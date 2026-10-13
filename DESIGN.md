@@ -18,6 +18,7 @@ colors:
   coral: "oklch(0.72 0.18 25)"
   paper-black: "#393939"
   paper-cream: "#f4ecd8"
+  paper-space: "#0B1020"
   ink-ice: "#E0F7FA"
   ink-green: "#00FF88"
   ink-cyan: "#00E5FF"
@@ -42,13 +43,13 @@ typography:
     lineHeight: 1.45
     letterSpacing: "0.03em"
   body:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontFamily: "'Exo 2', system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.45
     letterSpacing: "normal"
   meta:
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontFamily: "'Exo 2', system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.45
@@ -131,7 +132,7 @@ The ground is a deep blue-black with a sparse star field and one faint atom, its
 - **Ink** (`ink`, `ink-2`, `ink-3`): ground, raised controls and tiles, hover.
 - **Ceramic** (`ceramic`): primary text, the robot shell, selected segments, meter fill.
 - **Dim** (`dim`): secondary text on ink. On cobalt, secondary text uses `on-cobalt` instead.
-- **Paper** (`paper-black`, `paper-cream`): the diary page only. Matte black is StarNote's paper; cream is the light alternative.
+- **Paper** (`paper-black`, `paper-cream`, `paper-space`): the three default diary papers. The owner can replace any of them by hex; the printed template turns light or dark to suit.
 - **Diary inks** (`ink-ice`, `ink-green`, `ink-cyan`, `ink-fuchsia`, plus `paper-black` as ink on cream): the owner's writing palette. The printed template follows their roles: green for the header, fuchsia for the annotation margin.
 
 ### Named Rules
@@ -142,14 +143,14 @@ The ground is a deep blue-black with a sparse star field and one faint atom, its
 
 ## Typography
 
-Oxanium (self-hosted, variable 300 to 800) carries headings, labels, numerals and catalog numbers; its chamfered corners echo the hex nut. Running text uses the platform sans.
+Oxanium (self-hosted, variable 300 to 800) carries headings, labels, numerals and catalog numbers; its chamfered corners echo the hex nut. Running text uses Exo 2 (self-hosted, variable 300 to 700), a technical sans that keeps the same squared character at reading sizes.
 
 ### Hierarchy
 
 - **Display** 2.1rem / 700: the nameplate at the top of each bay.
 - **Heading** 1.25rem / 600: section headings in the pane; 1.6rem for a form or empty-state title.
 - **Label** 0.95rem / 600, 0.03em: buttons and segments. Tabs and small labels are uppercase with 0.08 to 0.16em tracking.
-- **Body** 1rem and **Meta** 0.875rem in the platform sans.
+- **Body** 1rem and **Meta** 0.875rem in Exo 2.
 
 Numerals that change (wallet, meters, dates) use tabular figures. The root size scales with viewport width, 17px at 1600px.
 
@@ -163,7 +164,7 @@ Flat. Depth comes from the cobalt field against ink and from one tone step (`ink
 
 ## Shapes
 
-Controls are 0.7rem rounded rectangles, segments 0.6rem inside a 0.85rem track, tiles 1rem. The hexagon is reserved for the fastener mark and the nut icon. Icons are authored 24px line SVG at 1.8 stroke with round caps.
+Controls are 0.7rem rounded rectangles, segments 0.6rem inside a 0.85rem track, tiles 1rem. The hexagon is reserved for the fastener mark and the nut icon. Icons are authored 24px line SVG at 1.8 stroke with square caps and mitred corners. They share one robot grammar: angular outlines, and a small circle (a pivot joint) wherever a part would hinge, as on the chevrons, the undo and redo arms, the pen and the eraser.
 
 ## Components
 
@@ -193,7 +194,11 @@ Attributes are a 20-cell gauge, ceramic on `ink-3`.
 
 ### Diary page
 
-A printed log sheet: weekday and date top left, a five-nut charge gauge to fill in by hand, the day number and an atom mark top right, thirteen ruled lines with a fuchsia annotation margin, a large faint atom in the lower right, and a catalog number in the footer. One pen, a fountain pen whose line swells with pressure and thins with speed.
+A printed log sheet in A4 proportions that fills the width and scrolls: weekday and date top left, a five-nut charge gauge to fill in by hand, the day number and an atom mark top right, ruled lines with a fuchsia annotation margin, a large faint atom near the foot, and a catalog number in the footer. One pen, a fountain pen whose line swells with pressure and thins with speed.
+
+### Diary toolbar
+
+One line that never wraps: Calendar, the date, then paper (icon and three swatches), pen (icon and five inks), eraser, and undo, redo, bin, with hairline separators between groups. Settings drop from the icon that owns them: paper opens the hex editor, pen opens nib and stabilizer, and a long press on the eraser opens its width. A corner tick marks a button that has more behind a long press.
 
 ### Calendar day
 

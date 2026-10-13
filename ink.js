@@ -1,22 +1,26 @@
 'use strict';
 // Pen canvas for the diary. Strokes are kept as vectors in page units so a page redraws sharp at any size.
 
-// The owner's StarNote palette. Matte Black is also the dark paper, so it is the ink for cream paper.
+// The owner's StarNote palette. Matte Black is also the first paper, so it is the ink for light paper.
 const PEN_COLORS = [['Ice Blue', '#E0F7FA'], ['Matrix Green', '#00FF88'], ['Electric Cyan', '#00E5FF'], ['Neon Fuchsia', '#FF007F'], ['Matte Black', '#393939']];
-const PAPERS = { dark: ['Matte black', '#393939'], cream: ['Cream', '#F4ECD8'] };
+// Three paper slots; the owner can replace any of them with a hex value.
+const PAPERS = ['#393939', '#F4ECD8', '#0B1020'];
 const PEN_SIZES = [['Fine', 2.4], ['Medium', 4], ['Bold', 6.5]];
+const ERASER_SIZES = [['Small', 12], ['Medium', 24], ['Large', 48]]; // page units across
 // Fountain pen: the nib opens with pressure and closes with speed, easing between the two so the line swells and tapers.
 // shortcut: tuned by eye in a desktop browser, retune min/max/speed on the tablet with the real pen
 const NIB = { min: 0.2, max: 1.7, speed: 0.45, ease: 0.35 };
 const STAB = [['Off', 1], ['Low', 0.5], ['High', 0.22]]; // share of the gap to the pen closed per sample
-const PAGE_W = 1600, PAGE_H = 940;
+const PAGE_W = 1600, PAGE_H = 2260; // A4 proportions: the page fills the width and scrolls
 
-function Ink(canvas, onChange) {
-  const ctx = canvas.getContext('2d', { desynchronized: true });
-  const ink = { strokes: [], tool: { color: PEN_COLORS[0][1], size: 1, erase: false, stab: 1 } };
-  let redo = [], cur = null, pid = null, sm = null, last = null, lastT = 0, nib = 0, penSeen = false;
+function Ink(canvas, scroller, onChange) {
+  // No `desynchronized` hint: on Android it can composite the canvas opaque, hiding the paper underneath.
+  const ctx = canvas.getContext('2d');
+  // pen: a pen has been used on this device, so fingers scroll the page instead of drawing
+  const ink = { strokes: [], pen: false, tool: { color: PEN_COLORS[0][1], size: 1, erase: false, eraser: 1, stab: 1 } };
+  let redo = [], cur = null, pid = null, sm = null, last = null, lastT = 0, nib = 0, pan = null;
 
-  // v is the nib opening, 0 to 1, stored as each point's third value
+  // v is the nib opening, 0 to 1, stored as each point's third value. An eraser stroke stores a fifth of its width in w.
   const width = (s, v) => s.e ? s.w * 5 : s.w * (NIB.min + (NIB.max - NIB.min) * v);
   function style(s) {
     ctx.globalCompositeOperation = s.e ? 'destination-out' : 'source-over';
@@ -66,18 +70,20 @@ function Ink(canvas, onChange) {
   }
 
   canvas.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'pen') penSeen = true;
-    else if (e.pointerType === 'touch' && penSeen) return; // palm rejection: once a pen has drawn, fingers stop drawing
+    if (e.pointerType === 'pen') ink.pen = true;
+    // palm rejection: once a pen has been used, a finger drags the page instead of drawing
+    else if (e.pointerType === 'touch' && ink.pen) { pan = { id: e.pointerId, y: e.clientY }; return; }
     if (cur) return;
     e.preventDefault();
     canvas.setPointerCapture(pid = e.pointerId);
-    // buttons bit 32 is the pen's eraser end
-    cur = { c: ink.tool.color, w: PEN_SIZES[ink.tool.size][1], e: ink.tool.erase || e.buttons & 32 ? 1 : 0, p: [] };
+    const erase = ink.tool.erase || e.buttons & 32; // buttons bit 32 is the pen's eraser end
+    cur = { c: ink.tool.color, w: erase ? ERASER_SIZES[ink.tool.eraser][1] / 5 : PEN_SIZES[ink.tool.size][1], e: erase ? 1 : 0, p: [] };
     last = pt(e); lastT = e.timeStamp; sm = [...last];
     nib = last[2] * 0.3; // touch down closed, so the stroke tapers in
     put([sm[0], sm[1], nib]);
   });
   canvas.addEventListener('pointermove', e => {
+    if (pan && e.pointerId === pan.id) { scroller.scrollTop -= e.clientY - pan.y; pan.y = e.clientY; return; }
     if (!cur || e.pointerId !== pid) return;
     const evs = e.getCoalescedEvents?.() || [], k = STAB[ink.tool.stab][1];
     for (const ev of evs.length ? evs : [e]) {
@@ -90,6 +96,7 @@ function Ink(canvas, onChange) {
     }
   });
   const end = e => {
+    if (pan && e.pointerId === pan.id) { pan = null; return; }
     if (!cur || e.pointerId !== pid) return;
     if (cur.p.length === 3) { cur.p[2] = last[2]; seg(cur, 0); } // a tap is a full dot, not a closed nib
     else if (e.type === 'pointerup') { const q = pt(e); put([q[0], q[1], nib * 0.35]); } // catch up to where the pen lifted, tapering out
@@ -102,7 +109,12 @@ function Ink(canvas, onChange) {
   canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-  ink.resize = (w, h) => { const d = window.devicePixelRatio || 1; canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); redraw(); };
+  ink.resize = (w, h) => {
+    // stay inside what mobile GPUs take as one texture: 4096px tall, about 12 megapixels
+    const d = Math.min(window.devicePixelRatio || 1, 4096 / h, Math.sqrt(12e6 / (w * h)));
+    canvas.width = Math.round(w * d); canvas.height = Math.round(h * d);
+    redraw();
+  };
   ink.load = strokes => { ink.strokes = strokes; redo = []; redraw(); };
   ink.undo = () => { if (ink.strokes.length) { redo.push(ink.strokes.pop()); redraw(); onChange(); } };
   ink.redo = () => { if (redo.length) { ink.strokes.push(redo.pop()); redraw(); onChange(); } };
