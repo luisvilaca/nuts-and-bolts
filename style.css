@@ -1,4 +1,5 @@
 @font-face { font-family: Oxanium; src: url(fonts/oxanium.woff2) format('woff2'); font-weight: 300 800; font-display: swap; }
+@font-face { font-family: 'Exo 2'; src: url(fonts/exo2.woff2) format('woff2'); font-weight: 300 700; font-display: swap; }
 
 :root {
   color-scheme: dark;
@@ -18,7 +19,7 @@
   --coral: oklch(0.72 0.18 25);
   --joint: #7f8db0;
   --display: Oxanium, system-ui, sans-serif;
-  --body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --body: 'Exo 2', system-ui, sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -40,7 +41,7 @@ button { cursor: pointer; font: inherit; color: inherit; }
 button:disabled { cursor: default; }
 input { caret-color: var(--signal); user-select: text; }
 h1, h2 { font-family: var(--display); text-wrap: balance; }
-.ico { width: 1.4em; height: 1.4em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ico { width: 1.4em; height: 1.4em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: square; stroke-linejoin: miter; }
 .grow { flex: 1; }
 
 /* ---------- chrome ---------- */
@@ -48,7 +49,6 @@ h1, h2 { font-family: var(--display); text-wrap: balance; }
 .top { display: flex; align-items: center; gap: 1.25rem; height: 3.25rem; padding: 0 1.75rem; border-bottom: 1px solid var(--line); }
 .mark { font-size: 1rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 .mark span { color: var(--brass); }
-#today { color: var(--dim); font-size: 0.9rem; }
 .wallet { margin-left: auto; display: flex; gap: 1.5rem; }
 .coin { display: inline-flex; align-items: center; gap: 0.35rem; font: 600 1.1rem var(--display); font-variant-numeric: tabular-nums; }
 .coin.bolts { color: var(--zinc); }
@@ -102,7 +102,7 @@ main { min-height: 0; }
 .btn:disabled { background: var(--ink-2); border-color: var(--line); color: var(--dim); opacity: 0.6; }
 .bay .btn:not(.primary), .bay .btn:disabled { background: oklch(0.2 0.08 264 / 0.75); border-color: oklch(1 0 0 / 0.25); color: var(--ceramic); opacity: 1; }
 
-.icb { display: grid; place-items: center; width: 3rem; height: 3rem; flex: none; padding: 0; border: 1px solid var(--line-2); border-radius: 0.7rem; background: var(--ink-2); transition: transform 0.15s var(--ease); }
+.icb { position: relative; display: grid; place-items: center; width: 3rem; height: 3rem; flex: none; padding: 0; border: 1px solid var(--line-2); border-radius: 0.7rem; background: var(--ink-2); transition: transform 0.15s var(--ease); }
 .icb:active:not(:disabled) { transform: scale(0.94); }
 .icb:disabled { opacity: 0.4; }
 .icb[aria-pressed=true] { background: var(--ceramic); border-color: transparent; color: var(--ink); }
@@ -219,8 +219,20 @@ main { min-height: 0; }
 /* ---------- diary page ---------- */
 
 .editor { grid-column: 1 / -1; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
-.tools { display: flex; align-items: center; gap: 0.5rem 0.9rem; flex-wrap: wrap; padding: 0.55rem 1.25rem; border-bottom: 1px solid var(--line); }
-.tools h2 { font-size: 1.15rem; font-weight: 600; }
+.tools { position: relative; z-index: 3; display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1.25rem; border-bottom: 1px solid var(--line); background: var(--ink); }
+.tools h2 { font-size: 1.15rem; font-weight: 600; white-space: nowrap; }
+.sep { flex: none; width: 1px; height: 1.75rem; background: var(--line-2); }
+/* a tool button and the settings that drop from it */
+.pw { position: relative; flex: none; }
+.pop { position: absolute; top: calc(100% + 0.7rem); left: 0; z-index: 4; display: grid; gap: 0.6rem; min-width: 15rem; padding: 1rem; border: 1px solid var(--line-2); border-radius: 1rem; background: var(--ink-2); box-shadow: 0 0.8rem 2rem oklch(0 0 0 / 0.5); animation: pop 0.2s var(--ease); }
+@keyframes pop { from { opacity: 0; transform: translateY(-0.4rem); } }
+.pop h3 { margin-top: 0.35rem; color: var(--dim); font: 600 0.85rem var(--display); letter-spacing: 0.04em; }
+.pop h3:first-child { margin-top: 0; }
+.pop .seg { display: flex; }
+.hexrow { display: flex; align-items: center; gap: 0.7rem; }
+.hexrow input { width: 8.5rem; height: 2.75rem; padding: 0 0.8rem; border: 1px solid var(--line-2); border-radius: 0.7rem; background: var(--ink); color: var(--ceramic); font: 600 1rem var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+/* corner tick: this button has more behind a long press */
+[data-hold]::after { content: ''; position: absolute; right: 0.28rem; bottom: 0.28rem; border: 0.2rem solid transparent; border-right-color: currentColor; border-bottom-color: currentColor; opacity: 0.75; }
 .swatches { display: flex; }
 .swatches label { position: relative; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; cursor: pointer; }
 .swatches input { position: absolute; opacity: 0; pointer-events: none; }
@@ -228,14 +240,12 @@ main { min-height: 0; }
 .sw.sq { border-radius: 0.35rem; }
 .swatches input:checked + .sw { outline-color: var(--ceramic); transform: scale(1.1); }
 .swatches input:focus-visible + .sw { outline-color: var(--signal); }
-.sizes label > span { padding: 0 0.8rem; min-width: 2.75rem; }
-.sizes i { display: block; width: calc(0.3rem + var(--d) * 0.3rem); aspect-ratio: 1; border-radius: 50%; background: currentColor; }
-.stab { display: flex; align-items: center; gap: 0.6rem; color: var(--dim); font: 600 0.85rem var(--display); letter-spacing: 0.04em; }
-.page-wrap { display: grid; place-items: center; min-height: 0; overflow: hidden; }
-/* the diary page: a printed log sheet on StarNote's matte black, or on cream; headers and margin follow the owner's ink roles */
-.page { position: relative; background: var(--paper); box-shadow: 0 0.5rem 1.5rem oklch(0 0 0 / 0.35); }
-.page.dark { --paper: #393939; --rule: rgb(255 255 255 / 0.15); --head: #00ff88; --sub: rgb(224 247 250 / 0.72); --margin: rgb(255 0 127 / 0.5); --art: rgb(0 229 255 / 0.2); }
-.page.cream { --paper: #f4ecd8; --rule: rgb(57 57 57 / 0.22); --head: #393939; --sub: rgb(57 57 57 / 0.75); --margin: rgb(255 0 127 / 0.45); --art: rgb(57 57 57 / 0.13); }
+/* the page fills the width and scrolls; with a pen in use, a finger drags it (see ink.js) */
+.page-wrap { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* the diary page: a printed log sheet on any of three paper colours; its print turns light or dark to suit the paper */
+.page { position: relative; width: 100%; aspect-ratio: 1600 / 2260; background: var(--paper, #393939); }
+.page.dark { --rule: rgb(255 255 255 / 0.15); --head: #00ff88; --sub: rgb(224 247 250 / 0.72); --margin: rgb(255 0 127 / 0.5); --art: rgb(0 229 255 / 0.2); }
+.page.light { --rule: rgb(57 57 57 / 0.22); --head: #393939; --sub: rgb(57 57 57 / 0.75); --margin: rgb(255 0 127 / 0.45); --art: rgb(57 57 57 / 0.13); }
 .tpl, .tpl svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tpl path, .tpl ellipse { fill: none; }
 .t-rule { stroke: var(--rule); stroke-width: 1.5; }
@@ -271,6 +281,22 @@ main { min-height: 0; }
 .bot .scarf { fill: var(--coral); }
 .bot .halo { fill: none; stroke: var(--brass); stroke-width: 7; }
 .bot .shadow { fill: #000; opacity: 0.3; }
+.cr { fill: var(--coral); }
+.mt { fill: var(--signal); }
+.ice { fill: #9fdcff; }
+.bowl { fill: rgb(170 215 255 / 0.2); stroke: rgb(255 255 255 / 0.75); stroke-width: 4; }
+.water { fill: rgb(0 229 255 / 0.3); }
+.bub { fill: none; stroke: #fff; stroke-width: 2; opacity: 0.7; }
+.smile { fill: none; stroke: var(--signal); stroke-width: 5; stroke-linecap: round; }
+.mag { fill: none; stroke: var(--coral); stroke-width: 12; }
+.magtip { fill: none; stroke: var(--ceramic); stroke-width: 12; }
+.tent { fill: none; stroke: #dfe6f5; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; }
+.mono { fill: rgb(170 215 255 / 0.15); stroke: var(--brass); stroke-width: 4; }
+.chain { fill: none; stroke: var(--brass); stroke-width: 2.5; stroke-linecap: round; }
+.orbit { fill: none; stroke: #fff; stroke-width: 2; opacity: 0.3; }
+.moon { fill: var(--ceramic); }
+.orb ellipse { fill: none; stroke: var(--signal); stroke-width: 2.5; opacity: 0.55; }
+.scene .wire { fill: none; stroke: #090d1b; stroke-width: 3; }
 
 .scene .seam { fill: none; stroke: #fff; stroke-width: 3; opacity: 0.09; }
 .scene .floor { fill: var(--cobalt-deep); }
@@ -299,6 +325,10 @@ main { min-height: 0; }
 .bot .arm-r { transform-origin: 30% 8%; animation: sway 3.4s ease-in-out infinite reverse; }
 .bot .spin { animation: spin 7s linear infinite; }
 .bot .halo { animation: bob 2.6s ease-in-out infinite; }
+.bot .hover { transform-box: fill-box; animation: bob 2.2s ease-in-out infinite; }
+/* a propeller seen edge-on: squashing it reads as spinning */
+.bot .prop { transform-box: fill-box; transform-origin: center; animation: prop 0.45s linear infinite; }
+@keyframes prop { 50% { transform: scaleX(0.12); } }
 .pulse { animation: pulse 2.2s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-6px); } }
 @keyframes look { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2.5deg); } }
@@ -340,7 +370,6 @@ main { min-height: 0; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seg.wide { flex-wrap: wrap; }
   .tabs button { flex-direction: column; gap: 0.15rem; font-size: 0.75rem; }
-  #today { display: none; }
   .plate h2, .name { font-size: 1.6rem; }
 }
 @media (prefers-reduced-motion: reduce) {

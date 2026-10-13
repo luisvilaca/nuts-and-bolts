@@ -40,13 +40,16 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Four attributes, robot-named with a human reading: Battery (energy), Processor (mind), Chassis (body), Core (heart).
 - Diary pen input needs pressure support and stroke stabilization. One pen only: a fountain pen (the owner's default in StarNote).
 - Diary ink colours, with the owner's roles: Ice Blue #E0F7FA (primary text), Matrix Green #00FF88 (headers), Electric Cyan #00E5FF (vectors and equations), Neon Fuchsia #FF007F (annotations and emphasis), Matte Black #393939 (for cream paper).
-- Diary paper: matte black #393939 (StarNote's paper colour) or a yellowish off-white.
+- Diary paper: three colour slots, matte black #393939 (StarNote's paper colour), a yellowish off-white, and a third; the owner can replace any slot with a hex value. Each page keeps the colour it was written on.
+- The diary page fills the screen width and scrolls. With the pen in use, a finger drags the page.
+- Diary toolbar, one line, in this order: calendar, date, paper, pen and inks, eraser, undo, redo, bin. Tapping the pen opens nib width and stabilizer; holding the eraser opens its width; the bin asks first.
 - Interface language: English.
 
 ## Brand Commitments
 
 - Clean and futuristic, with the robot theme strongly present.
 - The robot is a cute, friendly mini-robot in the spirit of WALL-E or EVE, built on the owner's sketch: boxy head on a neck, body, two arms, two legs, standing on a round platform. It must be animated.
+- Every icon is robot themed, and the typefaces share that character without looking crude or generated.
 - No squared or grid paper anywhere, in the app background or the diary. Backgrounds are space, nuclear or robot themed and coherent with the rest of the app.
 - The diary page is a true diary template, not a grid.
 
