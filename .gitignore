@@ -1,0 +1,6 @@
+# review screenshots and local tool state
+.impeccable/review/
+.impeccable/build/
+.impeccable/mocks/
+.impeccable/config.local.json
+.impeccable/hook.cache.json
