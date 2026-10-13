@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Nuts &amp; Bolts</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- shared robot shell gradient; must stay rendered, a gradient inside a hidden screen stops painting -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="shell" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#fdfeff"/><stop offset="1" stop-color="#c6d2ea"/></linearGradient></defs></svg>
+
+<header class="top">
+  <h1 class="mark">Nuts <span>&amp;</span> Bolts</h1>
+  <time id="today"></time>
+  <div class="wallet" id="wallet" aria-live="polite"></div>
+</header>
+
+<main>
+  <section id="base" class="screen" aria-label="Base">
+    <div class="bay" data-act="wave">
+      <div id="baseScene" class="fill"></div>
+      <div class="plate">
+        <input id="botName" class="name" aria-label="Robot name" maxlength="14" autocomplete="off" spellcheck="false">
+        <p id="mood"></p>
+      </div>
+      <p class="tier" id="baseTier"></p>
+    </div>
+    <div class="pane">
+      <div class="head"><h2>Today</h2><button class="btn" data-act="tab" data-tab="habits">Open habits</button></div>
+      <div id="baseToday"></div>
+      <h2>Attributes</h2>
+      <ul id="attrs" class="attrs"></ul>
+      <h2>This week</h2>
+      <ol id="week" class="week"></ol>
+    </div>
+  </section>
+
+  <section id="shop" class="screen" aria-label="Shop" hidden>
+    <div class="bay">
+      <div id="shopScene" class="fill"></div>
+      <div class="plate" id="shopDetail"></div>
+    </div>
+    <div class="pane">
+      <div class="head"><div class="seg" id="shopCats"></div></div>
+      <div id="shopGrid" class="grid"></div>
+    </div>
+  </section>
+
+  <section id="habits" class="screen" aria-label="Habits" hidden>
+    <div class="bay" data-act="wave">
+      <div id="habScene" class="fill"></div>
+      <div class="plate"><h2 id="habDay"></h2><p id="habDate"></p><p id="habSum"></p></div>
+    </div>
+    <div class="pane">
+      <div class="head" id="habBar"></div>
+      <div id="habBody" class="body"></div>
+    </div>
+  </section>
+
+  <section id="diary" class="screen" aria-label="Diary" hidden>
+    <div class="bay" id="diaryBay" data-act="wave">
+      <div id="diaryScene" class="fill"></div>
+      <div class="plate"><h2 id="diaryMonth"></h2><p id="diarySum"></p><button class="btn primary" id="writeToday" data-act="open"></button></div>
+    </div>
+    <div class="pane" id="diaryPane">
+      <div class="head" id="diaryBar"></div>
+      <div id="diaryBody" class="body"></div>
+    </div>
+    <div class="editor" id="editor" hidden>
+      <div class="tools" id="tools"></div>
+      <div class="page-wrap" id="pageWrap"><div class="page dark" id="page"><div class="tpl" id="tpl"></div><canvas id="ink"></canvas></div></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs" aria-label="Sections"></nav>
+<div id="toast" role="status"></div>
+
+<script src="logic.js"></script>
+<script src="robot.js"></script>
+<script src="ink.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
