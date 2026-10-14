@@ -1,5 +1,5 @@
 // Network first, so an update lands the next time the tablet is online; the cache is the offline copy.
-const CACHE = 'nb-v6';
+const CACHE = 'nb-v7';
 const FILES = ['./', 'style.css', 'logic.js', 'robot.js', 'ink.js', 'core.js', 'base.js', 'shop.js', 'habits.js', 'diary.js', 'device.js', 'app.js', 'fonts/oxanium.woff2', 'fonts/exo2.woff2', 'icon.svg', 'bg.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
@@ -25,7 +25,8 @@ self.addEventListener('notificationclick', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request)
+    // no-cache: ask the server every time (a cheap 304 when unchanged), so the browser's 10-minute HTTP cache never serves an old file
+    fetch(e.request, { cache: 'no-cache' })
       .then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
       .catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
