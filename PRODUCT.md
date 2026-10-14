@@ -28,12 +28,12 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Four sections on a bottom category bar: Base, Shop, Habits, Diary.
 - Base: the robot on its platform with an evolving background, currency balances, attribute bars.
 - Shop: item shop to evolve the character; categories Head, Body, Arms, Legs, Accessories.
-- Habits: day-to-day view with a switch to calendar view; add habit.
-- Diary: calendar view; pen entry on a printed diary page (dated header, ruled lines, annotation margin).
+- Habits: day-to-day view with switches to calendar view and history (each habit's share of slots done, fails, best and current run); add habit. Every date, past and future, opens to show the habits that run on it.
+- Diary: calendar view; pen entry on a printed diary page (dated header, ruled lines).
 
 ## Capabilities and Constraints
 
-- Habit: a target of X times per week or per day. Positive and negative habits.
+- Habit: a target of X times per week or per day. Positive and negative habits. Each runs from a start date until an end date, or indefinitely, on chosen weekdays (every day by default). A day off neither breaks nor extends a streak.
 - Each habit entry has three outcomes: Done, Skipped, Failed.
 - Each habit gives currency and attribute points when done, and takes them when failed.
 - Two currencies: Bolts (every completed habit, ordinary parts) and Nuts (rarer, from streaks, special parts and base evolutions).
@@ -42,7 +42,9 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Diary ink colours, with the owner's roles: Ice Blue #E0F7FA (primary text), Matrix Green #00FF88 (headers), Electric Cyan #00E5FF (vectors and equations), Neon Fuchsia #FF007F (annotations and emphasis), Matte Black #393939 (for cream paper).
 - Diary paper: three colour slots, matte black #393939 (StarNote's paper colour), a yellowish off-white, and a third; the owner can replace any slot with a hex value. Each page keeps the colour it was written on.
 - The diary page fills the screen width and scrolls. With the pen in use, a finger drags the page.
-- Diary toolbar, one line, in this order: calendar, date, paper, pen and inks, eraser, undo, redo, bin. Tapping the pen opens nib width and stabilizer; holding the eraser opens its width; the bin asks first.
+- Diary toolbar, one line in the spirit of StarNote's: undo, redo, pen, eraser, inks, paper, bin anchored left, the calendar alone on the right, no date and no separators. Tapping the pen in hand opens nib width and stabilizer; holding the eraser opens its width; the bin asks first. While erasing, a ring under the pen shows the eraser's size.
+- Base also holds this tablet's tools: a backup file (all state and every diary page) to save and restore, and a daily reminder at a set time. A restore replaces everything after confirming; a file that does not check out changes nothing.
+- The reminder is best effort: a web app has no exact alarm, so Android's periodic background sync decides when it checks. Exact timing would need the app wrapped as an APK.
 - Interface language: English.
 
 ## Brand Commitments

@@ -69,9 +69,8 @@ h1, h2 { font-family: var(--display); text-wrap: balance; }
 
 main { min-height: 0; }
 .screen { display: grid; grid-template-columns: var(--aside) minmax(0, 1fr); height: 100%; min-height: 0; }
-#base { --aside: 58%; }
-#shop { --aside: 40%; }
-#habits, #diary { --aside: 27%; }
+/* one bay width everywhere, so the robot stands at the same size on every screen */
+.screen { --aside: 40%; }
 
 .bay { position: relative; overflow: hidden; background: radial-gradient(120% 80% at 50% 30%, oklch(0.48 0.18 264), var(--cobalt) 55%, var(--cobalt-deep)); }
 .fill { position: absolute; inset: 0; }
@@ -89,6 +88,7 @@ main { min-height: 0; }
 .pane h2 { font-size: 1.25rem; font-weight: 600; margin: 2.25rem 0 0.8rem; }
 .head { display: flex; align-items: center; gap: 0.75rem 1rem; flex-wrap: wrap; min-height: 3rem; margin-bottom: 1rem; }
 .head h2 { margin: 0; flex: 1; }
+.head:empty { display: none; }
 .body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .note, .hint { color: var(--dim); }
 
@@ -146,6 +146,12 @@ main { min-height: 0; }
 .mini li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
 .mini .hex { width: 1.9rem; height: 1.9rem; padding: 0.15rem; }
 
+/* this tablet: backup and reminder, one row each */
+.device { display: grid; gap: 0.6rem; }
+.device .row { gap: 0.75rem 1rem; }
+.device input[type=time] { min-height: 3rem; padding: 0 0.8rem; border: 1px solid var(--line-2); border-radius: 0.7rem; background: var(--ink-2); color: var(--ceramic); font: 600 1rem var(--display); }
+.device input:disabled { opacity: 0.5; }
+.device .hint { font-size: 0.875rem; margin-bottom: 0.6rem; }
 .attrs { list-style: none; padding: 0; display: grid; gap: 0.9rem; }
 .attrs li { display: grid; grid-template-columns: 1.6rem 6.5rem minmax(0, 1fr) 2.2rem; align-items: center; gap: 0.75rem; }
 .a-ico { color: var(--zinc); display: grid; }
@@ -186,6 +192,12 @@ main { min-height: 0; }
 .h-ico { grid-row: span 2; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 0.7rem; background: var(--ink-2); color: var(--zinc); }
 .h-name { font: 600 1.1rem/1.25 var(--display); overflow-wrap: anywhere; }
 .h-meta { color: var(--dim); font-size: 0.875rem; }
+/* history: name and record, then the share of slots done as a gauge */
+.hist { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(6rem, 14rem) 3rem; align-items: center; gap: 1.25rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
+.hist .h-name, .hist .h-meta { display: block; }
+.hist .h-ico { grid-row: auto; }
+.hist b { text-align: right; font: 600 1.1rem var(--display); font-variant-numeric: tabular-nums; }
+.days .seg > label > span { padding: 0 0.75rem; }
 .tag { margin-left: 0.6rem; padding: 0.05rem 0.4rem; border: 1px solid currentColor; border-radius: 0.35rem; color: var(--coral); font: 600 0.7rem var(--display); letter-spacing: 0.08em; text-transform: uppercase; vertical-align: 0.15em; }
 .h-acts { display: flex; gap: 0.5rem; }
 .h-acts .btn { min-width: 5.25rem; }
@@ -195,8 +207,12 @@ main { min-height: 0; }
 .empty p { color: var(--dim); }
 .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-.form { display: grid; gap: 1.3rem; max-width: 44rem; }
+/* two columns so the whole form fits the screen without scrolling */
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.75rem; align-items: start; max-width: 60rem; }
 .form h2 { margin: 0; font-size: 1.6rem; }
+.form > h2, .form > .full, .form > .row { grid-column: 1 / -1; }
+.form input[type=date] { min-height: 3rem; padding: 0 0.8rem; border: 1px solid var(--line-2); border-radius: 0.7rem; background: var(--ink-2); color: var(--ceramic); font: 600 1rem var(--display); }
+.form:has(input[name=ends][value=never]:checked) input[name=end] { display: none; }
 .field { border: 0; padding: 0; min-width: 0; }
 .field > span, .field legend { display: block; margin-bottom: 0.45rem; padding: 0; color: var(--dim); font: 600 0.9rem var(--display); letter-spacing: 0.04em; }
 .field .hint { margin-top: 0.45rem; font-size: 0.875rem; }
@@ -219,9 +235,13 @@ main { min-height: 0; }
 /* ---------- diary page ---------- */
 
 .editor { grid-column: 1 / -1; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
-.tools { position: relative; z-index: 3; display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1.25rem; border-bottom: 1px solid var(--line); background: var(--ink); }
-.tools h2 { font-size: 1.15rem; font-weight: 600; white-space: nowrap; }
-.sep { flex: none; width: 1px; height: 1.75rem; background: var(--line-2); }
+.tools { position: relative; z-index: 3; display: flex; align-items: center; gap: 2.25rem; padding: 0.5rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--ink); }
+/* groups stand apart by space alone; inside a group the buttons sit close */
+.tg { display: flex; align-items: center; gap: 0.35rem; }
+.tools .icb { border-color: transparent; background: none; color: var(--dim); }
+.tools .icb[aria-pressed=true] { background: var(--ink-3); color: var(--ceramic); }
+/* the tool in hand: a short signal bar under it */
+.tools .icb[aria-pressed=true]::before { content: ''; position: absolute; left: 50%; bottom: 0.2rem; width: 0.9rem; height: 2px; translate: -50%; border-radius: 1px; background: var(--signal); }
 /* a tool button and the settings that drop from it */
 .pw { position: relative; flex: none; }
 .pop { position: absolute; top: calc(100% + 0.7rem); left: 0; z-index: 4; display: grid; gap: 0.6rem; min-width: 15rem; padding: 1rem; border: 1px solid var(--line-2); border-radius: 1rem; background: var(--ink-2); box-shadow: 0 0.8rem 2rem oklch(0 0 0 / 0.5); animation: pop 0.2s var(--ease); }
@@ -244,13 +264,12 @@ main { min-height: 0; }
 .page-wrap { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 /* the diary page: a printed log sheet on any of three paper colours; its print turns light or dark to suit the paper */
 .page { position: relative; width: 100%; aspect-ratio: 1600 / 2260; background: var(--paper, #393939); }
-.page.dark { --rule: rgb(255 255 255 / 0.15); --head: #00ff88; --sub: rgb(224 247 250 / 0.72); --margin: rgb(255 0 127 / 0.5); --art: rgb(0 229 255 / 0.2); }
-.page.light { --rule: rgb(57 57 57 / 0.22); --head: #393939; --sub: rgb(57 57 57 / 0.75); --margin: rgb(255 0 127 / 0.45); --art: rgb(57 57 57 / 0.13); }
+.page.dark { --rule: rgb(255 255 255 / 0.15); --head: #00ff88; --sub: rgb(224 247 250 / 0.72); --art: rgb(0 229 255 / 0.2); }
+.page.light { --rule: rgb(57 57 57 / 0.22); --head: #393939; --sub: rgb(57 57 57 / 0.75); --art: rgb(57 57 57 / 0.13); }
 .tpl, .tpl svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tpl path, .tpl ellipse { fill: none; }
 .t-rule { stroke: var(--rule); stroke-width: 1.5; }
 .t-headrule { stroke: var(--head); stroke-width: 2.5; }
-.t-margin { stroke: var(--margin); stroke-width: 1.5; }
 .t-hex path { stroke: var(--sub); stroke-width: 2; stroke-linejoin: round; }
 .t-art ellipse { stroke: var(--art); stroke-width: 2; }
 .t-art circle { fill: var(--art); }
@@ -260,6 +279,8 @@ main { min-height: 0; }
 .t-date { fill: var(--sub); font: 500 24px var(--display); }
 .t-label { fill: var(--sub); font: 600 15px var(--display); letter-spacing: 0.16em; }
 #ink { position: relative; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+/* the eraser's true size under the pen; a light line with a dark edge reads on any paper */
+.erase-ring { position: absolute; z-index: 1; translate: -50% -50%; border: 1.5px solid rgb(255 255 255 / 0.85); border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(0 0 0 / 0.45); pointer-events: none; }
 
 /* ---------- robot and bay ---------- */
 
@@ -355,6 +376,7 @@ main { min-height: 0; }
 /* ---------- pointer, small and tall screens ---------- */
 
 @media (hover: hover) {
+  .tools .icb:hover:not([aria-pressed=true]) { background: var(--ink-2); color: var(--ceramic); }
   .btn:hover:not(:disabled):not(.primary):not(.done):not([aria-pressed=true]), .icb:hover:not(:disabled) { background: var(--ink-3); }
   .btn.primary:hover:not(:disabled), .btn.done:hover:not(:disabled) { background: oklch(0.91 0.19 155); }
   .tile:hover:not(.sel), .day:hover:not(:disabled):not(.is-today) { border-color: var(--line-2); }
@@ -368,6 +390,7 @@ main { min-height: 0; }
   .h-acts { grid-column: 1 / -1; }
   .h-acts .btn { flex: 1; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form { grid-template-columns: minmax(0, 1fr); }
   .seg.wide { flex-wrap: wrap; }
   .tabs button { flex-direction: column; gap: 0.15rem; font-size: 0.75rem; }
   .plate h2, .name { font-size: 1.6rem; }

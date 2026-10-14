@@ -58,6 +58,17 @@ function Ink(canvas, scroller, onChange) {
     for (const s of ink.strokes) { for (let i = 0; i < s.p.length / 3; i++) seg(s, i); tail(s); }
   }
 
+  // the eraser's outline follows the pen, hovering or rubbing, at the size it actually erases
+  const ring = canvas.parentNode.appendChild(document.createElement('i'));
+  ring.className = 'erase-ring'; ring.hidden = true;
+  function showRing(e) {
+    ring.hidden = !(ink.tool.erase || e.buttons & 32);
+    if (ring.hidden) return;
+    const d = ERASER_SIZES[ink.tool.eraser][1] * canvas.clientWidth / PAGE_W;
+    ring.style.cssText = `width:${d}px;height:${d}px;left:${e.offsetX}px;top:${e.offsetY}px`;
+  }
+  canvas.addEventListener('pointerleave', () => { ring.hidden = true; });
+
   const pt = e => {
     const r = canvas.getBoundingClientRect();
     return [(e.clientX - r.left) * PAGE_W / r.width, (e.clientY - r.top) * PAGE_H / r.height, e.pointerType === 'pen' ? e.pressure || 0.1 : 0.5];
@@ -75,6 +86,7 @@ function Ink(canvas, scroller, onChange) {
     else if (e.pointerType === 'touch' && ink.pen) { pan = { id: e.pointerId, y: e.clientY }; return; }
     if (cur) return;
     e.preventDefault();
+    showRing(e);
     canvas.setPointerCapture(pid = e.pointerId);
     const erase = ink.tool.erase || e.buttons & 32; // buttons bit 32 is the pen's eraser end
     cur = { c: ink.tool.color, w: erase ? ERASER_SIZES[ink.tool.eraser][1] / 5 : PEN_SIZES[ink.tool.size][1], e: erase ? 1 : 0, p: [] };
@@ -84,6 +96,7 @@ function Ink(canvas, scroller, onChange) {
   });
   canvas.addEventListener('pointermove', e => {
     if (pan && e.pointerId === pan.id) { scroller.scrollTop -= e.clientY - pan.y; pan.y = e.clientY; return; }
+    showRing(e);
     if (!cur || e.pointerId !== pid) return;
     const evs = e.getCoalescedEvents?.() || [], k = STAB[ink.tool.stab][1];
     for (const ev of evs.length ? evs : [e]) {

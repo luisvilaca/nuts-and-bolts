@@ -133,7 +133,7 @@ The ground is a deep blue-black with a sparse star field and one faint atom, its
 - **Ceramic** (`ceramic`): primary text, the robot shell, selected segments, meter fill.
 - **Dim** (`dim`): secondary text on ink. On cobalt, secondary text uses `on-cobalt` instead.
 - **Paper** (`paper-black`, `paper-cream`, `paper-space`): the three default diary papers. The owner can replace any of them by hex; the printed template turns light or dark to suit.
-- **Diary inks** (`ink-ice`, `ink-green`, `ink-cyan`, `ink-fuchsia`, plus `paper-black` as ink on cream): the owner's writing palette. The printed template follows their roles: green for the header, fuchsia for the annotation margin.
+- **Diary inks** (`ink-ice`, `ink-green`, `ink-cyan`, `ink-fuchsia`, plus `paper-black` as ink on cream): the owner's writing palette. The printed template follows their roles: green for the header.
 
 ### Named Rules
 
@@ -156,7 +156,7 @@ Numerals that change (wallet, meters, dates) use tabular figures. The root size 
 
 ## Layout
 
-Three rows: a 3.25rem top strip (wordmark, date, wallet), the screen, a 4rem bottom tab bar. Each screen is two columns: the bay (58% on Base, 40% in Shop, 27% in Habits and Diary) and a scrolling pane with 1.5rem by 2.25rem padding. Pane sections get 2.25rem above their heading and 0.8rem below. The diary page editor takes the full width. Under 820px wide or in portrait, the bay stacks above the pane.
+Three rows: a 3.25rem top strip (wordmark, date, wallet), the screen, a 4rem bottom tab bar. Each screen is two columns: the bay (40% on every screen, so the robot stands at one size everywhere) and a scrolling pane with 1.5rem by 2.25rem padding. Pane sections get 2.25rem above their heading and 0.8rem below. The diary page editor takes the full width. Under 820px wide or in portrait, the bay stacks above the pane.
 
 ## Elevation & Depth
 
@@ -194,11 +194,11 @@ Attributes are a 20-cell gauge, ceramic on `ink-3`.
 
 ### Diary page
 
-A printed log sheet in A4 proportions that fills the width and scrolls: weekday and date top left, a five-nut charge gauge to fill in by hand, the day number and an atom mark top right, ruled lines with a fuchsia annotation margin, a large faint atom near the foot, and a catalog number in the footer. One pen, a fountain pen whose line swells with pressure and thins with speed.
+A printed log sheet in A4 proportions that fills the width and scrolls: weekday and date top left, a five-nut charge gauge to fill in by hand, the day number and an atom mark top right, ruled lines, a large faint atom near the foot, and a catalog number in the footer. One pen, a fountain pen whose line swells with pressure and thins with speed.
 
 ### Diary toolbar
 
-One line that never wraps: Calendar, the date, then paper (icon and three swatches), pen (icon and five inks), eraser, and undo, redo, bin, with hairline separators between groups. Settings drop from the icon that owns them: paper opens the hex editor, pen opens nib and stabilizer, and a long press on the eraser opens its width. A corner tick marks a button that has more behind a long press.
+One line that never wraps, modelled on StarNote's: undo and redo, pen and eraser, five inks, paper (icon and three swatches), bin, all anchored left with space between groups and no separators; the calendar sits alone on the right. Tool buttons are borderless; the tool in hand gets a raised tile and a short signal bar under it. While erasing, a ring under the pen shows the eraser's true size. Settings drop from the icon that owns them: paper opens the hex editor, pen opens nib and stabilizer, and a long press on the eraser opens its width. A corner tick marks a button that has more behind a long press.
 
 ### Calendar day
 
