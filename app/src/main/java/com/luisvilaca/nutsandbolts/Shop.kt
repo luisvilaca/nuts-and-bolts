@@ -1,5 +1,6 @@
 package com.luisvilaca.nutsandbolts
 
+import java.time.LocalDate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -76,14 +77,14 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(0.46f).fillMaxHeight()) {
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), emptyList(), tryOn, plate = false)
+                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
                 detail(Modifier.padding(start = 28.dp, end = 12.dp, bottom = 20.dp))
             }
             Column(Modifier.weight(0.54f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { catalog() }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(300.dp), emptyList(), tryOn, plate = false)
+        BayPanel(store, Modifier.fillMaxWidth().height(300.dp), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
         detail(Modifier.padding(vertical = 12.dp))
         catalog()
     }

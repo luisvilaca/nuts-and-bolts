@@ -145,12 +145,12 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
 private fun summary(s: Data, d: LocalDate, p: Progress) = when {
     s.habits.isEmpty() -> "No habits yet"
     d > LocalDate.now() -> "${plural(p.slots, "slot")} planned"
-    else -> "${p.done} of ${p.slots} leaves open" + if (p.fail > 0) ", ${p.fail} failed" else ""
+    else -> "${p.done} of ${p.slots} leaves unfurled" + if (p.fail > 0) ", ${p.fail} failed" else ""
 }
 
 @Composable
-fun segColors() = SegmentedButtonDefaults.colors(activeContainerColor = W.steel, activeContentColor = W.ground, inactiveContainerColor = W.ground,
-    inactiveContentColor = W.text, activeBorderColor = W.edge, inactiveBorderColor = W.edge)
+fun segColors() = SegmentedButtonDefaults.colors(activeContainerColor = W.raised, activeContentColor = W.text, inactiveContainerColor = W.ground,
+    inactiveContentColor = W.text, activeBorderColor = W.act, inactiveBorderColor = W.edge)
 
 @Composable
 fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(verticalAlignment = Alignment.CenterVertically) {
@@ -252,8 +252,8 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         r.forEach { (k, v) ->
                             FilterChip(cur == k, { set(k) }, { Text(v, Modifier.padding(vertical = 8.dp)) }, Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.steel, selectedLabelColor = W.ground, labelColor = W.text),
-                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.edge))
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
+                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.edge, selectedBorderColor = W.act, selectedBorderWidth = 1.5.dp))
                         }
                         if (r.size == 1) Spacer(Modifier.weight(1f))
                     }
@@ -302,8 +302,8 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                 FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DOW.forEachIndexed { i, n ->
                         FilterChip(i in days, { days = if (i in days) days - i else days + i }, { Text(n) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.steel, selectedLabelColor = W.ground, labelColor = W.text),
-                            border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge))
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
+                            border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge, selectedBorderColor = W.act, selectedBorderWidth = 1.5.dp))
                     }
                 }
             }

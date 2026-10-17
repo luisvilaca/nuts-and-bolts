@@ -1,5 +1,7 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.translate
 import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -134,7 +136,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(0.3f).fillMaxHeight()) {
                 Column(Modifier.padding(start = 28.dp)) { Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim); write() }
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), emptyList(), plate = false)
+                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), plate = false)
             }
             Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { cal() }
         }
@@ -420,8 +422,8 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
     OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore the originals", color = W.text) }
 }
 
-// The printed page: weekday and date, a five-electron charge gauge to fill in by hand, the day number and an atom,
-// ruled lines, a large faint atom near the foot, and the log's catalog number.
+// The printed page: weekday and date, a five-cell gauge to fill in by hand, the day number and this look's emblem,
+// ruled lines, a large faint emblem near the foot, and the log's catalog number.
 @Composable
 private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     val tm = rememberTextMeasurer()
@@ -434,10 +436,12 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     Canvas(Modifier.fillMaxSize()) {
         ver
         withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) {
-            fun atom(cx: Float, cy: Float, rx: Float, ry: Float, c: Color, w: Float) {
-                for (a in listOf(0f, 60f, 120f)) rotate(a, Offset(cx, cy)) { drawOval(c, Offset(cx - rx, cy - ry), Size(rx * 2, ry * 2), style = Stroke(w)) }
-            }
-            atom(1290f, PAGE_H - 330, 250f, 88f, art, 2f); drawCircle(art, 10f, Offset(1290f, PAGE_H - 330))
+            // a leaf: the page's emblem; the gauge is five buds to fill in
+            fun shape(p: androidx.compose.ui.graphics.Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
+                withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
+            fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(LEAF, cx, cy + r * 0.6f, r / 14f, c, w)
+            fun cell(at: Offset, r: Float, c: Color) = shape(BUD, at.x, at.y + r, r / 9f, c, 2f)
+            emblem(1290f, PAGE_H - 330, 250f, art, 2f)
             for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
             drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
             val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
@@ -448,10 +452,10 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
             }
             txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
             txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
-            txt("CHARGE", lbl, 1014f, 58f, false)
-            for (i in 0 until 5) drawCircle(sub, 15f, Offset(1028f + i * 46, 88f), style = Stroke(2f))
+            txt("LEAVES", lbl, 1014f, 58f, false)
+            for (i in 0 until 5) cell(Offset(1028f + i * 46, 88f), 15f, sub)
             txt("DAY $doy", lbl, 1392f, 96f, true)
-            atom(1462f, 90f, 44f, 15f, head, 2f); drawCircle(head, 5f, Offset(1462f, 90f))
+            emblem(1462f, 90f, 44f, head, 2f)
             txt("${name.uppercase()}'S LOG", lbl, 90f, PAGE_H - 18, false)
             txt("NB-D" + date.toString().replace("-", ""), lbl, 1510f, PAGE_H - 18, true)
         }

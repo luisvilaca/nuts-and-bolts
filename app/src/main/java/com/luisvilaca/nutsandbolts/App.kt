@@ -93,7 +93,7 @@ fun App(store: Store) {
         BackHandler(enabled = ui.tab != "today" && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = "today" }
         Scaffold(
             containerColor = W.ground,
-            snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.steel, contentColor = W.ground, actionColor = Color(0xFF0B6B5D)) } },
+            snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act) } },
             bottomBar = { if (!rail) BottomBar(ui) },
         ) { pad ->
             Row(Modifier.fillMaxSize().padding(pad)) {
@@ -160,7 +160,7 @@ fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier
     Row(modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically) {
         if (badge) RobotView(store, Modifier.padding(end = 10.dp).size(40.dp, 52.dp))
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (!small) Wallet(store.s)
