@@ -90,7 +90,9 @@ fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh
     drawCircle(Brush.radialGradient(listOf(W.grow.copy(alpha = 0.22f), Color.Transparent), glow, 460f), 460f, glow)
     // Rivet and its base step left to share the floor with the tray
     translate(-140f, 0f) {
-        scene(tier, t)
+        // the charger would sit off the frame and its cable cut by it, and the base's own pot and jar would land in the
+        // tray, so this look draws the base without them
+        SCENE.forEach { sh -> if (sh.tier <= tier && "cable" !in sh.roles && sh.path.getBounds().let { b -> b.right > 140f && !(b.left > 740f && b.top > 400f) }) paint(sh, t) }
         translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
     }
     for (x in listOf(650f, 880f)) drawLine(W.joint, Offset(x, 60f), Offset(x, ground - 316f), 3f)
