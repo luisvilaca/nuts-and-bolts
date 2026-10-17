@@ -29,7 +29,7 @@ colors:
 typography:
   display:
     fontFamily: "Lexend, sans-serif"
-    fontSize: "32sp"
+    fontSize: "28sp"
     fontWeight: 700
     lineHeight: "40sp"
     letterSpacing: "-0.01em"
@@ -98,29 +98,29 @@ components:
     textColor: "{colors.on-ready}"
     typography: "{typography.label-large}"
     rounded: "{rounded.pill}"
-    height: "48dp"
+    height: "40dp"
   button-done-disabled:
     backgroundColor: "{colors.raised-graphite}"
     textColor: "{colors.dim-slate}"
     rounded: "{rounded.pill}"
-    height: "48dp"
+    height: "40dp"
   button-done-lead:
     backgroundColor: "{colors.ready-green}"
     textColor: "{colors.on-ready}"
     rounded: "{rounded.pill}"
-    height: "64dp"
+    height: "52dp"
   icon-button-skip:
     textColor: "{colors.cool-steel}"
     rounded: "{rounded.pill}"
-    size: "48dp"
+    size: "40dp"
   icon-button-fail:
     textColor: "{colors.shear-coral}"
     rounded: "{rounded.pill}"
-    size: "48dp"
+    size: "40dp"
   button-outlined:
     textColor: "{colors.frost}"
     rounded: "{rounded.pill}"
-    height: "48dp"
+    height: "40dp"
   fab:
     backgroundColor: "{colors.ready-green}"
     textColor: "{colors.on-ready}"
@@ -164,7 +164,7 @@ A robot's workbench after dark. The app is a deep graphite-blue workshop in whic
 
 Hierarchy comes from type scale and hairlines, not boxes. Rows are separated by one-pixel graphite rules, sections are announced by small tracked caps, and the only filled surfaces are controls, shop part tiles and the framed bay. The bolt is the single ornament and always carries meaning: the slot, the day, the five hex holes of the diary page's gauge and the bolt emblem printed on every page.
 
-Density is calm and evening-friendly: 48dp targets, 28dp gutters on wide windows, one clear Done per row with Skip and Fail quieter beside it. One rounded, open face (Lexend) carries everything.
+Density is compact and calm: 40dp controls, 28dp gutters on wide windows, one clear Done per row with Skip and Fail quieter beside it. One rounded, open face (Lexend) carries everything.
 
 **Key Characteristics:**
 - Graphite-blue ground with a deeper rail; tonal steps, no shadows.
@@ -219,7 +219,7 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 **Character:** One rounded, open, highly legible face throughout; weight and tracking do the work a second family would.
 
 ### Hierarchy
-- **Display** (700, 32sp, 40sp, -0.01em): screen titles in the header; on a phone, the name of the next habit to log on Today.
+- **Display** (700, 28sp, 34sp, -0.01em): screen titles in the header; on a phone, the name of the next habit to log on Today.
 - **Headline** (600, 22sp, 28sp): the empty-state line ("The bench is empty").
 - **Title Large** (600, 21sp, 28sp): a shop part's name in its detail, the selected day's name on Habits.
 - **Title** (600, 18sp, 24sp): habit names in rows and history, the month and day stepper.
@@ -227,7 +227,7 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 - **Body** (400, 14sp, 20sp): habit metadata joined by " · ", summaries, helper text.
 - **Label Large** (600, 16sp, 20sp): button text, shop tabs, calendar day numbers.
 - **Label Medium** (500, 13sp, 16sp): weekday names under the week's plates, attribute glosses.
-- **Label** (500, 13sp, 0.14em tracking, uppercase, dim slate): section labels ("ATTRIBUTES", "THIS WEEK"), the day's status line ("TODAY · 4 OF 9 BOLTS FASTENED · 1 FAILED"), form field labels, calendar weekday heads, part catalogue numbers, the robot's nameplate (at body-large size in cool steel).
+- **Label** (500, 13sp, 0.14em tracking, uppercase, dim slate): section labels ("THIS WEEK"), the day's status line ("TODAY · 4 OF 9 BOLTS FASTENED · 1 FAILED"), form field labels, calendar weekday heads, part catalogue numbers, the robot's nameplate (at body-large size in cool steel).
 - **Numeral** (600, 18sp, tabular figures): wallet balances, attribute values and percentages, the target stepper, the reminder time. At small sizes it drops to 14sp.
 
 ### Named Rules
@@ -240,14 +240,14 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 Two window classes drive everything. A window is **wide** when it is landscape and at least 600dp wide: the Material navigation rail sits at the left and screens split into two panes. Otherwise the Material navigation bar sits at the foot and screens stack in one scroll. A window whose short side is under 600dp is a **phone**.
 
 - **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the list or catalogue 54% at right (8dp start, 32dp end padding). Shop's part detail sits under its bay.
-- **Habits and Diary:** no bay at any size; the robot rides as a badge in the header, the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
-- **Stacked:** 20dp side gutters; the bay sits under the header (560dp tall on a tablet in portrait, 360dp on a phone, the same on Today and Shop). Habits, Diary and the form show the robot badge.
+- **Habits and Diary:** no bay at any size; no robot badge either; the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
+- **Stacked:** 20dp side gutters; the bay sits under the header (600dp tall on a tablet in portrait, 400dp on a phone, the same on Today and Shop). Habits, Diary and the form have no robot at all.
 - **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.
 - **Rows:** 12dp vertical padding, a hairline under each. A habit row whose column is under 560dp puts its buttons on a second line with Done filling the width.
-- **Phone Today:** the next habit still to log leads the list at display size with a 64dp Done; the rest follow at normal size.
+- **Phone Today:** the next habit still to log leads the list at display size with a 52dp Done; the rest follow at normal size.
 - **Section rhythm:** section labels sit 28dp below what precedes them and 10dp above what they label (22dp and 8dp in the form). Gaps between controls are 8dp or 12dp.
 - **Shop grid:** as many columns as fit at 156dp each (at least two), 12dp gaps.
-- **Calendars:** a hairline grid: each week a ruled row, each day a cell at least 64dp tall with its number above and its mark (a day plate, or the pen icon for a diary page) beneath.
+- **Calendars:** a hairline grid that always fills the space below its month stepper and never scrolls, on Habits and Diary, phone and tablet, either orientation: each week a ruled row of equal height, each day its number with its mark (a day plate, or the pen icon for a diary page) beneath, or beside the number when rows are under 60dp. Diary's "Write today" (or "Open today") is a quiet text action at the right of the month stepper.
 
 ### Named Rules
 **The No Card Rule.** Sections are never boxed. Hierarchy is type scale, tracked labels and hairlines; the only filled surfaces are controls, shop part tiles, menus and the bay.
@@ -267,10 +267,10 @@ Soft and machined against straight hairlines. Every pressable action is a pill o
 
 ### Buttons
 Confident on the primary, quiet on the rest.
-- **Shape:** full pill (rounded.pill), 48dp tall; the phone's lead habit uses 64dp.
+- **Shape:** full pill (rounded.pill), 40dp tall (44dp for form, shop and settings actions); the phone's lead habit uses 52dp.
 - **Done / primary:** ready green with on-ready text in Label Large. Disabled when the period is full: raised graphite with dim text. Bad habits relabel the trio Resisted / Skip / Gave in.
-- **Skip:** a 48dp outlined circle, 1dp edge-graphite border, a cool-steel minus.
-- **Fail:** a 48dp outlined circle, coral cross, border coral at 45%; both fall to edge graphite when disabled.
+- **Skip:** a 40dp outlined circle, 1dp edge-graphite border, a cool-steel minus.
+- **Fail:** a 40dp outlined circle, coral cross, border coral at 45%; both fall to edge graphite when disabled.
 - **Outlined:** 1dp edge-graphite border, frost text (Cancel, Take off, backup, date pickers).
 - **Text actions:** ready green for confirm, coral for destructive, frost for dismiss.
 - **FAB:** extended, ready green with on-ready content, bottom-end with a 24dp inset (Add habit).
@@ -294,7 +294,7 @@ Confident on the primary, quiet on the rest.
 - **Bar:** Today, Shop, Habits, Diary on rail graphite at the bottom of every window, never a side rail; Settings is an icon in the header.
 - **States:** selected item gets a raised-graphite indicator, ready-green icon and frost label; unselected are dim slate.
 - **Segmented views (Day / Calendar / History):** active segment raised graphite with frost text and a cool-steel border; inactive on the ground with edge-graphite borders.
-- **Header:** at least 72dp; display title, dim date beside it, the wallet at right (bolt icon and count in cool steel, nut in gold, 22dp icons, Numeral). Screens without a bay put a 40x52dp robot badge before the title; on a phone the badge replaces the wallet.
+- **Header:** at least 60dp; display title, dim summary beside it on wide windows, the wallet at right (bolt icon and count in cool steel, nut in gold, 22dp icons, Numeral), then Settings. No robot badge anywhere.
 - **Snackbar:** raised graphite with frost text and a ready-green Undo, for every log and purchase.
 
 ### Bolt slots (signature)
@@ -322,7 +322,7 @@ One frame clock drives every animation and freezes when the system's animations 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** give each habit row exactly one ready-green Done pill (48dp, full pill) and keep Skip and Fail as 48dp outlined circles beside it.
+- **Do** give each habit row exactly one ready-green Done pill (40dp, full pill) and keep Skip and Fail as 40dp outlined circles beside it.
 - **Do** show every slot state with its own bolt form (driven, dashed, sheared, open hole) so state never depends on colour alone.
 - **Do** set every screen in Lexend, counts and balances in Numeral with tabular figures.
 - **Do** separate rows and calendar weeks with one hairline (hairline) and announce sections with a 13sp label tracked 0.14em.
@@ -363,3 +363,17 @@ The shop sells parts in six slots, drawn from the robot roles in Theme.kt.
 - **Dosimeter** and **Hard Hat** (accessories): a chest badge with a glowing reading; a gold hard hat with a blue lamp.
 - **Reactor Hall** (base, tier 5): two cooling towers breathing steam on the left of the bay.
 - The Aquarium became the **Coolant Tank** (bubbles instead of plants), and the Sprout the **Isotope Antenna**. No plants anywhere.
+
+## Levels
+
+Each attribute climbs ten levels; level n starts at 10 n (n - 1) points (0, 20, 60, 120 ... 900) and points count on past the top. Done adds the habit's weight in points, Fail takes them back, so a level can be lost. Reaching a level for the first time pays 2 nuts (stored on the mark, so undo is exact); climbing back to a level already reached pays nothing. The robot cheers and the snackbar leads with the news ("Level up! Core is now Fission Pile, level 4, +2 nuts").
+
+The stages, in the robot's own terms:
+- **Battery:** AA Cell, Nickel Pack, Lithium Cell, Li-ion Bank, Solid-State, Supercapacitor, Graphene Cell, Fusion Cell, Zero-Point Cell, Antimatter Cell.
+- **Processor:** 4-bit, 8-bit, 16-bit, 32-bit, 64-bit, Multicore, Neural Engine, Quantum Core, Photonic Mind, Singularity.
+- **Chassis:** Tin Can, Aluminium, Steel, Titanium, Carbon Fibre, Tungsten, Graphene, Nanoweave, Diamond Lattice, Neutronium.
+- **Core:** Spark, Dynamo, Turbine, Fission Pile, Breeder, Tokamak, Fusion Heart, Stellarator, Star Core, Supernova.
+
+The levels stand on the bay's floor on Today and Shop, always in view: four rail-graphite tiles at 80%, each with the attribute's icon (and name when the bay is at least 520dp wide), "LV n" in Numeral, the stage name and a 4dp gauge of the way to the next level. The room answers too: the reactor's glow and gauge follow the Core level, and the Charging Bay's station lights a cell for every two Battery levels. Mood follows the average level (under 2 low power, 4 and up fully charged).
+
+The diary page's emblem is an atom: three orbits round a nucleus.

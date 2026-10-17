@@ -76,9 +76,10 @@ class ScreensTest {
         shot("$prefix-today")
         tap("Shop"); shot("$prefix-shop")
         tap("Habits"); shot("$prefix-habits")
+        tap("Calendar"); shot("$prefix-habits-cal"); tap("Day")
         tap("Add habit"); shot("$prefix-form")
         tap("Cancel"); tap("Diary"); shot("$prefix-diary")
-        tap("Open today's page".takeIf { LocalDate.now() in st.s.diary } ?: "Write today's page"); shot("$prefix-page")
+        tap("Open today".takeIf { LocalDate.now() in st.s.diary } ?: "Write today"); shot("$prefix-page")
     }
 
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tabletLandscape() = tour("tablet")
@@ -127,7 +128,7 @@ class ScreensTest {
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
         val st = seed()
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); tap("Write today's page".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today's page")
+        tap("Diary"); tap("Write today".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today")
         rule.onNodeWithContentDescription("Pen. Tap again for nib and stabilizer").performClick(); rule.waitForIdle()
         rule.onNodeWithText("NIB").assertExists(); rule.onNodeWithText("0.6 mm").assertExists(); rule.onNodeWithText("50%").assertExists()
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()

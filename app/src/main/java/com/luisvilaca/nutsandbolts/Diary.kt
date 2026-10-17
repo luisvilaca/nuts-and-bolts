@@ -129,22 +129,20 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
     var month by remember { mutableStateOf(YearMonth.now()) }
     val n = s.diary.count { YearMonth.from(it) == month }
     val sum = "${if (n == 0) "No pages" else plural(n, "page")} written in ${month.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))}"
-    val write = @Composable {
-        Button({ ui.page = t }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
-            Icon(ICONS.getValue("diary"), null, Modifier.size(20.dp)); Text(if (t in s.diary) "Open today's page" else "Write today's page", Modifier.padding(start = 8.dp))
+    // like Habits: the calendar fills the screen below the header without scrolling, at any size; today's page is a
+    // quiet action beside the month it belongs to
+    Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
+        Header("Diary", sum.takeIf { lay.wide }, store, ui, lay)
+        if (!lay.wide) Text(sum, Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
+            Spacer(Modifier.weight(1f))
+            TextButton({ ui.page = t }) {
+                Icon(ICONS.getValue("diary"), null, Modifier.size(18.dp), tint = W.act)
+                Text(if (t in s.diary) "Open today" else "Write today", Modifier.padding(start = 6.dp), color = W.act)
+            }
         }
-    }
-    val cal = @Composable {
-        Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
-        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false) { ui.page = it }
-    }
-    // like Habits: no bay here, the robot rides small in the header and the calendar takes the width
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 28.dp else 20.dp).padding(bottom = 24.dp)) {
-        Header("Diary", sum.takeIf { lay.wide }, store, ui, lay, badge = true)
-        if (!lay.wide) Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-        write()
-        Spacer(Modifier.height(20.dp))
-        cal()
+        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false, Modifier.weight(1f).padding(bottom = 8.dp)) { ui.page = it }
     }
 }
 
@@ -315,7 +313,8 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                 }
             }
         }
-        // The page fills the width and scrolls. Once a pen has been used, a finger drags the page instead of drawing.
+        // The page fills the width and scrolls. With palm rejection on (Settings), once a pen has been used a finger drags
+        // the page instead of drawing.
         Box(Modifier.fillMaxSize().verticalScroll(scroll)) {
             Box(Modifier.fillMaxWidth().aspectRatio(PAGE_W / PAGE_H).background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
                 Template(date, pad.page.paper, s.name, pad.ver)
@@ -338,7 +337,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     ev.changes.firstOrNull { it.type.pen() && !it.pressed }?.let { h ->
                                         ring = if ((erase || h.type == PointerType.Eraser) && ev.type != PointerEventType.Exit) h.position else null
                                     }
-                                    val d = ev.changes.firstOrNull { it.changedToDown() && (it.type.pen() || !s.pen.seen) } ?: continue
+                                    val d = ev.changes.firstOrNull { it.changedToDown() && (it.type.pen() || !(s.pen.palm && s.pen.seen)) } ?: continue
                                     ev.changes.forEach { it.consume() }
                                     ps.pid = d.id; ps.pen = d.type.pen()
                                     val rubbing = erase || d.type == PointerType.Eraser || ((ev.motionEvent?.buttonState ?: 0) and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0

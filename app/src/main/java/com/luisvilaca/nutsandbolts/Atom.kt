@@ -42,8 +42,17 @@ fun slots(s: Data, h: Habit, d: LocalDate): List<Slot> {
 }
 
 private fun shape(d: String) = PathParser().parsePathString(d).toPath()
-// The diary page's marks, in a 22 x 26 box anchored at (11, 24): a bolt seen from the side, and a hex hole to fill in.
-val EMBLEM = shape("M5 3H17V9H14V24H8V9H5ZM8 13L14 11M8 17L14 15M8 21L14 19")
+// The diary page's marks, in a 22 x 26 box anchored at (11, 24): an atom (three orbits round a nucleus), and a hex
+// hole to fill in.
+val EMBLEM = Path().apply {
+    for (a in listOf(0.0, PI / 3, 2 * PI / 3)) for (i in 0..48) {
+        val t = i * 2 * PI / 48
+        val x = (11 + 10 * cos(t) * cos(a) - 3.6 * sin(t) * sin(a)).toFloat()
+        val y = (13 + 10 * cos(t) * sin(a) + 3.6 * sin(t) * cos(a)).toFloat()
+        if (i == 0) moveTo(x, y) else lineTo(x, y)
+    }
+    addOval(Rect(Offset(11f, 13f), 2.2f))
+}
 val CELL = shape("M11 24L5.8 21V15L11 12L16.2 15V21Z")
 
 // A slot is a bolt hole seen face on: done is a steel bolt head driven home (the bolts currency's cross on it),
@@ -118,11 +127,12 @@ val ROOMS = listOf(
 
 // The whole bay, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
 // show, so Today, Shop and the base tiles all frame the same picture. band: room left at the top for the nameplate.
-fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f) {
+// foot: room left at the bottom for the levels.
+fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f, foot: Float = 0f) {
     val tier = (PART[equip["base"]]?.tier ?: 1).coerceIn(1, ROOMS.size)
     val r = ROOMS[tier - 1]
-    val k = min(size.width / 920f, (size.height - band) / 760f)
-    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 120f * k
+    val k = min(size.width / 920f, (size.height - band - foot) / 760f)
+    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - foot - 760f * k) / 2 - 120f * k
     val fy = oy + 700f * k
     drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
     drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
@@ -134,7 +144,7 @@ fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fres
 // feeds and the gauge on its side follow the Core attribute. A habit just done screws its newest bolt in.
 // With no habits yet the bench holds one dashed frame.
 private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, tier: Int, r: Room) {
-    val core = s.stats.getValue("core") / 100f
+    val core = level(s.stats.getValue("core")) / 10f // the reactor burns brighter as Core levels up
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val bench = 596f
     drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
@@ -228,14 +238,14 @@ private fun DrawScope.reactor(core: Float, pulse: Float) {
 }
 
 // Charging Bay: panelled walls and the charging station Rivet's platform is plugged into; its screen shows the
-// Battery attribute in five cells.
+// Battery level in five cells.
 private fun DrawScope.chargingBay(s: Data) {
     for (x in listOf(90f, 300f, 540f)) drawLine(Color.White.copy(alpha = 0.04f), Offset(x, -300f), Offset(x, 692f), 3f)
     drawLine(Color.White.copy(alpha = 0.04f), Offset(-600f, 430f), Offset(600f, 430f), 3f)
     drawRoundRect(W.raised, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f))
     drawRoundRect(W.joint, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f), style = Stroke(3f))
     drawRoundRect(W.rail, Offset(84f, 468f), Size(68f, 44f), CornerRadius(8f))
-    val cells = (s.stats.getValue("battery") / 20f).roundToInt().coerceIn(0, 5)
+    val cells = (level(s.stats.getValue("battery")) + 1) / 2 // a cell for every two Battery levels
     for (i in 0 until 5) drawRoundRect(if (i < cells) W.act else W.line, Offset(92f + i * 11f, 478f), Size(8f, 24f), CornerRadius(2f))
     drawCircle(W.rail, 14f, Offset(118f, 556f))
     for (dx in listOf(-5f, 5f)) drawCircle(W.joint, 3f, Offset(118f + dx, 556f))

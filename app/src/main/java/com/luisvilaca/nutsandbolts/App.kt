@@ -1,5 +1,11 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -109,10 +115,17 @@ private fun go(ui: Ui, tab: String) { ui.tab = tab; ui.settings = false; ui.edit
 
 @Composable
 private fun BottomBar(ui: Ui) {
-    NavigationBar(containerColor = W.rail) {
+    // a compact bar: 60dp of tabs above the system's own navigation area
+    Row(Modifier.fillMaxWidth().background(W.rail).navigationBarsPadding().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
         TABS.forEach { (k, v) ->
-            NavigationBarItem(selected = ui.tab == k && !ui.settings, onClick = { go(ui, k) }, icon = { Icon(ICONS.getValue(TAB_ICON.getValue(k)), null) }, label = { Text(v) },
-                colors = NavigationBarItemDefaults.colors(selectedIconColor = W.act, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim))
+            val on = ui.tab == k && !ui.settings
+            Column(Modifier.weight(1f).fillMaxHeight().selectable(on, role = Role.Tab) { go(ui, k) },
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Box(Modifier.size(52.dp, 28.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
+                    Icon(ICONS.getValue(TAB_ICON.getValue(k)), null, Modifier.size(20.dp), tint = if (on) W.act else W.dim)
+                }
+                Text(v, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
+            }
         }
     }
 }
@@ -122,17 +135,14 @@ private fun BottomBar(ui: Ui) {
 val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK)
 fun plural(n: Int, w: String) = "$n $w${if (n == 1) "" else "s"}"
 
-// badge: a screen showing no bay puts the robot small beside its title; on a phone it takes the wallet's place.
 @Composable
-fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier, badge: Boolean = false) {
-    val small = badge && lay.phone
-    Row(modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (badge) RobotView(store, Modifier.padding(end = 10.dp).size(40.dp, 52.dp))
+fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (!small) Wallet(store.s)
+        Wallet(store.s)
         IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
     }
 }
@@ -156,14 +166,19 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) = Text(text.upperc
 private val BTN = mapOf("good" to listOf("Done", "Skip", "Fail"), "bad" to listOf("Resisted", "Skip", "Gave in"))
 
 fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
+    val st = STATS.getValue(h.stat)
+    val before = level(store.s.stats.getValue(h.stat))
     var m: Mark? = null
     store.change { m = mark(this, h, d, kind) }
     val k = m ?: return
-    val stat = STATS.getValue(h.stat).name
+    val after = level(store.s.stats.getValue(h.stat))
     when (kind) { "done" -> { store.fresh = h.id to now(); store.react("cheer") }; "fail" -> store.react("sad") }
-    ui.tell(when (kind) {
-        "done" -> "+${plural(k.b, "bolt")}, +${k.p} $stat" + if (k.n > 0) ", and a nut for the streak" else ""
-        "fail" -> "Lost ${plural(-k.b, "bolt")} and ${-k.p} $stat"
+    // crossing a level is the news; the points come second
+    ui.tell(when {
+        after > before -> "Level up! ${st.name} is now ${st.stages[after - 1]}, level $after" + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
+        after < before -> "${st.name} fell back to ${st.stages[after - 1]}, level $after. Lost ${plural(-k.b, "bolt")}."
+        kind == "done" -> "+${plural(k.b, "bolt")}, +${k.p} ${st.name}" + if (k.n > 0) ", and a nut for the streak" else ""
+        kind == "fail" -> "Lost ${plural(-k.b, "bolt")} and ${-k.p} ${st.name}"
         else -> "Skipped. Nothing gained, nothing lost."
     }) { store.change { undo(this, h, d) } }
 }
@@ -190,7 +205,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             slots(s, h, d).forEachIndexed { i, sl ->
                 val own = sl.s != "" && !sl.other
-                SlotMark(sl, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
+                SlotMark(sl, 22.dp, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
                     // the newest mark of the day is the one that comes off
                     var m: Mark? = null
                     store.change { m = undo(this, h, d) }
@@ -201,16 +216,16 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
     }
     val buttons = @Composable { m: Modifier ->
         Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 64.dp else 48.dp),
+            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 52.dp else 40.dp),
                 shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(label[0]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, W.edge),
+            OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(40.dp), enabled = !full, border = BorderStroke(1.dp, W.edge),
                 colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel, disabledContentColor = W.edge)) { Icon(ICONS.getValue("minus"), label[1]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "fail") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, if (full) W.edge else W.coral.copy(alpha = 0.45f)),
+            OutlinedIconButton(onClick = { log(store, ui, h, d, "fail") }, modifier = Modifier.size(40.dp), enabled = !full, border = BorderStroke(1.dp, if (full) W.edge else W.coral.copy(alpha = 0.45f)),
                 colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.coral, disabledContentColor = W.edge)) { Icon(ICONS.getValue("fail"), label[2]) }
         }
     }
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).clickable(onClickLabel = "edit") { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }) {
                 Text(h.name, style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(meta(s, h, d), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 2)
@@ -218,7 +233,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
             Box(Modifier.padding(horizontal = 12.dp)) { marks() }
             if (!stacked) buttons(Modifier)
         }
-        if (stacked) buttons(Modifier.fillMaxWidth().padding(bottom = 12.dp))
+        if (stacked) buttons(Modifier.fillMaxWidth().padding(bottom = 9.dp))
         HorizontalDivider(color = W.line)
     }
 }
