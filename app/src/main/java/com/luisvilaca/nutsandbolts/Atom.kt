@@ -112,7 +112,7 @@ fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh
         val newest = o.slots.indexOfLast { it.s == "done" && !it.other }
         o.slots.forEachIndexed { j, sl ->
             var grow = 1f
-            if (fresh != null && fresh.first == o.h.id && j == newest) grow = min(1f, (t - fresh.second).coerceAtLeast(0) / 700f).let { 1 - (1 - it).pow(3) }
+            if (fresh != null && fresh.first == o.h.id && j == newest) grow = min(1f, since(t, fresh.second) / 700f).let { 1 - (1 - it).pow(3) }
             leaf(Offset(x, ground - 34f - 44f * j), 2.8f * grow, sl, j % 2 == 1)
         }
     }
