@@ -34,7 +34,7 @@ object W {
     val glass = Color(0xFF080C1E)
 }
 
-private val jost = FontFamily(
+val jost = FontFamily(
     Font(R.font.jost, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),
     Font(R.font.jost, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
     Font(R.font.jost, FontWeight.SemiBold, variationSettings = FontVariation.Settings(FontVariation.weight(600))),
@@ -43,7 +43,8 @@ val michroma = FontFamily(Font(R.font.michroma))
 
 // Michroma is wide: display sizes stay modest and labels carry tracking instead of weight.
 val Label = TextStyle(fontFamily = michroma, fontSize = 11.sp, letterSpacing = 0.14.em, color = W.dim)
-val Numeral = TextStyle(fontFamily = michroma, fontSize = 16.sp)
+// counts and balances in Jost tabular figures: Michroma's squared zero reads as a missing glyph on its own
+val Numeral = TextStyle(fontFamily = jost, fontWeight = FontWeight.Medium, fontSize = 18.sp, fontFeatureSettings = "tnum")
 
 private val type = Typography(
     displaySmall = TextStyle(fontFamily = michroma, fontSize = 28.sp, lineHeight = 36.sp),
@@ -95,7 +96,7 @@ val ROLES: Map<String, Ink> = mapOf(
     // the bay
     "wire" to s(W.glass, 3f), "stars" to s(Color.White, 5f, 0.8f), "pring" to s(W.steel, 5f), "cone" to f(Color.White, 0.05f),
     "panel" to f(Color(0xFF1B2558)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
-    "floor" to f(FLOOR), "skirt" to f(W.steel, 0.12f), "orb" to s(W.turq, 2.5f, 0.45f), "cable" to s(W.glass, 9f),
+    "floor" to f(Color.Transparent), // BayPanel lays the floor edge to edge "skirt" to f(W.steel, 0.12f), "orb" to s(W.turq, 2.5f, 0.45f), "cable" to s(W.glass, 9f),
     "pot" to f(W.steel), "plat-side" to f(Color(0xFF141C45)), "plat-top" to Ink(SolidColor(Color(0xFF26336E)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.turq, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )

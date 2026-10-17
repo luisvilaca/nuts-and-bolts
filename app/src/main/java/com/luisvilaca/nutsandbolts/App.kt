@@ -152,13 +152,17 @@ fun AtomMark(modifier: Modifier) = androidx.compose.foundation.Canvas(modifier) 
 val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK)
 fun plural(n: Int, w: String) = "$n $w${if (n == 1) "" else "s"}"
 
+// badge: screens without the bay show the robot small beside the title on narrow windows, in place of the wallet.
 @Composable
-fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier) {
+fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier, badge: Boolean = false) {
+    val small = badge && !lay.wide
     Row(modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, style = MaterialTheme.typography.displaySmall, maxLines = 1)
-        if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.weight(1f))
-        Wallet(store.s)
+        if (small) RobotView(store, Modifier.padding(end = 10.dp).size(40.dp, 52.dp))
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(title, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (!small || !lay.phone) Wallet(store.s)
         if (!lay.rail) IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
     }
 }
@@ -227,7 +231,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
     }
     val buttons = @Composable { m: Modifier ->
         Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 56.dp else 48.dp),
+            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 64.dp else 48.dp),
                 shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq, W.raised, W.dim)) { Text(label[0]) }
             OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, W.orbit),
                 colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel, disabledContentColor = W.orbit)) { Icon(ICONS.getValue("minus"), label[1]) }
@@ -238,7 +242,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).clickable(onClickLabel = "edit") { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }) {
-                Text(h.name, style = if (big) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(h.name, style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(meta(s, h, d), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 2)
             }
             Box(Modifier.padding(horizontal = 12.dp)) { marks() }

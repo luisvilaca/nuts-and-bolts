@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -133,10 +134,10 @@ private fun Price(p: Part, owned: Boolean) {
 private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val s = store.s
     val eq = s.equip[p.slot] == p.id
-    Column(modifier.clip(RoundedCornerShape(16.dp)).background(W.rail)
-        .border(if (sel) 2.dp else 1.dp, if (sel) W.steel else W.line, RoundedCornerShape(16.dp))
-        .clickable(role = Role.Tab, onClick = onClick).semantics { selected = sel }.padding(10.dp)) {
-        Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).background(W.raised)) { thumb(p) }
+    // one panel per part; the selection ring sits on the panel itself
+    Column(modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab, onClick = onClick).semantics { selected = sel }.padding(bottom = 6.dp)) {
+        Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
+            .border(if (sel) 2.dp else 0.dp, if (sel) W.steel else Color.Transparent, RoundedCornerShape(12.dp))) { thumb(p) }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(p.no, style = Label.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize))
         Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

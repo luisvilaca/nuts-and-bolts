@@ -9,9 +9,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -127,7 +127,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
     }
     val cal = @Composable {
         Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
-        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(22.dp), tint = W.turq) }, ahead = false) { ui.page = it }
+        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.turq) }, ahead = false) { ui.page = it }
     }
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Diary", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
@@ -139,7 +139,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
             Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { cal() }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Diary", null, store, ui, lay)
+        Header("Diary", null, store, ui, lay, badge = true)
         Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         write()
         Spacer(Modifier.height(20.dp))
@@ -259,11 +259,15 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
 
     Column(Modifier.fillMaxSize()) {
         // One line, StarNote style: undo and redo, pen and eraser, inks, paper, bin on the left; the calendar alone on the right.
-        Row(Modifier.fillMaxWidth().background(W.rail).padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        // On a narrow window the inks fold into the current ink's swatch and the papers into the paper menu, so it still fits one line.
+        BoxWithConstraints(Modifier.fillMaxWidth().background(W.rail).padding(horizontal = 8.dp, vertical = 6.dp)) {
+        val narrow = maxWidth < 600.dp
+        val gap = if (narrow) 0.dp else 12.dp
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (narrow) 0.dp else 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Tool("undo", "Undo stroke", false) { pad.page.strokes.removeLastOrNull()?.let { pad.redo += it; pad.redraw(density); persist() } }
                 Tool("redo", "Redo stroke", false) { pad.redo.removeLastOrNull()?.let { pad.page.strokes += it; pad.redraw(density); persist() } }
-                Gap(12.dp)
+                Gap(gap)
                 Box {
                     // the first tap picks the pen back up from the eraser; a tap on the pen in hand opens its settings
                     Tool("diary", "Pen. Tap again for settings", !erase, more = true) { if (erase) erase = false else pop = "pen" }
@@ -276,18 +280,27 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                     Tool("eraser", "Eraser. Hold for width", erase, more = true, onLong = { erase = true; pop = "eraser" }) { erase = !erase; pop = null }
                     Menu(pop == "eraser", { pop = null }) { Choice("Eraser width", ERASER_SIZES.map { it.first }, s.pen.eraser) { store.change { pen.eraser = it } } }
                 }
-                Gap(12.dp)
-                PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true) { erase = false; store.change { pen.color = c } } }
-                Gap(12.dp)
+                Gap(gap)
+                val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true) { erase = false; pop = null; store.change { pen.color = c } } } }
+                val papers = @Composable { s.papers.forEachIndexed { i, c -> Swatch(c, "Paper ${i + 1}", pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } } }
+                if (narrow) Box {
+                    Swatch(s.pen.color, "Ink colour", !erase, round = true) { pop = "ink" }
+                    Menu(pop == "ink", { pop = null }) { Row { inks() } }
+                } else inks()
+                Gap(gap)
                 Box {
                     Tool("paper", "Paper colours", false) { pop = "paper" }
-                    Menu(pop == "paper", { pop = null }) { Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) } }
+                    Menu(pop == "paper", { pop = null }) {
+                        if (narrow) Row(Modifier.padding(bottom = 8.dp)) { papers() }
+                        Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }
+                    }
                 }
-                s.papers.forEachIndexed { i, c -> Swatch(c, "Paper ${i + 1}", pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } }
-                Gap(12.dp)
+                if (!narrow) papers()
+                Gap(gap)
                 Tool("trash", "Bin this page", false) { if (pad.page.strokes.isNotEmpty()) bin = true }
             }
             Tool("calendar", "Back to calendar", false) { ui.page = null }
+        }
         }
         // The page fills the width and scrolls. Once a pen has been used, a finger drags the page instead of drawing.
         Box(Modifier.fillMaxSize().verticalScroll(scroll)) {
