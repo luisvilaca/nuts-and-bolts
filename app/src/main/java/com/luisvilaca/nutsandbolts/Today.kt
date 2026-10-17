@@ -86,31 +86,24 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Today", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(if (lay.phone) 360.dp else 560.dp), orbitsFor(s, t))
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(s, t))
         if (s.habits.isNotEmpty()) Text(lit.uppercase(), Modifier.padding(top = 8.dp, bottom = 4.dp), style = Label)
         list(lay.phone)
     }
 }
 
-// The bay, framed, with the robot's nameplate inside its top corner.
+// The bay is the same picture on Today and Shop: same height, same framing, the nameplate in its top corner.
+fun bayHeight(lay: Lay) = if (lay.phone) 360.dp else 560.dp
+
 @Composable
-fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip, plate: Boolean = true) {
+fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip) {
     val s = store.s
     val tm = clock()
-    val all = orbits.flatMap { it.slots }
-    val done = all.count { it.s == "done" }
     Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp))) {
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
-            // frame the robot and its bay (scene x 60..940, y 140..900), centred; the floor runs on to the edges
-            val band = if (plate) 72.dp.toPx() else 0f
-            val k = min(size.width / 880f, (size.height - band) / 760f)
-            val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 140f * k
-            drawRect(Brush.verticalGradient(listOf(Color(0xFF111A2C), W.ground)))
-            drawRect(Brush.verticalGradient(listOf(FLOOR, W.rail), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
-            drawRect(W.steel.copy(alpha = 0.1f), Offset(0f, oy + 692f * k), Size(size.width, 6f * k))
-            withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, tm, store.react, orbits, store.fresh, equip, waiting = s.habits.isEmpty() && plate) }
+            room(s, tm, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
         }
-        if (plate) Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
+        Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
             Text(MOOD[mood(s)] + if (orbits.isNotEmpty()) " · building ${plural(min(orbits.size, 6), "frame")}" else "", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }

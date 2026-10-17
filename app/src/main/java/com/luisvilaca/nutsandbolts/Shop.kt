@@ -75,16 +75,17 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
+        // the same bay as Today, so trying a part on shows it exactly where it will live
         Row(Modifier.fillMaxSize()) {
-            Column(Modifier.weight(0.46f).fillMaxHeight()) {
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
-                detail(Modifier.padding(start = 28.dp, end = 12.dp, bottom = 20.dp))
+            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbitsFor(store.s, LocalDate.now()), tryOn)
+            Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 32.dp)) {
+                detail(Modifier.padding(bottom = 12.dp))
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) { catalog() }
             }
-            Column(Modifier.weight(0.54f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { catalog() }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(300.dp), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(store.s, LocalDate.now()), tryOn)
         detail(Modifier.padding(vertical = 12.dp))
         catalog()
     }
@@ -138,7 +139,10 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
     // one panel per part; the selection ring sits on the panel itself
     Column(modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab, onClick = onClick).semantics { selected = sel }.padding(bottom = 6.dp)) {
         Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
-            .border(if (sel) 2.dp else 0.dp, if (sel) W.steel else Color.Transparent, RoundedCornerShape(12.dp))) { thumb(p) }
+            .border(if (sel) 2.dp else 0.dp, if (sel) W.steel else Color.Transparent, RoundedCornerShape(12.dp))) {
+            // a base shows its whole room with Rivet in it, as it would look on Today
+            if (p.slot == "base") room(s, 0L, null, orbitsFor(s, LocalDate.now()), null, s.equip + ("base" to p.id)) else thumb(p)
+        }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned)

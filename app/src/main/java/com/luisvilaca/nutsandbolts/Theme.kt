@@ -77,7 +77,6 @@ class Ink(val fill: Brush? = null, val stroke: Color? = null, val width: Float =
 private val shell = Brush.linearGradient(listOf(Color(0xFFF7FAFD), Color(0xFFBFCADB)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
 private fun f(c: Color, a: Float = 1f) = Ink(fill = SolidColor(c), alpha = a)
 private fun s(c: Color, w: Float, a: Float = 1f, dash: FloatArray? = null) = Ink(stroke = c, width = w, alpha = a, dash = dash)
-val FLOOR = Color(0xFF0F1828)
 
 val ROLES: Map<String, Ink> = mapOf(
     "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE3EAF3), width = 14f), "sh2" to f(Color(0xFFA9B7CB)),
@@ -96,3 +95,27 @@ val ROLES: Map<String, Ink> = mapOf(
     "plat-side" to f(Color(0xFF0E1626)), "plat-top" to Ink(SolidColor(Color(0xFF22304A)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.act, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )
+
+// Finishes: each part can carry its own enamel, so a robot assembled from the catalogue becomes a patchwork of colour.
+// The starter parts keep the white factory shell; everything else is painted. Eyes take the finish's own colour.
+private fun finish(top: Long, bottom: Long, flat: Long, joint: Long, eye: Long, glass: Long): Map<String, Ink> {
+    val j = Color(joint)
+    return mapOf(
+        "sh" to Ink(fill = Brush.linearGradient(listOf(Color(top), Color(bottom)), androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(150f, 500f))),
+        "shr" to Ink(stroke = Color(top), width = 14f), "sh2" to f(Color(flat)), "zn" to f(j), "gl" to f(Color(glass)),
+        "ey" to f(Color(eye)), "smile" to s(Color(eye), 5f), "tent" to s(Color(flat), 16f),
+        "claw" to s(j, 8f), "spring" to s(j, 8f), "rod" to s(j, 6f), "tread" to s(j, 6f, dash = floatArrayOf(6f, 8f)),
+    )
+}
+val COPPER = finish(0xFFF6B98A, 0xFFB8643A, 0xFFD98B5F, 0xFF6B3A22, 0xFFFFC14D, 0xFF1C0F0A)
+val COBALT = finish(0xFF8FB2FF, 0xFF2E4DB3, 0xFF5677D6, 0xFF1F2C5C, 0xFFE8F6FF, 0xFF0A1030)
+val SIGNAL = finish(0xFFFFB36B, 0xFFE0661F, 0xFFF08A3E, 0xFF4A2A18, 0xFF3CF2FF, 0xFF1A0E06)
+val MINT = finish(0xFFD2F7E9, 0xFF6CC4A8, 0xFF8FD9BF, 0xFF2E6B5C, 0xFFFF6FA8, 0xFF0E2620)
+val STEALTH = finish(0xFF6A7488, 0xFF2C3342, 0xFF434C60, 0xFF3A4252, 0xFFFF4DD8, 0xFF1E2430)
+val BRASS = finish(0xFFFBE3A1, 0xFFC0902F, 0xFFDDB45A, 0xFF6B4E14, 0xFF7CF2FF, 0xFF1E1606)
+val VIOLET = finish(0xFFDCCEFF, 0xFF7E62D9, 0xFFA58EEB, 0xFF3A2A70, 0xFFFFE066, 0xFF140C2E)
+val URANIUM = finish(0xFFDDFFA6, 0xFF78C83A, 0xFFA6E266, 0xFF2D4A16, 0xFFFFFFFF, 0xFF0D1606)
+val CHROME = finish(0xFFFFFFFF, 0xFF8E9AAE, 0xFFB9C3D3, 0xFF4A5468, 0xFF4CC9FF, 0xFF0A0F18)
+val HAZARD = finish(0xFFFFE36A, 0xFFE6B000, 0xFFF2C631, 0xFF2A2A2A, 0xFFFF8A00, 0xFF151515)
+val ROSE = finish(0xFFFFCCDD, 0xFFE0709A, 0xFFF09AB8, 0xFF6A2A44, 0xFF7CF2C8, 0xFF230A14)
+val CHERENKOV = finish(0xFF4A70BC, 0xFF15244A, 0xFF27407A, 0xFF0C1530, 0xFF4CC9FF, 0xFF050A18)
