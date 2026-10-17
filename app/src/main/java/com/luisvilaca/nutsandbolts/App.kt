@@ -116,17 +116,6 @@ private fun BottomBar(ui: Ui) {
     }
 }
 
-// The app's mark: a steel stem with a cherry blossom and a spider lily in a small tray.
-@Composable
-fun AtomMark(modifier: Modifier) = androidx.compose.foundation.Canvas(modifier) {
-    val w = size.width
-    drawLine(W.steel, androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.88f), androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.42f), w * 0.05f)
-    bloom(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.58f), w / 30f, Slot("done", false))
-    bloom(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.72f), w / 38f, Slot("done", false), flip = true, lily = true)
-    drawRoundRect(W.steel, androidx.compose.ui.geometry.Offset(w * 0.24f, w * 0.82f), androidx.compose.ui.geometry.Size(w * 0.52f, w * 0.13f),
-        androidx.compose.ui.geometry.CornerRadius(w * 0.05f), style = androidx.compose.ui.graphics.drawscope.Stroke(w * 0.045f))
-}
-
 // ---------- shared pieces ----------
 
 val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK)
@@ -200,7 +189,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             slots(s, h, d).forEachIndexed { i, sl ->
                 val own = sl.s != "" && !sl.other
-                SlotMark(sl, lily = lily(s, h), modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
+                SlotMark(sl, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
                     // the newest mark of the day is the one that comes off
                     var m: Mark? = null
                     store.change { m = undo(this, h, d) }

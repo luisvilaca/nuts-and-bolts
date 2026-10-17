@@ -15,26 +15,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
-// Night Grow Room: a hydroponic bay after dark. Deep greenhouse teal, a magenta grow light, leaf green only where
-// something can be pressed or has grown, coral only for failed.
+// Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep graphite blue, Cherenkov blue
+// only as the reactor's light, ready green only where something can be pressed or is done, coral only for failed.
 object W {
-    val ground = Color(0xFF0B1A1A)
-    val rail = Color(0xFF081313)
-    val raised = Color(0xFF15302B)
-    val line = Color(0xFF1B3632)
-    val edge = Color(0xFF24443E)
-    val text = Color(0xFFE6F2EE)
-    val dim = Color(0xFF8FB0A8)
-    val steel = Color(0xFFCFE3DE)
-    val act = Color(0xFF6EE787) // a leaf
+    val ground = Color(0xFF0C1320)
+    val rail = Color(0xFF070C15)
+    val raised = Color(0xFF17223A)
+    val line = Color(0xFF1B2638)
+    val edge = Color(0xFF2A3A55)
+    val text = Color(0xFFE8EEF7)
+    val dim = Color(0xFF94A3BA)
+    val steel = Color(0xFFD3DDEA)
+    val act = Color(0xFF6EE787) // a ready lamp
     val onAct = Color(0xFF06281A)
     val gold = Color(0xFFF2C14E)
     val coral = Color(0xFFFF6B4A)
-    val joint = Color(0xFF6C8F87)
-    val glass = Color(0xFF081313)
-    val grow = Color(0xFFE05AD0) // the grow light
-    val blossom = Color(0xFFFFB7C5) // a cherry blossom
-    val lily = Color(0xFFE8303F) // a red spider lily
+    val joint = Color(0xFF6F809A)
+    val glass = Color(0xFF070C15)
+    val glow = Color(0xFF4CC9FF) // the reactor's Cherenkov light
 }
 
 private fun lexend(vararg w: Int) = FontFamily(w.map { Font(R.font.lexend, FontWeight(it), variationSettings = FontVariation.Settings(FontVariation.weight(it))) })
@@ -76,25 +74,25 @@ fun NbTheme(content: @Composable () -> Unit) = MaterialTheme(
 // How each drawing role in Parts.kt is painted.
 class Ink(val fill: Brush? = null, val stroke: Color? = null, val width: Float = 0f, val alpha: Float = 1f, val dash: FloatArray? = null, val butt: Boolean = false)
 
-private val shell = Brush.linearGradient(listOf(Color(0xFFF7FCFA), Color(0xFFBFD9D1)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
+private val shell = Brush.linearGradient(listOf(Color(0xFFF7FAFD), Color(0xFFBFCADB)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
 private fun f(c: Color, a: Float = 1f) = Ink(fill = SolidColor(c), alpha = a)
 private fun s(c: Color, w: Float, a: Float = 1f, dash: FloatArray? = null) = Ink(stroke = c, width = w, alpha = a, dash = dash)
-val FLOOR = Color(0xFF0E2020)
+val FLOOR = Color(0xFF0F1828)
 
 val ROLES: Map<String, Ink> = mapOf(
-    "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE2F0EB), width = 14f), "sh2" to f(Color(0xFFA9C9C1)),
+    "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE3EAF3), width = 14f), "sh2" to f(Color(0xFFA9B7CB)),
     "gl" to f(W.glass), "space" to f(W.glass), "zn" to f(W.joint), "br" to f(W.gold), "ey" to f(W.act), "mt" to f(W.act),
-    "cr" to f(W.coral), "ice" to f(Color(0xFF9FDCFF)), "moon" to f(W.steel), "leaf" to f(W.act), "scarf" to f(W.coral),
-    "ln" to s(Color(0xFF8FB0A8), 3.5f), "hl" to s(Color.White, 5f, 0.28f), "claw" to s(W.joint, 8f), "spring" to s(W.joint, 8f),
+    "cr" to f(W.coral), "ice" to f(Color(0xFF9FDCFF)), "moon" to f(W.steel), "leaf" to f(W.act), "core" to f(W.glow), "scarf" to f(W.coral),
+    "ln" to s(W.dim, 3.5f), "hl" to s(Color.White, 5f, 0.28f), "claw" to s(W.joint, 8f), "spring" to s(W.joint, 8f),
     "tread" to s(W.joint, 6f, dash = floatArrayOf(6f, 8f)), "ring" to s(W.act, 5f, dash = floatArrayOf(20f, 12f)), "rod" to s(W.joint, 6f),
     "stem" to s(Color(0xFF3FA866), 6f), "halo" to s(W.gold, 7f), "bowl" to Ink(SolidColor(Color(0x339FE3D6)), Color(0xBFFFFFFF), 4f),
-    "water" to f(Color(0x4D2FC6B8)), "bub" to s(Color.White, 2f, 0.7f), "smile" to s(W.act, 5f), "mag" to Ink(stroke = W.coral, width = 12f, butt = true),
+    "water" to f(Color(0x4D4CC9FF)), "bub" to s(Color.White, 2f, 0.7f), "smile" to s(W.act, 5f), "mag" to Ink(stroke = W.coral, width = 12f, butt = true),
     "magtip" to Ink(stroke = W.steel, width = 12f, butt = true), "tent" to s(Color(0xFFDCEBE6), 16f), "mono" to Ink(SolidColor(Color(0x269FE3D6)), W.gold, 4f),
     "chain" to s(W.gold, 2.5f), "orbit" to s(Color.White, 2f, 0.3f),
     // the bay (its floor is transparent: BayPanel lays the floor edge to edge)
-    "wire" to s(W.glass, 3f), "stars" to s(Color.White, 4f, 0.4f), "pring" to s(W.steel, 5f), "cone" to f(W.grow, 0.05f),
-    "panel" to f(Color(0xFF12302B)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
-    "floor" to f(Color.Transparent), "skirt" to f(W.steel, 0.1f), "orb" to s(W.grow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
-    "pot" to f(W.steel), "plat-side" to f(Color(0xFF0E2420)), "plat-top" to Ink(SolidColor(Color(0xFF1F4640)), Color(0x38FFFFFF), 3f),
+    "wire" to s(W.glass, 3f), "stars" to s(Color.White, 4f, 0.4f), "pring" to s(W.steel, 5f), "cone" to f(W.glow, 0.05f),
+    "panel" to f(Color(0xFF15213A)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
+    "floor" to f(Color.Transparent), "skirt" to f(W.steel, 0.1f), "orb" to s(W.glow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
+    "plat-side" to f(Color(0xFF0E1626)), "plat-top" to Ink(SolidColor(Color(0xFF22304A)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.act, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )

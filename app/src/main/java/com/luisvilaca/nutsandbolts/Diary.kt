@@ -445,11 +445,11 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     Canvas(Modifier.fillMaxSize()) {
         ver
         withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) {
-            // a leaf: the page's emblem; the gauge is five buds to fill in
+            // a bolt: the page's emblem; the gauge is five hex holes to fill in
             fun shape(p: androidx.compose.ui.graphics.Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
                 withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
-            fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(LEAF, cx, cy + r * 0.6f, r / 14f, c, w)
-            fun cell(at: Offset, r: Float, c: Color) = shape(BUD, at.x, at.y + r, r / 9f, c, 2f)
+            fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(EMBLEM, cx, cy + r * 0.6f, r / 14f, c, w)
+            fun cell(at: Offset, r: Float, c: Color) = shape(CELL, at.x, at.y + r, r / 9f, c, 2f)
             emblem(1290f, PAGE_H - 330, 250f, art, 2f)
             for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
             drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
@@ -461,7 +461,7 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
             }
             txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
             txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
-            txt("LEAVES", lbl, 1014f, 58f, false)
+            txt("BOLTS", lbl, 1014f, 58f, false)
             for (i in 0 until 5) cell(Offset(1028f + i * 46, 88f), 15f, sub)
             txt("DAY $doy", lbl, 1392f, 96f, true)
             emblem(1462f, 90f, 44f, head, 2f)
