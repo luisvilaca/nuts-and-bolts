@@ -1,249 +1,601 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-13T22:28:59.909Z",
-  "title": "Design System: Nuts & Bolts",
+  "generatedAt": "2026-10-17T00:00:00Z",
+  "title": "Design System: Nuts And Bolts",
   "extensions": {
     "colorMeta": {
-      "ink": {
+      "night-indigo": {
         "role": "neutral",
-        "displayName": "Ink",
-        "canonical": "oklch(0.16 0.03 262)",
+        "displayName": "Night Indigo",
+        "canonical": "#0E1430",
         "tonalRamp": [
-          "oklch(0.15 0.03 262)",
-          "oklch(0.27 0.03 262)",
-          "oklch(0.38 0.03 262)",
-          "oklch(0.5 0.03 262)",
-          "oklch(0.62 0.03 262)",
-          "oklch(0.74 0.03 262)",
-          "oklch(0.85 0.03 262)",
-          "oklch(0.95 0.03 262)"
+          "#050820",
+          "#1C233E",
+          "#38405D",
+          "#57607E",
+          "#7781A1",
+          "#99A4C6",
+          "#BDC8EB",
+          "#E2EDFF"
         ]
       },
-      "cobalt": {
-        "role": "primary",
-        "displayName": "Bay Cobalt",
-        "canonical": "oklch(0.42 0.17 264)",
+      "rail-indigo": {
+        "role": "neutral",
+        "displayName": "Rail Indigo",
+        "canonical": "#0A0F25",
         "tonalRamp": [
-          "oklch(0.15 0.17 264)",
-          "oklch(0.27 0.17 264)",
-          "oklch(0.38 0.17 264)",
-          "oklch(0.5 0.17 264)",
-          "oklch(0.62 0.17 264)",
-          "oklch(0.74 0.17 264)",
-          "oklch(0.85 0.17 264)",
-          "oklch(0.95 0.17 264)"
+          "#06091C",
+          "#1E2439",
+          "#3A4158",
+          "#596079",
+          "#79819C",
+          "#9BA4C0",
+          "#BFC8E5",
+          "#E4EEFF"
         ]
       },
-      "signal": {
+      "raised-indigo": {
+        "role": "neutral",
+        "displayName": "Raised Indigo",
+        "canonical": "#172050",
+        "tonalRamp": [
+          "#04042C",
+          "#18204B",
+          "#333F6C",
+          "#515E8F",
+          "#7180B3",
+          "#93A3D8",
+          "#B6C7FE",
+          "#DBECFF"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#1E2750",
+        "tonalRamp": [
+          "#040627",
+          "#1A2246",
+          "#353F66",
+          "#535F88",
+          "#7480AC",
+          "#96A3D0",
+          "#B9C7F6",
+          "#DEEDFF"
+        ]
+      },
+      "orbit-blue": {
+        "role": "neutral",
+        "displayName": "Orbit Blue",
+        "canonical": "#2B3870",
+        "tonalRamp": [
+          "#04022F",
+          "#161F4F",
+          "#313E70",
+          "#4F5E93",
+          "#6F7FB7",
+          "#90A2DD",
+          "#B4C7FF",
+          "#D8ECFF"
+        ]
+      },
+      "bay-floor": {
+        "role": "neutral",
+        "displayName": "Bay Floor",
+        "canonical": "#121A3D",
+        "tonalRamp": [
+          "#040724",
+          "#1A2242",
+          "#364063",
+          "#546084",
+          "#7481A8",
+          "#96A4CC",
+          "#BAC8F2",
+          "#DFEDFF"
+        ]
+      },
+      "glass": {
+        "role": "neutral",
+        "displayName": "Glass",
+        "canonical": "#080C1E",
+        "tonalRamp": [
+          "#060A1A",
+          "#1F2436",
+          "#3B4155",
+          "#5A6075",
+          "#7B8298",
+          "#9DA4BB",
+          "#C1C8E0",
+          "#E6EEFF"
+        ]
+      },
+      "starlight": {
+        "role": "neutral",
+        "displayName": "Starlight",
+        "canonical": "#E8EDF5",
+        "tonalRamp": [
+          "#080B10",
+          "#22252B",
+          "#3E4249",
+          "#5D6168",
+          "#7E838A",
+          "#A1A5AD",
+          "#C5C9D1",
+          "#EAEFF7"
+        ]
+      },
+      "dim-steel": {
+        "role": "neutral",
+        "displayName": "Dim Steel",
+        "canonical": "#97A3C2",
+        "tonalRamp": [
+          "#05091D",
+          "#1C243A",
+          "#384159",
+          "#57617A",
+          "#77829D",
+          "#9AA5C1",
+          "#BDC9E6",
+          "#E2EEFF"
+        ]
+      },
+      "polished-steel": {
         "role": "secondary",
-        "displayName": "Signal Mint",
-        "canonical": "oklch(0.86 0.19 155)",
+        "displayName": "Polished Steel",
+        "canonical": "#C9D3E0",
         "tonalRamp": [
-          "oklch(0.15 0.19 155)",
-          "oklch(0.27 0.19 155)",
-          "oklch(0.38 0.19 155)",
-          "oklch(0.5 0.19 155)",
-          "oklch(0.62 0.19 155)",
-          "oklch(0.74 0.19 155)",
-          "oklch(0.85 0.19 155)",
-          "oklch(0.95 0.19 155)"
+          "#060C13",
+          "#1F262E",
+          "#3B434C",
+          "#5A626C",
+          "#7B838E",
+          "#9DA6B1",
+          "#C1CAD6",
+          "#E6EFFB"
         ]
       },
-      "zinc": {
+      "joint-grey": {
+        "role": "secondary",
+        "displayName": "Joint Grey",
+        "canonical": "#7F8BA8",
+        "tonalRamp": [
+          "#050A1C",
+          "#1C2439",
+          "#384158",
+          "#576179",
+          "#77829C",
+          "#9AA5C0",
+          "#BDC9E5",
+          "#E2EEFF"
+        ]
+      },
+      "atomic-turquoise": {
+        "role": "primary",
+        "displayName": "Atomic Turquoise",
+        "canonical": "#3FE0C5",
+        "tonalRamp": [
+          "#00170C",
+          "#003526",
+          "#005543",
+          "#007662",
+          "#009983",
+          "#2EBEA6",
+          "#5EE3CA",
+          "#88FFF0"
+        ]
+      },
+      "on-turquoise": {
+        "role": "primary",
+        "displayName": "On Turquoise",
+        "canonical": "#052823",
+        "tonalRamp": [
+          "#00100C",
+          "#0D2B26",
+          "#2B4843",
+          "#4A6862",
+          "#6B8A84",
+          "#8DADA6",
+          "#B0D1CB",
+          "#D5F7F0"
+        ]
+      },
+      "deep-turquoise": {
+        "role": "primary",
+        "displayName": "Deep Turquoise",
+        "canonical": "#0B6B5D",
+        "tonalRamp": [
+          "#00140C",
+          "#003026",
+          "#004F43",
+          "#256F62",
+          "#4A9183",
+          "#6EB5A6",
+          "#92DACA",
+          "#B7FFF0"
+        ]
+      },
+      "starburst-gold": {
         "role": "tertiary",
-        "displayName": "Zinc",
-        "canonical": "oklch(0.82 0.03 240)",
+        "displayName": "Starburst Gold",
+        "canonical": "#F2C14E",
         "tonalRamp": [
-          "oklch(0.15 0.03 240)",
-          "oklch(0.27 0.03 240)",
-          "oklch(0.38 0.03 240)",
-          "oklch(0.5 0.03 240)",
-          "oklch(0.62 0.03 240)",
-          "oklch(0.74 0.03 240)",
-          "oklch(0.85 0.03 240)",
-          "oklch(0.95 0.03 240)"
+          "#210000",
+          "#401A00",
+          "#603900",
+          "#815900",
+          "#A47B00",
+          "#C99E38",
+          "#EEC360",
+          "#FFE886"
         ]
       },
-      "brass": {
+      "flame-coral": {
         "role": "tertiary",
-        "displayName": "Brass",
-        "canonical": "oklch(0.81 0.13 85)",
+        "displayName": "Flame Coral",
+        "canonical": "#FF6B4A",
         "tonalRamp": [
-          "oklch(0.15 0.13 85)",
-          "oklch(0.27 0.13 85)",
-          "oklch(0.38 0.13 85)",
-          "oklch(0.5 0.13 85)",
-          "oklch(0.62 0.13 85)",
-          "oklch(0.74 0.13 85)",
-          "oklch(0.85 0.13 85)",
-          "oklch(0.95 0.13 85)"
+          "#380000",
+          "#5E0000",
+          "#850000",
+          "#AC2C0C",
+          "#D45336",
+          "#FC7759",
+          "#FF9C7D",
+          "#FFC2A1"
         ]
       },
-      "coral": {
-        "role": "error",
-        "displayName": "Coral",
-        "canonical": "oklch(0.72 0.18 25)",
+      "paper-matte-black": {
+        "role": "diary",
+        "displayName": "Paper Matte Black",
+        "canonical": "#393939",
         "tonalRamp": [
-          "oklch(0.15 0.18 25)",
-          "oklch(0.27 0.18 25)",
-          "oklch(0.38 0.18 25)",
-          "oklch(0.5 0.18 25)",
-          "oklch(0.62 0.18 25)",
-          "oklch(0.74 0.18 25)",
-          "oklch(0.85 0.18 25)",
-          "oklch(0.95 0.18 25)"
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
         ]
       },
-      "ceramic": {
-        "role": "neutral",
-        "displayName": "Ceramic",
-        "canonical": "oklch(0.97 0.008 250)",
+      "paper-cream": {
+        "role": "diary",
+        "displayName": "Paper Cream",
+        "canonical": "#F4ECD8",
         "tonalRamp": [
-          "oklch(0.15 0.008 250)",
-          "oklch(0.27 0.008 250)",
-          "oklch(0.38 0.008 250)",
-          "oklch(0.5 0.008 250)",
-          "oklch(0.62 0.008 250)",
-          "oklch(0.74 0.008 250)",
-          "oklch(0.85 0.008 250)",
-          "oklch(0.95 0.008 250)"
+          "#0F0A02",
+          "#2A2517",
+          "#474133",
+          "#676151",
+          "#888272",
+          "#ABA594",
+          "#D0C9B7",
+          "#F5EEDC"
+        ]
+      },
+      "paper-night": {
+        "role": "diary",
+        "displayName": "Paper Night",
+        "canonical": "#0B1020",
+        "tonalRamp": [
+          "#060A18",
+          "#1F2434",
+          "#3B4153",
+          "#5A6173",
+          "#7B8295",
+          "#9DA5B9",
+          "#C1C9DE",
+          "#E6EEFF"
+        ]
+      },
+      "ink-ice-blue": {
+        "role": "diary",
+        "displayName": "Ink Ice Blue",
+        "canonical": "#E0F7FA",
+        "tonalRamp": [
+          "#010E10",
+          "#18282A",
+          "#344648",
+          "#536567",
+          "#748689",
+          "#96A9AC",
+          "#BACED0",
+          "#DEF3F6"
+        ]
+      },
+      "ink-matrix-green": {
+        "role": "diary",
+        "displayName": "Ink Matrix Green",
+        "canonical": "#00FF88",
+        "tonalRamp": [
+          "#001A00",
+          "#003A00",
+          "#005B00",
+          "#007E15",
+          "#00A23D",
+          "#00C761",
+          "#31EE84",
+          "#68FFA9"
+        ]
+      },
+      "ink-electric-cyan": {
+        "role": "diary",
+        "displayName": "Ink Electric Cyan",
+        "canonical": "#00E5FF",
+        "tonalRamp": [
+          "#001228",
+          "#003147",
+          "#005267",
+          "#007389",
+          "#0096AC",
+          "#00BBD1",
+          "#3FE0F7",
+          "#70FFFF"
+        ]
+      },
+      "ink-neon-fuchsia": {
+        "role": "diary",
+        "displayName": "Ink Neon Fuchsia",
+        "canonical": "#FF007F",
+        "tonalRamp": [
+          "#420004",
+          "#6B001A",
+          "#940036",
+          "#BE0055",
+          "#E81B75",
+          "#FF5097",
+          "#FF79BB",
+          "#FFA0E0"
+        ]
+      },
+      "ink-matte-black": {
+        "role": "diary",
+        "displayName": "Ink Matte Black",
+        "canonical": "#393939",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
         ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Nameplate",
-        "purpose": "The title at the top of each bay."
+        "displayName": "Display",
+        "purpose": "Screen titles; the phone's next habit on Today."
       },
-      "heading": {
-        "displayName": "Heading",
-        "purpose": "Section headings in the pane."
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Empty-state line."
       },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Buttons, segments, tabs, numerals."
+      "title-large": {
+        "displayName": "Title Large",
+        "purpose": "Part name in the shop detail; selected day name on Habits."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Habit names in rows; month and day navigator."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Header date, notes, part names."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Running text, set in Exo 2."
+        "purpose": "Habit metadata, summaries, helper text."
       },
-      "meta": {
-        "displayName": "Meta",
-        "purpose": "Secondary lines and hints."
+      "label-large": {
+        "displayName": "Label Large",
+        "purpose": "Button text, shop tabs, calendar day numbers."
+      },
+      "label-medium": {
+        "displayName": "Label Medium",
+        "purpose": "Weekday names, attribute glosses."
+      },
+      "label": {
+        "displayName": "Tracked Label",
+        "purpose": "Uppercase section labels, status line, catalogue numbers, nameplate."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Counts and balances in tabular figures; never Michroma."
       }
     },
-    "shadows": [
-      {
-        "name": "toast",
-        "value": "0 0.6rem 1.6rem oklch(0 0 0 / 0.45)",
-        "purpose": "Lifts the toast off the page; the only shadow in the system."
-      }
-    ],
+    "shadows": [],
     "motion": [
       {
-        "name": "ease",
-        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Every press, toast and mark animation."
+        "name": "electron-home",
+        "value": "900ms, cubic ease-out from the far side of the orbit",
+        "purpose": "A new done electron runs home to its slot."
       },
       {
-        "name": "torque",
-        "value": "0.55s, rotate(-120deg) scale(1.4) to rest",
-        "purpose": "A done mark turning home."
+        "name": "starburst",
+        "value": "500ms linear fade, eight rays",
+        "purpose": "Thrown once as the electron lands, while the robot cheers."
       },
       {
-        "name": "idle",
-        "value": "3.4s bob, 6.8s look, 4.6s blink",
-        "purpose": "The robot at rest."
+        "name": "orbit-drift",
+        "value": "90000ms per full turn, linear",
+        "purpose": "Electrons drift around their orbits in the bay."
+      },
+      {
+        "name": "waiting-orbit",
+        "value": "6000ms dash cycle, linear",
+        "purpose": "The dashed orbit that waits around the robot when there are no habits."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "one frame clock, frozen when system animations are off",
+        "purpose": "Every animation stops together."
       }
     ],
     "breakpoints": [
       {
-        "name": "stack",
-        "value": "820px or portrait"
+        "name": "wide",
+        "value": "landscape and width >= 600dp (rail, two panes)"
+      },
+      {
+        "name": "phone",
+        "value": "shortest side < 600dp (robot badge, next habit at display size)"
+      },
+      {
+        "name": "rail-mark",
+        "value": "height >= 560dp (atom mark at the head of the rail)"
+      },
+      {
+        "name": "row-stack",
+        "value": "row column < 560dp (buttons on a second line)"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Done Button",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The main action of a group: Done, Add habit, Buy.",
-      "html": "<button class=\"ds-btn ds-btn-primary\">Add habit</button>",
-      "css": ".ds-btn { display:inline-flex; align-items:center; min-height:3rem; padding:0 1.2rem; border:1px solid var(--line-2, oklch(0.47 0.05 262)); border-radius:.7rem; background:var(--ink-2, oklch(0.205 0.035 262)); color:var(--ceramic, oklch(0.97 0.008 250)); font:600 .95rem Oxanium, system-ui, sans-serif; letter-spacing:.03em; cursor:pointer; transition:transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn:hover { background:oklch(0.27 0.045 262); } .ds-btn:active { transform:scale(.96); } .ds-btn:focus-visible { outline:2px solid oklch(0.86 0.19 155); outline-offset:2px; } .ds-btn-primary { background:oklch(0.86 0.19 155); border-color:transparent; color:oklch(0.16 0.03 262); } .ds-btn-primary:hover { background:oklch(0.91 0.19 155); }"
+      "refersTo": "button-done",
+      "description": "The one primary action per habit row; full pill, 48dp; raised indigo when the period is full.",
+      "html": "<button class=\"ds-btn-done\">Done</button> <button class=\"ds-btn-done\" disabled>Done</button>",
+      "css": ".ds-btn-done { background: #3FE0C5; color: #052823; font-family: Jost, sans-serif; font-weight: 600; font-size: 16px; line-height: 20px; height: 48px; padding: 0 24px; border: none; border-radius: 9999px; cursor: pointer; transition: filter 0.15s; } .ds-btn-done:hover { filter: brightness(1.08); } .ds-btn-done:focus-visible { outline: 2px solid #E8EDF5; outline-offset: 2px; } .ds-btn-done:active { filter: brightness(0.92); } .ds-btn-done:disabled { background: #172050; color: #97A3C2; cursor: default; filter: none; }"
     },
     {
-      "name": "Button",
+      "name": "Skip and Fail Buttons",
       "kind": "button",
-      "refersTo": "button",
-      "description": "Secondary actions such as Skip and Cancel.",
-      "html": "<button class=\"ds-btn\">Skip</button>",
-      "css": ".ds-btn { display:inline-flex; align-items:center; min-height:3rem; padding:0 1.2rem; border:1px solid var(--line-2, oklch(0.47 0.05 262)); border-radius:.7rem; background:var(--ink-2, oklch(0.205 0.035 262)); color:var(--ceramic, oklch(0.97 0.008 250)); font:600 .95rem Oxanium, system-ui, sans-serif; letter-spacing:.03em; cursor:pointer; transition:transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn:hover { background:oklch(0.27 0.045 262); } .ds-btn:active { transform:scale(.96); } .ds-btn:focus-visible { outline:2px solid oklch(0.86 0.19 155); outline-offset:2px; }"
+      "refersTo": "icon-button-skip",
+      "description": "Quieter 48dp outlined circles beside Done: steel minus for Skip, coral cross for Fail.",
+      "html": "<span class=\"ds-row-btns\"><button class=\"ds-ibtn ds-skip\" aria-label=\"Skip\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M5 12h14\"/></svg></button><button class=\"ds-ibtn ds-fail\" aria-label=\"Fail\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/></svg></button></span>",
+      "css": ".ds-row-btns { display: inline-flex; gap: 8px; } .ds-ibtn { width: 48px; height: 48px; border-radius: 50%; background: transparent; display: inline-grid; place-items: center; cursor: pointer; transition: background 0.15s; } .ds-skip { border: 1px solid #2B3870; color: #C9D3E0; } .ds-fail { border: 1px solid rgba(255,107,74,0.45); color: #FF6B4A; } .ds-ibtn:hover { background: rgba(201,211,224,0.08); } .ds-ibtn:focus-visible { outline: 2px solid #E8EDF5; outline-offset: 2px; }"
     },
     {
-      "name": "Fail Button",
+      "name": "Outlined Button",
       "kind": "button",
-      "refersTo": "button-fail",
-      "description": "Logging a failure, or deleting.",
-      "html": "<button class=\"ds-btn ds-btn-fail\">Fail</button>",
-      "css": ".ds-btn { display:inline-flex; align-items:center; min-height:3rem; padding:0 1.2rem; border:1px solid var(--line-2, oklch(0.47 0.05 262)); border-radius:.7rem; background:var(--ink-2, oklch(0.205 0.035 262)); color:var(--ceramic, oklch(0.97 0.008 250)); font:600 .95rem Oxanium, system-ui, sans-serif; letter-spacing:.03em; cursor:pointer; transition:transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn:hover { background:oklch(0.27 0.045 262); } .ds-btn:active { transform:scale(.96); } .ds-btn:focus-visible { outline:2px solid oklch(0.86 0.19 155); outline-offset:2px; } .ds-btn-fail { color:oklch(0.72 0.18 25); border-color:oklch(0.72 0.18 25 / .55); }"
+      "refersTo": "button-outlined",
+      "description": "Secondary actions such as Cancel, Take off and date pickers.",
+      "html": "<button class=\"ds-btn-outlined\">Cancel</button>",
+      "css": ".ds-btn-outlined { background: transparent; color: #E8EDF5; border: 1px solid #2B3870; border-radius: 9999px; height: 48px; padding: 0 24px; font-family: Jost, sans-serif; font-weight: 600; font-size: 16px; cursor: pointer; transition: background 0.15s; } .ds-btn-outlined:hover { background: rgba(232,237,245,0.06); } .ds-btn-outlined:focus-visible { outline: 2px solid #3FE0C5; outline-offset: 2px; }"
     },
     {
-      "name": "Segmented Control",
+      "name": "Habit Row",
       "kind": "custom",
-      "refersTo": "segment-selected",
-      "description": "View switches, categories and radio groups.",
-      "html": "<div class=\"ds-seg\"><button aria-pressed=\"true\">Day</button><button aria-pressed=\"false\">Calendar</button></div>",
-      "css": ".ds-seg { display:inline-flex; gap:.25rem; padding:.25rem; border:1px solid oklch(0.3 0.04 262); border-radius:.85rem; background:oklch(0.205 0.035 262); } .ds-seg button { min-height:2.5rem; padding:0 1.1rem; border:0; border-radius:.6rem; background:none; color:oklch(0.77 0.03 258); font:600 .95rem Oxanium, system-ui, sans-serif; cursor:pointer; } .ds-seg button[aria-pressed=true] { background:oklch(0.97 0.008 250); color:oklch(0.16 0.03 262); } .ds-seg button:focus-visible { outline:2px solid oklch(0.86 0.19 155); outline-offset:2px; }"
+      "refersTo": "button-done",
+      "description": "Name and meta, electron marks, one Done, with a hairline under the row.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-row-text\"><div class=\"ds-row-name\">Drink water</div><div class=\"ds-row-meta\">3 a day · Battery</div></div><span class=\"ds-marks\"><i class=\"ds-e ds-e-done\"></i><i class=\"ds-e ds-e-done\"></i><i class=\"ds-e\"></i></span><button class=\"ds-row-done\">Done</button></div>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1E2750; background: #0E1430; color: #E8EDF5; font-family: Jost, sans-serif; } .ds-row-text { flex: 1; } .ds-row-name { font-weight: 500; font-size: 19px; line-height: 26px; } .ds-row-meta { font-size: 15px; line-height: 21px; color: #97A3C2; } .ds-marks { display: inline-flex; gap: 4px; } .ds-e { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #97A3C2; box-sizing: border-box; display: inline-block; } .ds-e-done { background: #3FE0C5; border-color: rgba(63,224,197,0.45); } .ds-row-done { background: #3FE0C5; color: #052823; border: none; border-radius: 9999px; height: 48px; padding: 0 24px; font: 600 16px Jost, sans-serif; cursor: pointer; } .ds-row-done:hover { filter: brightness(1.08); } .ds-row-done:focus-visible { outline: 2px solid #E8EDF5; outline-offset: 2px; }"
     },
     {
-      "name": "Fastener Mark",
+      "name": "Electron Marks",
       "kind": "custom",
-      "refersTo": "hex-slot",
-      "description": "One hex nut per slot of a habit: open, done, skipped or failed.",
-      "html": "<span class=\"ds-hex\"><svg viewBox=\"0 0 40 40\"><path class=\"hx\" d=\"M20 3.5 34.3 11.75v16.5L20 36.5 5.7 28.25v-16.5z\"/><circle class=\"ho\" cx=\"20\" cy=\"20\" r=\"6\"/></svg></span><span class=\"ds-hex ds-done\"><svg viewBox=\"0 0 40 40\"><path class=\"hx\" d=\"M20 3.5 34.3 11.75v16.5L20 36.5 5.7 28.25v-16.5z\"/><circle class=\"ho\" cx=\"20\" cy=\"20\" r=\"6\"/></svg></span>",
-      "css": ".ds-hex { display:inline-grid; width:2.75rem; height:2.75rem; padding:.2rem; } .ds-hex svg { width:100%; height:100%; } .ds-hex .hx, .ds-hex .ho { fill:none; stroke:oklch(0.47 0.05 262); stroke-width:2.5; stroke-linejoin:round; } .ds-done .hx { fill:oklch(0.86 0.19 155); stroke:oklch(0.86 0.19 155); } .ds-done .ho { fill:oklch(0.16 0.03 262); stroke:oklch(0.16 0.03 262); } .ds-hex:hover svg { transform:rotate(60deg); transition:transform .55s cubic-bezier(.16,1,.3,1); }"
+      "refersTo": "",
+      "description": "Slot states by form: lit, skipped (dashed ring with bar), failed (struck ring), open.",
+      "html": "<span class=\"ds-electrons\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" aria-label=\"done\"><circle cx=\"13\" cy=\"13\" r=\"7.2\" fill=\"#3FE0C5\"/><circle cx=\"13\" cy=\"13\" r=\"10.5\" fill=\"none\" stroke=\"#3FE0C5\" stroke-opacity=\"0.45\" stroke-width=\"2\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" aria-label=\"skip\"><circle cx=\"13\" cy=\"13\" r=\"8\" fill=\"none\" stroke=\"#C9D3E0\" stroke-width=\"2.8\" stroke-dasharray=\"3.5 3\"/><path d=\"M7.5 13h11\" stroke=\"#C9D3E0\" stroke-width=\"2.8\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" aria-label=\"fail\"><circle cx=\"13\" cy=\"13\" r=\"8\" fill=\"none\" stroke=\"#FF6B4A\" stroke-width=\"2.8\"/><path d=\"M7.4 18.6L18.6 7.4\" stroke=\"#FF6B4A\" stroke-width=\"2.8\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" aria-label=\"open\"><circle cx=\"13\" cy=\"13\" r=\"8\" fill=\"none\" stroke=\"#97A3C2\" stroke-width=\"2.8\"/></svg></span>",
+      "css": ".ds-electrons { display: inline-flex; gap: 4px; padding: 12px; background: #0E1430; }"
     },
     {
-      "name": "Tab Bar",
+      "name": "Navigation Rail",
       "kind": "nav",
-      "description": "The four sections along the bottom edge.",
-      "html": "<nav class=\"ds-tabs\"><button aria-current=\"page\">Base</button><button>Shop</button><button>Habits</button><button>Diary</button></nav>",
-      "css": ".ds-tabs { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid oklch(0.3 0.04 262); background:oklch(0.16 0.03 262); } .ds-tabs button { position:relative; min-height:4rem; border:0; background:none; color:oklch(0.77 0.03 258); font:600 1rem Oxanium, system-ui, sans-serif; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; } .ds-tabs button:hover { color:oklch(0.97 0.008 250); } .ds-tabs button[aria-current] { color:oklch(0.86 0.19 155); } .ds-tabs button[aria-current]::before { content:\"\"; position:absolute; top:-1px; left:28%; right:28%; height:3px; background:oklch(0.86 0.19 155); }"
+      "refersTo": "nav-container",
+      "description": "Wide windows: rail indigo; the current tab gets a raised indicator and a turquoise icon.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-rail-item ds-on\" href=\"#\"><span class=\"ds-pill\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M7 8.5h10l2 2v7l-2 2H7l-2-2v-7zM12 8.5v-3M9.5 13v2M14.5 13v2M2.8 12.5v3M21.2 12.5v3M10.7 4.2a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0 -2.6 0z\"/></svg></span>Today</a><a class=\"ds-rail-item\" href=\"#\"><span class=\"ds-pill\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4zM8.5 12.2l2.4 2.4 4.6-5\"/></svg></span>Habits</a></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 12px; width: 80px; padding: 16px 0; background: #0A0F25; font-family: Jost, sans-serif; } .ds-rail-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #97A3C2; text-decoration: none; font-size: 13px; font-weight: 500; } .ds-pill { width: 56px; height: 32px; border-radius: 16px; display: grid; place-items: center; transition: background 0.15s; } .ds-rail-item:hover .ds-pill { background: rgba(23,32,80,0.6); } .ds-rail-item:focus-visible { outline: 2px solid #3FE0C5; outline-offset: 2px; } .ds-on { color: #E8EDF5; } .ds-on .ds-pill { background: #172050; color: #3FE0C5; }"
+    },
+    {
+      "name": "Segmented Views",
+      "kind": "chip",
+      "refersTo": "segment-active",
+      "description": "Day, Calendar, History; selection in steel, not turquoise.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-on\">Day</button><button>Calendar</button><button>History</button></div>",
+      "css": ".ds-seg { display: inline-flex; border: 1px solid #2B3870; border-radius: 9999px; overflow: hidden; } .ds-seg button { background: #0E1430; color: #E8EDF5; border: none; border-left: 1px solid #2B3870; height: 48px; padding: 0 24px; font: 600 16px Jost, sans-serif; cursor: pointer; } .ds-seg button:first-child { border-left: none; } .ds-seg button:hover { background: #172050; } .ds-seg button:focus-visible { outline: 2px solid #3FE0C5; outline-offset: -2px; } .ds-seg .ds-seg-on { background: #C9D3E0; color: #0E1430; }"
+    },
+    {
+      "name": "Shop Part Panel",
+      "kind": "card",
+      "refersTo": "part-panel",
+      "description": "One raised panel per part; the 2dp steel selection ring sits on the panel.",
+      "html": "<div class=\"ds-parts\"><button class=\"ds-part ds-part-on\"><span class=\"ds-part-art\"></span><span class=\"ds-part-name\">Beacon antenna</span><span class=\"ds-part-no\">NB-H02</span></button><button class=\"ds-part\"><span class=\"ds-part-art\"></span><span class=\"ds-part-name\">Visor</span><span class=\"ds-part-no\">NB-H03</span></button></div>",
+      "css": ".ds-parts { display: flex; gap: 12px; background: #0E1430; padding: 12px; } .ds-part { width: 156px; background: none; border: none; padding: 0 0 6px; text-align: left; color: #E8EDF5; cursor: pointer; border-radius: 12px; } .ds-part-art { display: block; aspect-ratio: 1; background: #172050; border-radius: 12px; border: 2px solid transparent; transition: border-color 0.15s; } .ds-part:hover .ds-part-art { border-color: #2B3870; } .ds-part:focus-visible { outline: 2px solid #3FE0C5; outline-offset: 2px; } .ds-part-on .ds-part-art, .ds-part-on:hover .ds-part-art { border-color: #C9D3E0; } .ds-part-name { display: block; margin-top: 8px; font: 400 17px/24px Jost, sans-serif; } .ds-part-no { display: block; font: 400 13px Michroma, sans-serif; letter-spacing: 0.14em; color: #97A3C2; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "",
+      "description": "Material outlined field; orbit blue at rest, turquoise border, label and cursor on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Habit name\">",
+      "css": ".ds-input { background: transparent; color: #E8EDF5; border: 1px solid #2B3870; border-radius: 4px; height: 56px; padding: 0 16px; font: 400 17px Jost, sans-serif; caret-color: #3FE0C5; transition: border-color 0.15s; } .ds-input::placeholder { color: #97A3C2; } .ds-input:hover { border-color: #97A3C2; } .ds-input:focus, .ds-input:focus-visible { outline: none; border: 2px solid #3FE0C5; }"
+    },
+    {
+      "name": "Snackbar with Undo",
+      "kind": "custom",
+      "refersTo": "snackbar",
+      "description": "After every log and purchase; steel surface, deep-turquoise Undo.",
+      "html": "<div class=\"ds-snack\"><span>+2 bolts, +3 Battery</span><button>Undo</button></div>",
+      "css": ".ds-snack { display: inline-flex; align-items: center; gap: 24px; background: #C9D3E0; color: #0E1430; border-radius: 4px; padding: 6px 8px 6px 16px; font: 400 15px Jost, sans-serif; } .ds-snack button { background: none; border: none; color: #0B6B5D; font: 600 15px Jost, sans-serif; padding: 10px 12px; cursor: pointer; border-radius: 9999px; } .ds-snack button:hover { background: rgba(11,107,93,0.1); } .ds-snack button:focus-visible { outline: 2px solid #0B6B5D; }"
     }
   ],
   "narrative": {
-    "northStar": "The charging bay at night",
-    "overview": "A small robot stands in a cobalt bay while its keeper sorts fasteners on a dark bench beside it. The app is used in the evening, on a tablet in landscape, lights low, pen in hand, so the ground is dark; the bay is the one saturated region and it always holds the robot.",
+    "northStar": "Atomium Night",
+    "overview": "Expo 58 after dark. The app is a night-indigo hall in which the owner's robot stands on a round platform at the nucleus of an atom: every habit running today is an orbit around it, every slot an electron, and logging Done lights one. Polished steel carries the robot, the bolts and the gauges; atomic turquoise is the one live colour, reserved for what can be pressed, what is done, and where the owner is; starburst gold belongs to nuts; flame coral means failed and nothing else.\n\nHierarchy comes from type scale and hairlines, not boxes. Rows are separated by one-pixel indigo rules, sections are announced by small tracked Michroma labels, and the only filled surfaces are controls, shop part panels and the bay. The orbit ellipse is the single ornament and it is never decoration alone: it is the app mark, the habit, the day's mini-atom in the week and the calendar, the faint atom on the diary page, and the dashed orbit that waits around the robot before any habit exists.\n\nDensity is calm and evening-friendly: 48dp targets, generous 28dp gutters on wide windows, and one clear Done per row with Skip and Fail quieter beside it.",
     "keyCharacteristics": [
-      "A cobalt field on the left of every screen, with the robot in it; the work sits on ink to its right.",
-      "Habits are hex nuts. Done, skipped and failed are states of the same mark everywhere it appears.",
-      "Rows and hairlines carry lists. Tiles are reserved for shop parts and calendar days.",
-      "Ceramic white, zinc and brass are materials with jobs, not decoration."
+      "Night-indigo ground with a deeper rail; tonal steps, no shadows.",
+      "One live accent (turquoise); gold for nuts, coral for failure, steel for selection.",
+      "Michroma for display and tracked uppercase labels; Jost for everything read or counted.",
+      "Orbits and electrons as the one ornament and the one state language.",
+      "Hairline rows, no cards around sections.",
+      "Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles."
     ],
     "rules": [
       {
-        "name": "The Pressable Rule",
-        "body": "A mint fill means the control is the primary action in its group. A disabled primary loses the mint.",
+        "name": "The One Signal Rule",
+        "body": "Turquoise appears only where something can be pressed, is done, or marks where the owner is (plus the robot's eyes). Selection that is not a place is steel.",
         "section": "colors"
       },
       {
-        "name": "The Two Metals Rule",
-        "body": "Zinc always means bolts and brass always means nuts, in the wallet, on prices and in the scene.",
+        "name": "The One Meaning Rule",
+        "body": "Gold is nuts, coral is failed. Neither is used to decorate, warn generally, or add variety.",
         "section": "colors"
+      },
+      {
+        "name": "The Jost Counts Rule",
+        "body": "Every count and balance is set in Jost Medium with tabular figures, never Michroma: Michroma's squared zero reads as a missing glyph when it stands alone. Michroma keeps display titles and tracked labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Wide Face Rule",
+        "body": "Michroma is wide, so its display sizes stay modest (28sp at most in the app chrome) and its labels carry tracking, never weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Card Rule",
+        "body": "Sections are never boxed. Hierarchy is type scale, tracked labels and hairlines; the only filled surfaces are controls, shop part panels, menus and the bay.",
+        "section": "layout"
+      },
+      {
+        "name": "The Tonal Step Rule",
+        "body": "To lift a surface, move it one indigo step (rail, ground, raised). Never add a shadow or a glow.",
+        "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the robot on screen wherever the pane does not need the full width.",
-      "Do show habit state with the fastener mark rather than a new symbol.",
-      "Do give every part a catalog number in the `NB-` series.",
-      "Do keep touch targets at 2.75rem or more."
+      "**Do** give each habit row exactly one turquoise Done pill (48dp, full pill) and keep Skip and Fail as 48dp outlined circles beside it.",
+      "**Do** show every slot state with its own electron form (lit, hollow with bar, struck) so state never depends on colour alone.",
+      "**Do** set counts and balances in Jost Medium with tabular figures (Numeral); keep Michroma for display titles and tracked uppercase labels.",
+      "**Do** separate rows and calendar weeks with one hairline (hairline) and announce sections with an 11sp Michroma label tracked 0.14em.",
+      "**Do** lift surfaces by one indigo step (rail, ground, raised) instead of shadows.",
+      "**Do** show selection in polished steel and offer Undo in the snackbar after every log and purchase.",
+      "**Do** keep the diary page on the owner's papers and inks, ruled lines only."
     ],
     "donts": [
-      "Don't add glow or blur to panels, borders or text.",
-      "Don't use cobalt as an accent on ink, or mint as decoration.",
-      "Don't wrap pane sections in cards.",
-      "Don't use grid or squared paper, on the diary page or as a background."
+      "**Don't** use turquoise for decoration, emphasis or non-place selection; it means pressable, done, or here.",
+      "**Don't** use coral for anything but failure and destruction, or gold for anything but nuts.",
+      "**Don't** set a lone number in Michroma.",
+      "**Don't** wrap sections in cards, or build the dark-dashboard default of neon-glow stat cards and progress rings.",
+      "**Don't** add ornaments beyond orbits and electrons.",
+      "**Don't** put squared or grid paper anywhere; calendars use ruled rows, the diary ruled lines.",
+      "**Don't** draw icons outside the robot grammar (24dp, 1.8 stroke, square caps, pivot joints) or substitute glyphs and emoji for them."
     ]
   }
 }
