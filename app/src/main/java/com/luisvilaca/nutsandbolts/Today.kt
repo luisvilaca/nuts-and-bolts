@@ -42,6 +42,10 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import kotlin.math.min
 import java.time.LocalDate
 
+// A day's progress over the slots its rows draw (a weekly habit's slots included), so Today, Habits, the week and
+// the calendar all count the same thing.
+fun slotProgress(s: Data, d: LocalDate) = orbitsFor(s, d).flatMap { it.slots }.let { a -> Progress(a.count { it.s == "done" }, a.count { it.s == "fail" }, a.size) }
+
 private val MOOD = listOf("Low power", "Running steady", "Fully charged")
 
 @Composable
@@ -49,7 +53,7 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val t = LocalDate.now()
     val run = s.habits.filter { active(it, t) }
-    val p = orbitsFor(s, t).flatMap { it.slots }.let { a -> Progress(a.count { it.s == "done" }, a.count { it.s == "fail" }, a.size) } // the slots the rows draw
+    val p = slotProgress(s, t)
     val lit = "Today · ${p.done} of ${p.slots} leaves unfurled" + if (p.fail > 0) " · ${p.fail} failed" else ""
 
     val list = @Composable { lead: Boolean ->
@@ -98,8 +102,9 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp))) {
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
             // frame the robot and its bay (scene x 60..940, y 140..900), centred; the floor runs on to the edges
-            val k = min(size.width / 880f, size.height / 760f)
-            val ox = (size.width - 1000f * k) / 2; val oy = (size.height - 760f * k) / 2 - 140f * k
+            val band = if (plate) 72.dp.toPx() else 0f
+            val k = min(size.width / 880f, (size.height - band) / 760f)
+            val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 140f * k
             drawRect(Brush.verticalGradient(listOf(Color(0xFF0F2424), W.ground)))
             drawRect(Brush.verticalGradient(listOf(FLOOR, W.rail), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
             drawRect(W.steel.copy(alpha = 0.1f), Offset(0f, oy + 692f * k), Size(size.width, 6f * k))
@@ -143,7 +148,7 @@ fun Week(s: Data, ui: Ui) {
     val t = LocalDate.now()
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         (0..6L).map { weekStart(t).plusDays(it) }.forEach { d ->
-            val p = dayProgress(s, d)
+            val p = slotProgress(s, d)
             Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable { ui.date = d; ui.tab = "habits" }.padding(6.dp)
                 .semantics(mergeDescendants = true) { contentDescription = "${d.format(dayFmt)}, ${p.done} of ${p.slots} done" + if (p.fail > 0) ", ${p.fail} failed" else "" },
                 horizontalAlignment = Alignment.CenterHorizontally) {
