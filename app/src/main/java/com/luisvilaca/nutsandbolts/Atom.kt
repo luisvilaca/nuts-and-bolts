@@ -87,7 +87,8 @@ private const val CY = 520f
 fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?> = s.equip, waiting: Boolean = false) {
     val tier = PART[equip["base"]]?.tier ?: 1
     scene(tier, t)
-    if (waiting) drawOval(W.orbit, Offset(CX - 400f, CY - 118f), Size(800f, 236f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 14f), -(t % 6000) / 6000f * 64f)))
+    if (waiting) drawOval(W.orbit, Offset(CX - 320f, CY - 110f), Size(640f, 220f), // clears the wall socket
+        style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 14f), -(t % 6000) / 6000f * 64f)))
     val shown = orbits.take(TILT.size)
     val drift = (t % 90_000) / 90_000f * 2 * PI.toFloat()
     fun place(k: Int, theta: Float): Offset {
