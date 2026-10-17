@@ -46,7 +46,7 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
     val t = LocalDate.now()
     val run = s.habits.filter { active(it, t) }
     val p = dayProgress(s, t)
-    val lit = "Today · ${p.done} of ${p.slots} lit" + if (p.fail > 0) " · ${p.fail} failed" else ""
+    val lit = "Today · ${p.done} of ${p.slots} leaves open" + if (p.fail > 0) " · ${p.fail} failed" else ""
 
     val list = @Composable { lead: Boolean ->
         when {
@@ -113,8 +113,8 @@ fun Attributes(s: Data) = androidx.compose.foundation.layout.BoxWithConstraints 
         val v = s.stats.getValue(e.key)
         Row(m.padding(vertical = 6.dp).semantics(mergeDescendants = true) { contentDescription = "${e.value.name}, $v of 100" }, verticalAlignment = Alignment.CenterVertically) {
             Icon(ICONS.getValue(e.key), null, Modifier.size(20.dp), tint = W.steel)
-            Column(Modifier.padding(start = 10.dp).weight(0.9f)) {
-                Text(e.value.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Column(Modifier.padding(start = 10.dp).weight(1.1f)) {
+                Text(e.value.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, softWrap = false)
                 Text(e.value.gloss, style = MaterialTheme.typography.labelMedium, color = W.dim)
             }
             Gauge(v / 100f, Modifier.weight(1.4f))
@@ -125,10 +125,10 @@ fun Attributes(s: Data) = androidx.compose.foundation.layout.BoxWithConstraints 
     else Column { rows.forEach { one(it, Modifier.fillMaxWidth()) } }
 }
 
-// A polished steel bar on a dark track.
+// A steel bar on a dark track.
 @Composable
 fun Gauge(v: Float, modifier: Modifier) = Box(modifier.height(8.dp).clip(CircleShape).background(W.line)) {
-    Box(Modifier.fillMaxWidth(v.coerceIn(0f, 1f)).fillMaxHeight().background(Brush.horizontalGradient(listOf(W.joint, W.text))))
+    Box(Modifier.fillMaxWidth(v.coerceIn(0f, 1f)).fillMaxHeight().background(W.steel))
 }
 
 @Composable
@@ -140,7 +140,7 @@ fun Week(s: Data, ui: Ui) {
             Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable { ui.date = d; ui.tab = "habits" }.padding(6.dp)
                 .semantics(mergeDescendants = true) { contentDescription = "${d.format(dayFmt)}, ${p.done} of ${p.slots} done" + if (p.fail > 0) ", ${p.fail} failed" else "" },
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                MiniAtom(p, d > t, Modifier.size(42.dp))
+                DayMark(p, d > t, Modifier.size(42.dp))
                 Text(DOW[d.dayOfWeek.value - 1], style = MaterialTheme.typography.labelMedium, color = if (d == t) W.text else W.dim)
             }
         }
@@ -159,10 +159,10 @@ fun newId() = "h" + System.currentTimeMillis().toString(36) + (0..999).random()
 
 @Composable
 fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
-    Text("Nothing in orbit yet", style = MaterialTheme.typography.headlineSmall)
-    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes an orbit around ${store.s.name}.",
+    Text("Nothing planted yet", style = MaterialTheme.typography.headlineSmall)
+    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes a sprout that ${store.s.name} tends.",
         Modifier.padding(top = 8.dp, bottom = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
-    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq)) {
+    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
         Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))
     }
     Text("Or start from one of these:", Modifier.padding(top = 20.dp, bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
@@ -171,7 +171,7 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
             androidx.compose.material3.SuggestionChip(onClick = {
                 store.change { habits += Habit(newId(), h.name, h.kind, h.per, h.target, h.stat, h.weight, start = LocalDate.now()) }
             }, label = { Text("${h.name} · ${h.target} a ${h.per}") }, Modifier.height(40.dp),
-                border = androidx.compose.material3.SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.orbit),
+                border = androidx.compose.material3.SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
                 colors = androidx.compose.material3.SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))
         }
     }

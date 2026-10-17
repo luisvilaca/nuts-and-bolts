@@ -4,23 +4,26 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
-import kotlin.math.PI
-import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.sin
 
 // One slot of a habit's period: its state ("" open, done, skip, fail) and whether it was logged on another day of the week.
 class Slot(val s: String, val other: Boolean)
@@ -30,92 +33,81 @@ fun slots(s: Data, h: Habit, d: LocalDate): List<Slot> {
     return List(h.target) { i -> ms.getOrNull(i)?.let { Slot(it.second.s, it.first != d) } ?: Slot("", false) }
 }
 
-// The electron: each state has its own form, lit, hollow, barred, struck; colour only confirms it.
-fun DrawScope.electron(c: Offset, r: Float, slot: Slot, burst: Float = -1f) {
+// Leaf shapes in a 22 x 26 box, each anchored where it meets the stem at (11, 24).
+private fun shape(d: String) = PathParser().parsePathString(d).toPath()
+private val LEAF = shape("M11 24C11 14 4 10 3 3C10 3 16 9 11 24Z")
+private val BUD = shape("M11 24C11 18 8 15 8 11C8 8 10 6 11 5C12 6 14 8 14 11C14 15 11 18 11 24Z")
+private val WILT = shape("M11 24C11 18 12 14 18 12C16 17 13 18 11 24Z")
+
+// A slot is a leaf: done has unfurled (solid green), skipped is a dashed leaf, failed has wilted (coral, drooping),
+// open is still a bud. Each state has its own form; colour only confirms it.
+fun DrawScope.leaf(at: Offset, k: Float, slot: Slot, flip: Boolean = false) {
     val a = if (slot.other) 0.45f else 1f
-    val w = r * 0.28f
-    when (slot.s) {
-        "done" -> {
-            drawCircle(W.turq, r * 0.72f, c, alpha = a)
-            drawCircle(W.turq, r * 1.05f, c, alpha = 0.45f * a, style = Stroke(w * 0.7f))
+    val line = Stroke(2f, pathEffect = if (slot.s == "skip") PathEffect.dashPathEffect(floatArrayOf(3f, 2.5f)) else null)
+    withTransform({ translate(at.x, at.y); scale(if (flip) -k else k, k, Offset.Zero); translate(-11f, -24f) }) {
+        when (slot.s) {
+            "done" -> drawPath(LEAF, W.act, alpha = a)
+            "skip" -> drawPath(LEAF, W.dim, alpha = a, style = line)
+            "fail" -> drawPath(WILT, W.coral, alpha = a)
+            else -> drawPath(BUD, W.dim, alpha = a, style = line)
         }
-        "skip" -> {
-            drawCircle(W.steel, r * 0.8f, c, alpha = a, style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(r * 0.35f, r * 0.3f))))
-            drawLine(W.steel, c - Offset(r * 0.55f, 0f), c + Offset(r * 0.55f, 0f), w, alpha = a)
-        }
-        "fail" -> {
-            drawCircle(W.coral, r * 0.8f, c, alpha = a, style = Stroke(w))
-            drawLine(W.coral, c - Offset(r * 0.56f, -r * 0.56f), c + Offset(r * 0.56f, -r * 0.56f), w, alpha = a)
-        }
-        else -> drawCircle(W.dim, r * 0.8f, c, alpha = a, style = Stroke(w))
-    }
-    // the starburst: eight rays thrown out once as the electron lands
-    if (burst in 0f..1f) for (i in 0 until 8) {
-        val ang = i * PI / 4
-        val d = Offset(cos(ang).toFloat(), sin(ang).toFloat())
-        drawLine(W.turq, c + d * (r * (1.2f + 1.6f * burst)), c + d * (r * (1.5f + 2.6f * burst)), w * 0.8f, alpha = 1 - burst)
     }
 }
 
 @Composable
-fun ElectronMark(slot: Slot, size: Dp = 26.dp, modifier: Modifier = Modifier) =
-    Canvas(modifier.size(size)) { electron(center, this.size.minDimension / 2.6f, slot) }
+fun SlotMark(slot: Slot, size: Dp = 26.dp, modifier: Modifier = Modifier) =
+    Canvas(modifier.size(size)) { leaf(Offset(center.x * 1.1f, this.size.height * 0.96f), this.size.height / 23f, slot) }
 
-// A day as a small atom: the nucleus grows with the share done, the orbit says how the day went.
+// A day as a small sprout: it stands taller and puts out more leaves the more was done; a wilted leaf when something
+// failed; a dashed seed while the day is ahead.
 @Composable
-fun MiniAtom(p: Progress, future: Boolean, modifier: Modifier = Modifier) = Canvas(modifier) {
-    val c = center
-    val rx = size.width * 0.44f; val ry = rx * 0.36f
-    val col = when { p.fail > 0 -> W.coral; p.done > 0 -> W.turq; else -> W.orbit }
-    rotate(-18f, c) {
-        drawOval(col, Offset(c.x - rx, c.y - ry), Size(rx * 2, ry * 2), style = Stroke(size.width * 0.035f,
-            pathEffect = if (future) PathEffect.dashPathEffect(floatArrayOf(6f, 6f)) else null))
+fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier) = Canvas(modifier) {
+    val base = Offset(size.width / 2, size.height * 0.92f)
+    val k = size.height / 44f
+    if (future || p.slots == 0) {
+        drawCircle(W.edge, size.width * 0.07f, base - Offset(0f, size.width * 0.08f),
+            style = Stroke(size.width * 0.04f, pathEffect = if (future) PathEffect.dashPathEffect(floatArrayOf(4f, 4f)) else null))
+        return@Canvas
     }
-    if (p.slots > 0 && (p.done > 0 || p.fail > 0)) drawCircle(W.turq, size.width * (0.05f + 0.11f * p.done / p.slots), c)
-    else if (p.slots > 0) drawCircle(W.orbit, size.width * 0.04f, c)
+    val share = min(1f, p.done.toFloat() / p.slots)
+    val top = base.y - size.height * (0.18f + 0.5f * share)
+    drawLine(W.act, base, Offset(base.x, top), size.width * 0.05f, StrokeCap.Round)
+    val n = when { share >= 1f -> 3; share >= 0.5f -> 2; p.done > 0 -> 1; else -> 0 }
+    for (i in 0 until n) leaf(Offset(base.x, top + size.height * (0.14f + 0.16f * i)), k, Slot("done", false), i % 2 == 1)
+    if (p.fail > 0) leaf(Offset(base.x, base.y - size.height * 0.08f), k, Slot("fail", false), true)
 }
 
 class Orbit(val h: Habit, val slots: List<Slot>)
 
-private val TILT = floatArrayOf(0f, 32f, -32f, 64f, -64f, 90f)
-private const val CX = 500f
-private const val CY = 520f
-
-// The bay: the base scene, the robot on its platform, and today's habits as orbits around it.
-// fresh: the habit whose newest done electron is still travelling home, and when it set off.
-// waiting: no habits yet, so one empty dashed orbit stands ready around the robot.
+// The bay: Rivet on its platform and, beside it under a magenta grow light, a glass tray with one sprout per
+// habit running today and a leaf per slot. A habit just done unfurls its newest leaf.
+// waiting: no habits yet, so the tray holds one dashed seed.
 fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?> = s.equip, waiting: Boolean = false) {
     val tier = PART[equip["base"]]?.tier ?: 1
+    val glow = Offset(760f, 210f)
+    drawCircle(Brush.radialGradient(listOf(W.grow.copy(alpha = 0.2f), Color.Transparent), glow, 440f), 440f, glow)
     scene(tier, t)
-    if (waiting) drawOval(W.orbit, Offset(CX - 320f, CY - 110f), Size(640f, 220f), // clears the wall socket
-        style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 14f), -(t % 6000) / 6000f * 64f)))
-    val shown = orbits.take(TILT.size)
-    val drift = (t % 90_000) / 90_000f * 2 * PI.toFloat()
-    fun place(k: Int, theta: Float): Offset {
-        val rx = 400f - k * 14f; val ry = 118f
-        val a = TILT[k] * PI.toFloat() / 180
-        val x = rx * cos(theta); val y = ry * sin(theta)
-        return Offset(CX + x * cos(a) - y * sin(a), CY + x * sin(a) + y * cos(a))
-    }
-    shown.forEachIndexed { k, o ->
-        val col = when { o.slots.any { it.s == "fail" } -> W.coral; o.slots.all { it.s == "done" } -> W.turq; else -> W.orbit }
-        rotate(TILT[k], Offset(CX, CY)) {
-            drawOval(col, Offset(CX - (400f - k * 14f), CY - 118f), Size(2 * (400f - k * 14f), 236f), alpha = if (col == W.orbit) 0.9f else 0.55f, style = Stroke(2.5f))
-        }
-    }
+    for (x in listOf(640f, 880f)) drawLine(W.joint, Offset(x, 100f), Offset(x, 206f), 3f)
+    drawRoundRect(W.grow, Offset(610f, 200f), Size(300f, 14f), CornerRadius(7f), alpha = 0.3f, style = Stroke(16f))
+    drawRoundRect(W.grow, Offset(610f, 200f), Size(300f, 14f), CornerRadius(7f))
     translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
+
+    val ground = 412f
+    drawRoundRect(Color(0x229FE3D6), Offset(620f, ground - 8f), Size(280f, 50f), CornerRadius(14f))
+    drawRoundRect(Color(0x332FC6B8), Offset(626f, ground + 12f), Size(268f, 26f), CornerRadius(10f))
+    drawRoundRect(W.steel, Offset(620f, ground - 8f), Size(280f, 50f), CornerRadius(14f), alpha = 0.7f, style = Stroke(2.5f))
+    if (waiting) drawCircle(W.dim, 10f, Offset(760f, ground - 12f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
+    val shown = orbits.take(6)
+    val gap = 280f / max(1, shown.size)
     shown.forEachIndexed { k, o ->
+        val x = 620f + gap * (k + 0.5f)
+        val failed = o.slots.any { it.s == "fail" }
+        drawLine(if (failed) W.joint else W.act, Offset(x, ground), Offset(x, ground - 50f - 36f * o.slots.size), 4f, StrokeCap.Round)
         val newest = o.slots.indexOfLast { it.s == "done" && !it.other }
         o.slots.forEachIndexed { j, sl ->
-            var theta = 2 * PI.toFloat() * j / o.slots.size + k * 1.1f + drift
-            var burst = -1f
-            if (fresh != null && fresh.first == o.h.id && j == newest) {
-                val e = (t - fresh.second).coerceAtLeast(0)
-                val run = min(1f, e / 900f)
-                theta -= PI.toFloat() * (1 - run).pow(3) // eases home from the far side of the orbit
-                if (e in 900..1400) burst = (e - 900) / 500f
-            }
-            electron(place(k, theta), 15f, sl, burst)
+            var grow = 1f
+            if (fresh != null && fresh.first == o.h.id && j == newest) grow = min(1f, (t - fresh.second).coerceAtLeast(0) / 700f).let { 1 - (1 - it).pow(3) }
+            leaf(Offset(x, ground - 30f - 36f * j), 2.2f * grow, sl, j % 2 == 1)
         }
     }
 }

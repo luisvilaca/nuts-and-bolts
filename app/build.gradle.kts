@@ -10,7 +10,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.luisvilaca.nutsandbolts"
+        applicationId = "com.luisvilaca.nutsandbolts.grow"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

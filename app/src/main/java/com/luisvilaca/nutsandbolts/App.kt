@@ -116,7 +116,7 @@ private fun go(ui: Ui, tab: String) { ui.tab = tab; ui.settings = false; ui.edit
 
 @Composable
 private fun Rail(ui: Ui, tall: Boolean) {
-    val item = NavigationRailItemDefaults.colors(selectedIconColor = W.turq, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim)
+    val item = NavigationRailItemDefaults.colors(selectedIconColor = W.act, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim)
     NavigationRail(containerColor = W.rail, header = { if (tall) AtomMark(Modifier.padding(vertical = 18.dp).size(40.dp)) }) {
         TABS.forEach { (k, v) ->
             NavigationRailItem(selected = ui.tab == k && !ui.settings, onClick = { go(ui, k) }, icon = { Icon(ICONS.getValue(TAB_ICON.getValue(k)), null) }, label = { Text(v) }, colors = item)
@@ -132,19 +132,20 @@ private fun BottomBar(ui: Ui) {
     NavigationBar(containerColor = W.rail) {
         TABS.forEach { (k, v) ->
             NavigationBarItem(selected = ui.tab == k && !ui.settings, onClick = { go(ui, k) }, icon = { Icon(ICONS.getValue(TAB_ICON.getValue(k)), null) }, label = { Text(v) },
-                colors = NavigationBarItemDefaults.colors(selectedIconColor = W.turq, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim))
+                colors = NavigationBarItemDefaults.colors(selectedIconColor = W.act, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim))
         }
     }
 }
 
-// The app's mark: three orbits and a turquoise nucleus.
+// The app's mark: a sprout with two leaves in a small tray.
 @Composable
 fun AtomMark(modifier: Modifier) = androidx.compose.foundation.Canvas(modifier) {
-    val c = center; val rx = size.width * 0.47f; val ry = rx * 0.37f
-    for (a in listOf(0f, 60f, 120f)) rotate(a, c) {
-        drawOval(W.steel, androidx.compose.ui.geometry.Offset(c.x - rx, c.y - ry), androidx.compose.ui.geometry.Size(rx * 2, ry * 2), style = androidx.compose.ui.graphics.drawscope.Stroke(size.width * 0.04f))
-    }
-    drawCircle(W.turq, size.width * 0.1f, c)
+    val w = size.width
+    drawLine(W.steel, androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.88f), androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.42f), w * 0.05f)
+    leaf(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.58f), w / 30f, Slot("done", false))
+    leaf(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.72f), w / 38f, Slot("done", false), flip = true)
+    drawRoundRect(W.steel, androidx.compose.ui.geometry.Offset(w * 0.24f, w * 0.82f), androidx.compose.ui.geometry.Size(w * 0.52f, w * 0.13f),
+        androidx.compose.ui.geometry.CornerRadius(w * 0.05f), style = androidx.compose.ui.graphics.drawscope.Stroke(w * 0.045f))
 }
 
 // ---------- shared pieces ----------
@@ -209,7 +210,7 @@ fun meta(s: Data, h: Habit, d: LocalDate): String {
 }
 val DOW = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-// One habit: name, its electrons, one clear Done, and the quieter Skip and Fail. In a narrow column the buttons take a second line.
+// One habit: name, its slots, one clear Done, and the quieter Skip and Fail. In a narrow column the buttons take a second line.
 @Composable
 fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false) = BoxWithConstraints {
     val stacked = big || maxWidth < 560.dp
@@ -220,7 +221,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             slots(s, h, d).forEachIndexed { i, sl ->
                 val own = sl.s != "" && !sl.other
-                ElectronMark(sl, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
+                SlotMark(sl, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
                     // the newest mark of the day is the one that comes off
                     var m: Mark? = null
                     store.change { m = undo(this, h, d) }
@@ -232,11 +233,11 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
     val buttons = @Composable { m: Modifier ->
         Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 64.dp else 48.dp),
-                shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq, W.raised, W.dim)) { Text(label[0]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, W.orbit),
-                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel, disabledContentColor = W.orbit)) { Icon(ICONS.getValue("minus"), label[1]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "fail") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, if (full) W.orbit else W.coral.copy(alpha = 0.45f)),
-                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.coral, disabledContentColor = W.orbit)) { Icon(ICONS.getValue("fail"), label[2]) }
+                shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(label[0]) }
+            OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, W.edge),
+                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel, disabledContentColor = W.edge)) { Icon(ICONS.getValue("minus"), label[1]) }
+            OutlinedIconButton(onClick = { log(store, ui, h, d, "fail") }, modifier = Modifier.size(48.dp), enabled = !full, border = BorderStroke(1.dp, if (full) W.edge else W.coral.copy(alpha = 0.45f)),
+                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.coral, disabledContentColor = W.edge)) { Icon(ICONS.getValue("fail"), label[2]) }
         }
     }
     Column(Modifier.fillMaxWidth()) {

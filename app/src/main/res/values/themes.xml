@@ -1,9 +1,9 @@
 <resources>
-    <!-- the window before Compose draws: night indigo, so launch never flashes white -->
+    <!-- the window before Compose draws: the world's ground, so launch never flashes white -->
     <style name="Theme.NutsAndBolts" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/ground</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
-    <color name="ground">#0E1430</color>
+    <color name="ground">#0B1A1A</color>
 </resources>
