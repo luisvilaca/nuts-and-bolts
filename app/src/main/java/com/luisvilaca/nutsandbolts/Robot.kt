@@ -61,6 +61,10 @@ fun clock(): Long {
     return t
 }
 
+// Milliseconds on the shared clock since `at`. A frozen clock (animations off) reads as long settled, so anything
+// keyed to a fresh mark shows its end state at once instead of its first frame.
+fun since(t: Long, at: Long) = if (t == 0L) Long.MAX_VALUE / 2 else (t - at).coerceAtLeast(0)
+
 private fun wave(t: Long, period: Float) = sin(2 * PI * (t % (period * 1000).toLong()) / (period * 1000)).toFloat()
 
 fun DrawScope.paint(sh: Shape, t: Long, alpha: Float = 1f) {

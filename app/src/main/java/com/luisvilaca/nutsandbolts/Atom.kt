@@ -110,7 +110,7 @@ fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh
             var theta = 2 * PI.toFloat() * j / o.slots.size + k * 1.1f + drift
             var burst = -1f
             if (fresh != null && fresh.first == o.h.id && j == newest) {
-                val e = (t - fresh.second).coerceAtLeast(0)
+                val e = since(t, fresh.second)
                 val run = min(1f, e / 900f)
                 theta -= PI.toFloat() * (1 - run).pow(3) // eases home from the far side of the orbit
                 if (e in 900..1400) burst = (e - 900) / 500f
