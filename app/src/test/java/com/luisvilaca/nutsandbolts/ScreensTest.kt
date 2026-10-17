@@ -15,6 +15,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -111,5 +112,26 @@ class ScreensTest {
             Row { PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(252.dp, 230.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id)) } }
         } } }
         shot("catalogue")
+    }
+
+    // Settings saved before the sliders (three-step choices) map onto the new mm and percent values.
+    @Test fun oldPenSettingsCarryOver() {
+        fun load(pen: String) = dataFrom(json(Data()).put("pen", org.json.JSONObject(pen))).pen
+        val old = load("""{"color":"#E0F7FA","size":2,"stab":0,"eraser":2}""")
+        org.junit.Assert.assertEquals(listOf(1f, 0, 7f), listOf(old.nib, old.stab, old.rub))
+        val new = load("""{"nib":0.8,"stabPct":37,"rub":40}""")
+        org.junit.Assert.assertEquals(listOf(0.8f, 30, 15f), listOf(new.nib, new.stab, new.rub)) // stab snaps to tens, rub clamps
+    }
+
+    // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        tap("Diary"); tap("Write today's page".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today's page")
+        rule.onNodeWithContentDescription("Pen. Tap again for nib and stabilizer").performClick(); rule.waitForIdle()
+        rule.onNodeWithText("NIB").assertExists(); rule.onNodeWithText("0.6 mm").assertExists(); rule.onNodeWithText("50%").assertExists()
+        rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
+        rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
+        rule.onNodeWithText("4 mm").assertExists()
     }
 }

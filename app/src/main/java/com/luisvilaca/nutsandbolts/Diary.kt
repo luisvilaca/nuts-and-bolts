@@ -38,13 +38,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,11 +68,13 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -90,6 +92,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.hypot
 import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -98,9 +101,10 @@ import kotlinx.coroutines.withContext
 // The owner's StarNote palette. Matte Black is also the first paper, so it is the ink for light paper.
 val PEN_COLORS = listOf("Ice Blue" to "#E0F7FA", "Matrix Green" to "#00FF88", "Electric Cyan" to "#00E5FF", "Neon Fuchsia" to "#FF007F", "Matte Black" to "#393939")
 val PAPERS = listOf("#393939", "#F4ECD8", "#0B1020") // three slots the owner can replace with any hex
-private val PEN_SIZES = listOf("Fine" to 2.4f, "Medium" to 4f, "Bold" to 6.5f)
-private val ERASER_SIZES = listOf("Small" to 12f, "Medium" to 24f, "Large" to 48f) // page units across
-private val STAB = listOf("Off" to 1f, "Low" to 0.5f, "High" to 0.22f) // share of the gap to the pen closed per sample
+val NIB_MM = 0.2f..2f // in steps of 0.1
+val RUB_MM = 1f..15f // in steps of 1
+// the stabilizer's share of the gap to the pen closed per sample: 0% follows the pen exactly, 100% trails it most
+private fun follow(pct: Int) = 1f - 0.88f * pct / 100f
 // Fountain pen: the nib opens with pressure and closes with speed, easing between the two so the line swells and tapers.
 // shortcut: tuned by eye in a desktop browser, retune min/max/speed on the tablet with the real pen
 private const val NIB_MIN = 0.2f
@@ -215,6 +219,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     var ring by remember { mutableStateOf<Offset?>(null) }
     var px by remember { mutableStateOf(IntSize.Zero) }
     val ps = remember { PenState() }
+    val mmPx = LocalContext.current.resources.displayMetrics.xdpi / 25.4f // screen pixels in a millimetre
     val scroll = rememberScrollState()
 
     fun persist() {
@@ -255,49 +260,60 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     }
 
     Column(Modifier.fillMaxSize()) {
-        // One line, StarNote style: undo and redo, pen and eraser, inks, paper, bin on the left; the calendar alone on the right.
-        // On a narrow window the inks fold into the current ink's swatch and the papers into the paper menu, so it still fits one line.
-        BoxWithConstraints(Modifier.fillMaxWidth().background(W.rail).padding(horizontal = 8.dp, vertical = 6.dp)) {
-        val narrow = maxWidth < 600.dp
-        val gap = if (narrow) 0.dp else 12.dp
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(if (narrow) 0.dp else 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Tool("undo", "Undo stroke", false) { pad.page.strokes.removeLastOrNull()?.let { pad.redo += it; pad.redraw(density); persist() } }
-                Tool("redo", "Redo stroke", false) { pad.redo.removeLastOrNull()?.let { pad.page.strokes += it; pad.redraw(density); persist() } }
-                Gap(gap)
-                Box {
-                    // the first tap picks the pen back up from the eraser; a tap on the pen in hand opens its settings
-                    Tool("diary", "Pen. Tap again for settings", !erase, more = true) { if (erase) erase = false else pop = "pen" }
-                    Menu(pop == "pen", { pop = null }) {
-                        Choice("Nib", PEN_SIZES.map { it.first }, s.pen.size) { store.change { pen.size = it } }
-                        Choice("Stabilizer", STAB.map { it.first }, s.pen.stab) { store.change { pen.stab = it } }
+        // One thin line in three parts: the calendar (back) on the left; the pen, the eraser and the inks in the middle,
+        // where the hand goes most; undo, redo, paper and bin on the right. On a narrow window the inks fold into the
+        // current ink's swatch. Papers live in the paper menu, since a page rarely changes paper.
+        BoxWithConstraints(Modifier.fillMaxWidth().background(W.rail).padding(horizontal = 6.dp, vertical = 2.dp)) {
+            val narrow = maxWidth < 640.dp
+            // wide: equal side groups keep the tools truly centred; narrow: the groups simply spread so nothing falls off
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                val side = if (narrow) Modifier else Modifier.weight(1f)
+                Row(side) { Tool("calendar", "Back to calendar", false) { ui.page = null } }
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box {
+                        // the first tap picks the pen back up from the eraser; a tap on the pen in hand opens its settings
+                        Tool("diary", "Pen. Tap again for nib and stabilizer", !erase, more = true) { if (erase) erase = false else pop = "pen" }
+                        Menu(pop == "pen", { pop = null }) {
+                            Setting("Nib", s.pen.nib, NIB_MM, 17, { "%.1f mm".format(it) }, { v -> store.change { pen.nib = v } }) { v ->
+                                Canvas(Modifier.fillMaxWidth().height(28.dp)) {
+                                    drawLine(hex(s.pen.color), Offset(12f, center.y), Offset(size.width - 12f, center.y), v * mmPx, StrokeCap.Round)
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Setting("Stabilizer", s.pen.stab.toFloat(), 0f..100f, 9, { "${it.roundToInt()}%" }, { v -> store.change { pen.stab = v.roundToInt() } }, ticks = true)
+                            Text("At 0% the line follows the pen exactly; higher irons out shake but trails a little behind.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+                        }
                     }
-                }
-                Box {
-                    Tool("eraser", "Eraser. Hold for width", erase, more = true, onLong = { erase = true; pop = "eraser" }) { erase = !erase; pop = null }
-                    Menu(pop == "eraser", { pop = null }) { Choice("Eraser width", ERASER_SIZES.map { it.first }, s.pen.eraser) { store.change { pen.eraser = it } } }
-                }
-                Gap(gap)
-                val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true) { erase = false; pop = null; store.change { pen.color = c } } } }
-                val papers = @Composable { s.papers.forEachIndexed { i, c -> Swatch(c, "Paper ${i + 1}", pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } } }
-                if (narrow) Box {
-                    Swatch(s.pen.color, "Ink colour", !erase, round = true) { pop = "ink" }
-                    Menu(pop == "ink", { pop = null }) { Row { inks() } }
-                } else inks()
-                Gap(gap)
-                Box {
-                    Tool("paper", "Paper colours", false) { pop = "paper" }
-                    Menu(pop == "paper", { pop = null }) {
-                        if (narrow) Row(Modifier.padding(bottom = 8.dp)) { papers() }
-                        Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }
+                    Box {
+                        Tool("eraser", "Eraser. Tap again for its size", erase, more = true, onLong = { erase = true; pop = "eraser" }) { if (erase) pop = "eraser" else { erase = true; pop = null } }
+                        Menu(pop == "eraser", { pop = null }) {
+                            Setting("Eraser", s.pen.rub, RUB_MM, 13, { "${it.roundToInt()} mm" }, { v -> store.change { pen.rub = v.roundToInt().toFloat() } }) { v ->
+                                Canvas(Modifier.fillMaxWidth().height(100.dp)) { eraserRing(center, v * mmPx / 2) }
+                            }
+                        }
                     }
+                    Box(Modifier.padding(horizontal = 6.dp).size(1.dp, 22.dp).background(W.line))
+                    val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true) { erase = false; pop = null; store.change { pen.color = c } } } }
+                    if (narrow) Box {
+                        Swatch(s.pen.color, "Ink colour", !erase, round = true) { pop = "ink" }
+                        Menu(pop == "ink", { pop = null }) { Row { inks() } }
+                    } else inks()
                 }
-                if (!narrow) papers()
-                Gap(gap)
-                Tool("trash", "Bin this page", false) { if (pad.page.strokes.isNotEmpty()) bin = true }
+                Row(side, horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    Tool("undo", "Undo stroke", false) { pad.page.strokes.removeLastOrNull()?.let { pad.redo += it; pad.redraw(density); persist() } }
+                    Tool("redo", "Redo stroke", false) { pad.redo.removeLastOrNull()?.let { pad.page.strokes += it; pad.redraw(density); persist() } }
+                    Box {
+                        Tool("paper", "Paper", false) { pop = "paper" }
+                        Menu(pop == "paper", { pop = null }) {
+                            Row(Modifier.padding(bottom = 8.dp)) {
+                                s.papers.forEachIndexed { i, c -> Swatch(c, "Paper ${i + 1}", pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } }
+                            }
+                            Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }
+                        }
+                    }
+                    Tool("trash", "Bin this page", false) { if (pad.page.strokes.isNotEmpty()) bin = true }
+                }
             }
-            Tool("calendar", "Back to calendar", false) { ui.page = null }
-        }
         }
         // The page fills the width and scrolls. Once a pen has been used, a finger drags the page instead of drawing.
         Box(Modifier.fillMaxSize().verticalScroll(scroll)) {
@@ -315,13 +331,18 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                 val s = store.s
                                 if (!s.pen.seen && ev.changes.any { it.type.pen() }) store.change { pen.seen = true }
                                 val sc = PAGE_W / max(1, px.width)
+                                fun mm(v: Float) = v * mmPx * sc
                                 fun pt(p: Offset, pr: Float) = floatArrayOf(p.x * sc, p.y * sc, if (ps.pen) max(pr, 0.1f) else 0.5f)
                                 if (pad.cur == null) {
+                                    // a hovering pen shows the eraser's outline before it touches, when the eraser is in hand
+                                    ev.changes.firstOrNull { it.type.pen() && !it.pressed }?.let { h ->
+                                        ring = if ((erase || h.type == PointerType.Eraser) && ev.type != PointerEventType.Exit) h.position else null
+                                    }
                                     val d = ev.changes.firstOrNull { it.changedToDown() && (it.type.pen() || !s.pen.seen) } ?: continue
                                     ev.changes.forEach { it.consume() }
                                     ps.pid = d.id; ps.pen = d.type.pen()
                                     val rubbing = erase || d.type == PointerType.Eraser || ((ev.motionEvent?.buttonState ?: 0) and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
-                                    pad.cur = InkStroke(s.pen.color, if (rubbing) ERASER_SIZES[s.pen.eraser].second / 5 else PEN_SIZES[s.pen.size].second, rubbing, FloatArray(0))
+                                    pad.cur = InkStroke(s.pen.color, if (rubbing) mm(s.pen.rub) / 5 else mm(s.pen.nib), rubbing, FloatArray(0))
                                     ps.last = pt(d.position, d.pressure); ps.lastT = d.uptimeMillis; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
                                     ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
                                     ring = if (rubbing) d.position else null
@@ -331,7 +352,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                 val c = ev.changes.firstOrNull { it.id == ps.pid }
                                 ev.changes.forEach { it.consume() }
                                 if (c == null || !c.pressed) { finish(c != null, (c?.position?.x ?: 0f) * sc, (c?.position?.y ?: 0f) * sc); ring = null; continue }
-                                val k = STAB[s.pen.stab].second
+                                val k = follow(s.pen.stab)
                                 // past samples carry no pressure of their own, so it is eased from the last sample to this one
                                 val p0 = ps.last[2]; val hs = c.historical
                                 for (i in 0..hs.size) {
@@ -353,12 +374,8 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
                     val st = pad.cur
                     if (st != null && !st.e) scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) { with(pad) { val c = n / 3; for (i in 0 until c) seg(st, pts, i) } }
-                    // the eraser's true size under the pen; a light line with a dark edge reads on any paper
-                    ring?.let { r ->
-                        val rad = ERASER_SIZES[s.pen.eraser].second * size.width / PAGE_W / 2
-                        drawCircle(Color.Black.copy(alpha = 0.45f), rad + 1.5f, r, style = Stroke(1f))
-                        drawCircle(Color.White.copy(alpha = 0.85f), rad, r, style = Stroke(1.5f))
-                    }
+                    // the eraser's true size under the pen, while it rubs and while it hovers
+                    ring?.let { eraserRing(it, s.pen.rub * mmPx / 2) }
                 }
             }
         }
@@ -369,16 +386,16 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
         dismissButton = { TextButton({ bin = false }) { Text("Keep it", color = W.text) } })
 }
 
-// Tool buttons are borderless; the tool in hand gets a raised tile and a short turquoise bar under it.
+// Tool buttons are borderless; the tool in hand gets a raised tile and a short green bar under it.
 // more: a corner tick for a button with settings behind a second tap or a long press.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Tool(icon: String, label: String, on: Boolean, more: Boolean = false, onLong: (() -> Unit)? = null, onClick: () -> Unit) {
-    Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (on) W.raised else Color.Transparent)
+    Box(Modifier.size(44.dp, 40.dp).clip(RoundedCornerShape(10.dp)).background(if (on) W.raised else Color.Transparent)
         .combinedClickable(onClickLabel = label, onLongClick = onLong, onClick = onClick).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
-        Icon(ICONS.getValue(icon), null, tint = if (on) W.text else W.dim)
-        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(16.dp, 2.dp).background(W.act))
-        if (more) Canvas(Modifier.align(Alignment.BottomEnd).padding(6.dp).size(5.dp)) {
+        Icon(ICONS.getValue(icon), null, Modifier.size(22.dp), tint = if (on) W.text else W.dim)
+        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp).size(14.dp, 2.dp).background(W.act))
+        if (more) Canvas(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(4.dp)) {
             drawPath(Path().apply { moveTo(size.width, 0f); lineTo(size.width, size.height); lineTo(0f, size.height); close() }, W.dim)
         }
     }
@@ -387,8 +404,8 @@ private fun Tool(icon: String, label: String, on: Boolean, more: Boolean = false
 @Composable
 private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, onClick: () -> Unit) {
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
-    Box(Modifier.size(44.dp).clip(CircleShape).clickable(onClickLabel = label, onClick = onClick).semantics { contentDescription = label; selected = on }, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(if (on) 30.dp else 26.dp).clip(shape).background(hex(c))
+    Box(Modifier.size(36.dp, 40.dp).clip(RoundedCornerShape(10.dp)).clickable(onClickLabel = label, onClick = onClick).semantics { contentDescription = label; selected = on }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(if (on) 26.dp else 22.dp).clip(shape).background(hex(c))
             .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
     }
 }
@@ -397,12 +414,26 @@ private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, onClic
 private fun Menu(open: Boolean, close: () -> Unit, content: @Composable () -> Unit) =
     DropdownMenu(open, close, containerColor = W.raised, shape = RoundedCornerShape(16.dp)) { Column(Modifier.padding(16.dp).width(300.dp)) { content() } }
 
+// A labelled slider with its value at the right. It moves freely under the finger and saves once, on release.
 @Composable
-private fun Choice(title: String, opts: List<String>, cur: Int, set: (Int) -> Unit) {
-    Text(title.uppercase(), Modifier.padding(top = 4.dp, bottom = 8.dp), style = Label)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-        opts.forEachIndexed { i, o -> SegmentedButton(cur == i, { set(i) }, SegmentedButtonDefaults.itemShape(i, opts.size), icon = {}, colors = segColors()) { Text(o) } }
+private fun Setting(title: String, value: Float, range: ClosedFloatingPointRange<Float>, steps: Int, show: (Float) -> String, save: (Float) -> Unit,
+                    ticks: Boolean = false, preview: @Composable (Float) -> Unit = {}) {
+    var v by remember(value) { mutableFloatStateOf(value) }
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title.uppercase(), Modifier.weight(1f), style = Label)
+        Text(show(v), style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = W.text)
     }
+    preview(v)
+    Slider(v, { v = it }, valueRange = range, steps = steps, onValueChangeFinished = { save(v) },
+        colors = SliderDefaults.colors(thumbColor = W.act, activeTrackColor = W.act, inactiveTrackColor = W.line,
+            activeTickColor = if (ticks) W.onAct else Color.Transparent, inactiveTickColor = if (ticks) W.dim else Color.Transparent))
+}
+
+// The eraser's outline: a dark ring around a white one over a faint fill, so it reads on dark and light paper alike.
+private fun DrawScope.eraserRing(c: Offset, r: Float) {
+    drawCircle(Color.White.copy(alpha = 0.12f), r, c)
+    drawCircle(Color.Black.copy(alpha = 0.6f), r, c, style = Stroke(3.dp.toPx()))
+    drawCircle(Color.White, r, c, style = Stroke(1.5.dp.toPx()))
 }
 
 // Typing a hex value into a paper slot; the page on screen follows when it uses that slot.

@@ -37,7 +37,8 @@ class Habit(
 // Each mark stores exactly what it changed (bolts, points, nuts), so undo is exact.
 class Mark(val s: String, var b: Int = 0, var p: Int = 0, var n: Int = 0)
 
-class Pen(var color: String = PEN_COLORS[0].second, var size: Int = 1, var stab: Int = 1, var eraser: Int = 1, var paper: Int = 0, var seen: Boolean = false)
+// nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
+class Pen(var color: String = PEN_COLORS[0].second, var nib: Float = 0.6f, var stab: Int = 50, var rub: Float = 4f, var paper: Int = 0, var seen: Boolean = false)
 class Remind(var on: Boolean = false, var time: String = "21:00")
 
 class Data {

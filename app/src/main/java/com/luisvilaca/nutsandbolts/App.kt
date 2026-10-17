@@ -89,7 +89,8 @@ fun App(store: Store) {
         Scaffold(
             containerColor = W.ground,
             snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act) } },
-            bottomBar = { BottomBar(ui) }, // the owner wants the tabs at the bottom at every size
+            // the owner wants the tabs at the bottom at every size, except under an open diary page, which needs the height
+            bottomBar = { if (ui.page == null) BottomBar(ui) },
         ) { pad ->
             Box(Modifier.fillMaxSize().padding(pad)) {
                 when {
