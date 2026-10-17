@@ -1,5 +1,7 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.translate
 import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -66,7 +68,10 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -121,20 +126,20 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
     val n = s.diary.count { YearMonth.from(it) == month }
     val sum = "${if (n == 0) "No pages" else plural(n, "page")} written in ${month.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))}"
     val write = @Composable {
-        Button({ ui.page = t }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq)) {
+        Button({ ui.page = t }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
             Icon(ICONS.getValue("diary"), null, Modifier.size(20.dp)); Text(if (t in s.diary) "Open today's page" else "Write today's page", Modifier.padding(start = 8.dp))
         }
     }
     val cal = @Composable {
         Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
-        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.turq) }, ahead = false) { ui.page = it }
+        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false) { ui.page = it }
     }
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Diary", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(0.3f).fillMaxHeight()) {
                 Column(Modifier.padding(start = 28.dp)) { Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim); write() }
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), emptyList(), plate = false)
+                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), plate = false)
             }
             Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { cal() }
         }
@@ -202,7 +207,7 @@ private class Pad(val page: Page) {
     }
 }
 
-private class PenState { var sm = FloatArray(2); var last = FloatArray(3); var lastT = 0L; var nib = 0f; var pid = -1 }
+private class PenState { var sm = FloatArray(2); var last = FloatArray(3); var lastT = 0L; var nib = 0f; var pid = PointerId(-1); var pen = false }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -307,31 +312,40 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
             Box(Modifier.fillMaxWidth().aspectRatio(PAGE_W / PAGE_H).background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
                 Template(date, pad.page.paper, s.name, pad.ver)
                 Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Diary page for ${date.format(dayFmt)}" }
-                    .pointerInteropFilter { e ->
-                        val tool = e.getToolType(e.actionIndex)
-                        val isPen = tool == MotionEvent.TOOL_TYPE_STYLUS || tool == MotionEvent.TOOL_TYPE_ERASER
-                        if (isPen && !s.pen.seen) store.change { pen.seen = true }
-                        // palm rejection: once a pen has been used, a finger is left to scroll the page
-                        if (!isPen && s.pen.seen && pad.cur == null) return@pointerInteropFilter false
-                        val sc = PAGE_W / max(1, px.width)
-                        fun pt(x: Float, y: Float, pr: Float) = floatArrayOf(x * sc, y * sc, if (isPen) max(pr, 0.1f) else 0.5f)
-                        val rubbing = erase || tool == MotionEvent.TOOL_TYPE_ERASER || (e.buttonState and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
-                        when (e.actionMasked) {
-                            MotionEvent.ACTION_DOWN -> {
-                                ps.pid = e.getPointerId(0)
-                                pad.cur = InkStroke(s.pen.color, if (rubbing) ERASER_SIZES[s.pen.eraser].second / 5 else PEN_SIZES[s.pen.size].second, rubbing, FloatArray(0))
-                                ps.last = pt(e.x, e.y, e.pressure); ps.lastT = e.eventTime; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
-                                ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
-                                ring = if (rubbing) Offset(e.x, e.y) else null
-                                put(ps.sm[0], ps.sm[1], ps.nib)
-                            }
-                            MotionEvent.ACTION_MOVE -> {
-                                if (pad.cur == null) return@pointerInteropFilter true
+                    // A pen always writes; once a pen has been used, a finger scrolls (palm rejection). Every pointer is
+                    // consumed here while a stroke is live, before the scrolling page sees it, so a line drawn down the
+                    // page no longer drags the page and cuts the stroke, and a resting palm neither scrolls nor blocks the pen.
+                    .pointerInput(pad) {
+                        fun PointerType.pen() = this == PointerType.Stylus || this == PointerType.Eraser
+                        awaitPointerEventScope {
+                            while (true) {
+                                val ev = awaitPointerEvent()
+                                val s = store.s
+                                if (!s.pen.seen && ev.changes.any { it.type.pen() }) store.change { pen.seen = true }
+                                val sc = PAGE_W / max(1, px.width)
+                                fun pt(p: Offset, pr: Float) = floatArrayOf(p.x * sc, p.y * sc, if (ps.pen) max(pr, 0.1f) else 0.5f)
+                                if (pad.cur == null) {
+                                    val d = ev.changes.firstOrNull { it.changedToDown() && (it.type.pen() || !s.pen.seen) } ?: continue
+                                    ev.changes.forEach { it.consume() }
+                                    ps.pid = d.id; ps.pen = d.type.pen()
+                                    val rubbing = erase || d.type == PointerType.Eraser || ((ev.motionEvent?.buttonState ?: 0) and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
+                                    pad.cur = InkStroke(s.pen.color, if (rubbing) ERASER_SIZES[s.pen.eraser].second / 5 else PEN_SIZES[s.pen.size].second, rubbing, FloatArray(0))
+                                    ps.last = pt(d.position, d.pressure); ps.lastT = d.uptimeMillis; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
+                                    ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
+                                    ring = if (rubbing) d.position else null
+                                    put(ps.sm[0], ps.sm[1], ps.nib)
+                                    continue
+                                }
+                                val c = ev.changes.firstOrNull { it.id == ps.pid }
+                                ev.changes.forEach { it.consume() }
+                                if (c == null || !c.pressed) { finish(c != null, (c?.position?.x ?: 0f) * sc, (c?.position?.y ?: 0f) * sc); ring = null; continue }
                                 val k = STAB[s.pen.stab].second
-                                for (i in 0..e.historySize) {
-                                    val h = i < e.historySize
-                                    val raw = pt(if (h) e.getHistoricalX(i) else e.x, if (h) e.getHistoricalY(i) else e.y, if (h) e.getHistoricalPressure(i) else e.pressure)
-                                    val tm = if (h) e.getHistoricalEventTime(i) else e.eventTime
+                                // past samples carry no pressure of their own, so it is eased from the last sample to this one
+                                val p0 = ps.last[2]; val hs = c.historical
+                                for (i in 0..hs.size) {
+                                    val h = i < hs.size
+                                    val raw = pt(if (h) hs[i].position else c.position, p0 + (c.pressure - p0) * (i + 1) / (hs.size + 1))
+                                    val tm = if (h) hs[i].uptimeMillis else c.uptimeMillis
                                     val speed = hypot(raw[0] - ps.last[0], raw[1] - ps.last[1]) / max(1L, tm - ps.lastT) // page units per ms
                                     ps.nib += (min(1f, raw[2] * max(0.45f, 1.15f - NIB_SPEED * speed)) - ps.nib) * NIB_EASE
                                     ps.last = raw; ps.lastT = tm
@@ -339,12 +353,9 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     ps.sm[0] += (raw[0] - ps.sm[0]) * k; ps.sm[1] += (raw[1] - ps.sm[1]) * k
                                     put(ps.sm[0], ps.sm[1], ps.nib)
                                 }
-                                if (pad.cur?.e == true) ring = Offset(e.x, e.y)
+                                if (pad.cur?.e == true) ring = c.position
                             }
-                            MotionEvent.ACTION_UP -> { finish(true, e.x * sc, e.y * sc); ring = null }
-                            MotionEvent.ACTION_CANCEL -> { finish(false, 0f, 0f); ring = null }
                         }
-                        true
                     }) {
                     pad.ver; live // redraw when either changes
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
@@ -374,7 +385,7 @@ private fun Tool(icon: String, label: String, on: Boolean, more: Boolean = false
     Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (on) W.raised else Color.Transparent)
         .combinedClickable(onClickLabel = label, onLongClick = onLong, onClick = onClick).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Icon(ICONS.getValue(icon), null, tint = if (on) W.text else W.dim)
-        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(16.dp, 2.dp).background(W.turq))
+        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(16.dp, 2.dp).background(W.act))
         if (more) Canvas(Modifier.align(Alignment.BottomEnd).padding(6.dp).size(5.dp)) {
             drawPath(Path().apply { moveTo(size.width, 0f); lineTo(size.width, size.height); lineTo(0f, size.height); close() }, W.dim)
         }
@@ -386,7 +397,7 @@ private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, onClic
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
     Box(Modifier.size(44.dp).clip(CircleShape).clickable(onClickLabel = label, onClick = onClick).semantics { contentDescription = label; selected = on }, contentAlignment = Alignment.Center) {
         Box(Modifier.size(if (on) 30.dp else 26.dp).clip(shape).background(hex(c))
-            .border(if (on) 2.dp else 1.dp, if (on) W.text else W.orbit, shape))
+            .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
     }
 }
 
@@ -409,19 +420,19 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
     store.s.papers.forEachIndexed { i, c ->
         var txt by remember(c) { mutableStateOf(c) }
         Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.orbit, RoundedCornerShape(6.dp)))
+            Box(Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.edge, RoundedCornerShape(6.dp)))
             OutlinedTextField(txt, { v ->
                 txt = "#" + v.filter { it.isLetterOrDigit() }.uppercase().filter { it in "0123456789ABCDEF" }.take(6)
                 if (txt.length == 7) { changed(i, txt); store.change { papers[i] = txt } }
             }, Modifier.padding(start = 12.dp).weight(1f), singleLine = true, label = { Text("Paper ${i + 1}") },
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq))
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act))
         }
     }
-    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Restore the originals", color = W.text) }
+    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore the originals", color = W.text) }
 }
 
-// The printed page: weekday and date, a five-electron charge gauge to fill in by hand, the day number and an atom,
-// ruled lines, a large faint atom near the foot, and the log's catalog number.
+// The printed page: weekday and date, a five-cell gauge to fill in by hand, the day number and this look's emblem,
+// ruled lines, a large faint emblem near the foot, and the log's catalog number.
 @Composable
 private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     val tm = rememberTextMeasurer()
@@ -434,24 +445,26 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     Canvas(Modifier.fillMaxSize()) {
         ver
         withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) {
-            fun atom(cx: Float, cy: Float, rx: Float, ry: Float, c: Color, w: Float) {
-                for (a in listOf(0f, 60f, 120f)) rotate(a, Offset(cx, cy)) { drawOval(c, Offset(cx - rx, cy - ry), Size(rx * 2, ry * 2), style = Stroke(w)) }
-            }
-            atom(1290f, PAGE_H - 330, 250f, 88f, art, 2f); drawCircle(art, 10f, Offset(1290f, PAGE_H - 330))
+            // a leaf: the page's emblem; the gauge is five buds to fill in
+            fun shape(p: androidx.compose.ui.graphics.Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
+                withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
+            fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(LEAF, cx, cy + r * 0.6f, r / 14f, c, w)
+            fun cell(at: Offset, r: Float, c: Color) = shape(BUD, at.x, at.y + r, r / 9f, c, 2f)
+            emblem(1290f, PAGE_H - 330, 250f, art, 2f)
             for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
             drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
-            val lbl = TextStyle(fontFamily = michroma, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
+            val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
             val txt = { s: String, st: TextStyle, x: Float, base: Float, end: Boolean ->
                 // sizes are in page units; the canvas is already scaled to the page
                 val r = tm.measure(s, st.copy(fontSize = (st.fontSize.value / (density * fontScale)).sp))
                 drawText(r, topLeft = Offset(if (end) x - r.size.width else x, base - r.firstBaseline))
             }
-            txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = michroma, fontSize = 50.sp, color = head), 88f, 100f, false)
-            txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = michroma, fontSize = 24.sp, color = sub), 90f, 138f, false)
-            txt("CHARGE", lbl, 1014f, 58f, false)
-            for (i in 0 until 5) drawCircle(sub, 15f, Offset(1028f + i * 46, 88f), style = Stroke(2f))
+            txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
+            txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
+            txt("LEAVES", lbl, 1014f, 58f, false)
+            for (i in 0 until 5) cell(Offset(1028f + i * 46, 88f), 15f, sub)
             txt("DAY $doy", lbl, 1392f, 96f, true)
-            atom(1462f, 90f, 44f, 15f, head, 2f); drawCircle(head, 5f, Offset(1462f, 90f))
+            emblem(1462f, 90f, 44f, head, 2f)
             txt("${name.uppercase()}'S LOG", lbl, 90f, PAGE_H - 18, false)
             txt("NB-D" + date.toString().replace("-", ""), lbl, 1510f, PAGE_H - 18, true)
         }

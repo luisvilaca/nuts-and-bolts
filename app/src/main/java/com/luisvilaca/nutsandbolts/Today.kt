@@ -1,5 +1,9 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +42,10 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import kotlin.math.min
 import java.time.LocalDate
 
+// A day's progress over the slots its rows draw (a weekly habit's slots included), so Today, Habits, the week and
+// the calendar all count the same thing.
+fun slotProgress(s: Data, d: LocalDate) = orbitsFor(s, d).flatMap { it.slots }.let { a -> Progress(a.count { it.s == "done" }, a.count { it.s == "fail" }, a.size) }
+
 private val MOOD = listOf("Low power", "Running steady", "Fully charged")
 
 @Composable
@@ -45,8 +53,8 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val t = LocalDate.now()
     val run = s.habits.filter { active(it, t) }
-    val p = dayProgress(s, t)
-    val lit = "Today · ${p.done} of ${p.slots} lit" + if (p.fail > 0) " · ${p.fail} failed" else ""
+    val p = slotProgress(s, t)
+    val lit = "Today · ${p.done} of ${p.slots} blossoms open" + if (p.fail > 0) " · ${p.fail} failed" else ""
 
     val list = @Composable { lead: Boolean ->
         when {
@@ -84,23 +92,27 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
     }
 }
 
-// The bay with the robot's nameplate in its corner.
+// The bay, framed, with the robot's nameplate inside its top corner.
 @Composable
 fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip, plate: Boolean = true) {
     val s = store.s
     val tm = clock()
-    Box(modifier) {
-        Canvas(Modifier.fillMaxSize().padding(top = if (plate) 48.dp else 0.dp).clipToBounds().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
-            // frame the robot and its orbits (scene x 60..940, y 140..900), centred; the floor runs on to the edges
-            val k = min(size.width / 880f, size.height / 760f)
-            val ox = (size.width - 1000f * k) / 2; val oy = (size.height - 760f * k) / 2 - 140f * k
-            drawRect(Brush.verticalGradient(listOf(FLOOR, W.ground), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
-            drawRect(W.steel.copy(alpha = 0.12f), Offset(0f, oy + 692f * k), Size(size.width, 8f * k))
+    val all = orbits.flatMap { it.slots }
+    val done = all.count { it.s == "done" }
+    Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp))) {
+        Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
+            // frame the robot and its bay (scene x 60..940, y 140..900), centred; the floor runs on to the edges
+            val band = if (plate) 72.dp.toPx() else 0f
+            val k = min(size.width / 880f, (size.height - band) / 760f)
+            val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 140f * k
+            drawRect(Brush.verticalGradient(listOf(Color(0xFF0F2424), W.ground)))
+            drawRect(Brush.verticalGradient(listOf(FLOOR, W.rail), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
+            drawRect(W.steel.copy(alpha = 0.1f), Offset(0f, oy + 692f * k), Size(size.width, 6f * k))
             withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, tm, store.react, orbits, store.fresh, equip, waiting = s.habits.isEmpty() && plate) }
         }
-        if (plate) Column(Modifier.padding(start = 28.dp, top = 4.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
+        if (plate) Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
-            Text(MOOD[mood(s)], style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Text(MOOD[mood(s)] + if (orbits.isNotEmpty()) " · tending ${plural(min(orbits.size, 6), "plant")}" else "", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }
     }
 }
@@ -113,8 +125,8 @@ fun Attributes(s: Data) = androidx.compose.foundation.layout.BoxWithConstraints 
         val v = s.stats.getValue(e.key)
         Row(m.padding(vertical = 6.dp).semantics(mergeDescendants = true) { contentDescription = "${e.value.name}, $v of 100" }, verticalAlignment = Alignment.CenterVertically) {
             Icon(ICONS.getValue(e.key), null, Modifier.size(20.dp), tint = W.steel)
-            Column(Modifier.padding(start = 10.dp).weight(0.9f)) {
-                Text(e.value.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Column(Modifier.padding(start = 10.dp).weight(1.1f)) {
+                Text(e.value.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, softWrap = false)
                 Text(e.value.gloss, style = MaterialTheme.typography.labelMedium, color = W.dim)
             }
             Gauge(v / 100f, Modifier.weight(1.4f))
@@ -125,10 +137,10 @@ fun Attributes(s: Data) = androidx.compose.foundation.layout.BoxWithConstraints 
     else Column { rows.forEach { one(it, Modifier.fillMaxWidth()) } }
 }
 
-// A polished steel bar on a dark track.
+// A steel bar on a dark track.
 @Composable
 fun Gauge(v: Float, modifier: Modifier) = Box(modifier.height(8.dp).clip(CircleShape).background(W.line)) {
-    Box(Modifier.fillMaxWidth(v.coerceIn(0f, 1f)).fillMaxHeight().background(Brush.horizontalGradient(listOf(W.joint, W.text))))
+    Box(Modifier.fillMaxWidth(v.coerceIn(0f, 1f)).fillMaxHeight().background(W.steel))
 }
 
 @Composable
@@ -136,11 +148,11 @@ fun Week(s: Data, ui: Ui) {
     val t = LocalDate.now()
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         (0..6L).map { weekStart(t).plusDays(it) }.forEach { d ->
-            val p = dayProgress(s, d)
+            val p = slotProgress(s, d)
             Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable { ui.date = d; ui.tab = "habits" }.padding(6.dp)
                 .semantics(mergeDescendants = true) { contentDescription = "${d.format(dayFmt)}, ${p.done} of ${p.slots} done" + if (p.fail > 0) ", ${p.fail} failed" else "" },
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                MiniAtom(p, d > t, Modifier.size(42.dp))
+                DayMark(p, d > t, Modifier.size(42.dp), today = d == t)
                 Text(DOW[d.dayOfWeek.value - 1], style = MaterialTheme.typography.labelMedium, color = if (d == t) W.text else W.dim)
             }
         }
@@ -159,10 +171,10 @@ fun newId() = "h" + System.currentTimeMillis().toString(36) + (0..999).random()
 
 @Composable
 fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
-    Text("Nothing in orbit yet", style = MaterialTheme.typography.headlineSmall)
-    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes an orbit around ${store.s.name}.",
+    Text("Nothing planted yet", style = MaterialTheme.typography.headlineSmall)
+    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes a mechanical flower that ${store.s.name} tends.",
         Modifier.padding(top = 8.dp, bottom = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
-    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq)) {
+    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
         Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))
     }
     Text("Or start from one of these:", Modifier.padding(top = 20.dp, bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
@@ -171,7 +183,7 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
             androidx.compose.material3.SuggestionChip(onClick = {
                 store.change { habits += Habit(newId(), h.name, h.kind, h.per, h.target, h.stat, h.weight, start = LocalDate.now()) }
             }, label = { Text("${h.name} · ${h.target} a ${h.per}") }, Modifier.height(40.dp),
-                border = androidx.compose.material3.SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.orbit),
+                border = androidx.compose.material3.SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
                 colors = androidx.compose.material3.SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))
         }
     }
