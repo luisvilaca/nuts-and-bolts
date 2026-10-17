@@ -90,13 +90,13 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     val s = store.s
     val tm = clock()
     Box(modifier) {
-        Canvas(Modifier.fillMaxSize().clipToBounds().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
+        Canvas(Modifier.fillMaxSize().padding(top = if (plate) 48.dp else 0.dp).clipToBounds().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
             // frame the robot and its orbits (scene x 60..940, y 140..900), centred; the floor runs on to the edges
             val k = min(size.width / 880f, size.height / 760f)
             val ox = (size.width - 1000f * k) / 2; val oy = (size.height - 760f * k) / 2 - 140f * k
-            drawRect(FLOOR, Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
+            drawRect(Brush.verticalGradient(listOf(FLOOR, W.ground), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
             drawRect(W.steel.copy(alpha = 0.12f), Offset(0f, oy + 692f * k), Size(size.width, 8f * k))
-            withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, tm, store.react, orbits, store.fresh, equip) }
+            withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, tm, store.react, orbits, store.fresh, equip, waiting = s.habits.isEmpty() && plate) }
         }
         if (plate) Column(Modifier.padding(start = 28.dp, top = 4.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))

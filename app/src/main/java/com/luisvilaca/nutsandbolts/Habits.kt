@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -54,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.contentDescription
@@ -84,23 +87,29 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     val p = dayProgress(s, d)
 
     val body = @Composable {
+        val views = @Composable { m: Modifier ->
+            SingleChoiceSegmentedButtonRow(m) {
+                listOf("day" to "Day", "cal" to "Calendar", "hist" to "History").forEachIndexed { i, (k, v) ->
+                    SegmentedButton(view == k, { view = k; month = YearMonth.from(d) }, SegmentedButtonDefaults.itemShape(i, 3), icon = {},
+                        colors = segColors()) { Text(v, maxLines = 1) }
+                }
+            }
+        }
+        // a narrow column gives the view switch its own line
+        BoxWithConstraints { val narrow = maxWidth < 560.dp; Column {
+        if (narrow) views(Modifier.fillMaxWidth().padding(bottom = 8.dp))
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             when (view) {
                 "day" -> Stepper(d.format(shortFmt), { ui.date = d.minusDays(1) }, { ui.date = d.plusDays(1) })
                 "cal" -> Stepper(month.format(monthFmt), { month = month.minusMonths(1) }, { month = month.plusMonths(1) })
             }
             if (view == "day" && d != t) TextButton({ ui.date = t }) { Text("Back to today", color = W.turq) }
-            Spacer(Modifier.weight(1f))
-            SingleChoiceSegmentedButtonRow {
-                listOf("day" to "Day", "cal" to "Calendar", "hist" to "History").forEachIndexed { i, (k, v) ->
-                    SegmentedButton(view == k, { view = k; month = YearMonth.from(d) }, SegmentedButtonDefaults.itemShape(i, 3), icon = {},
-                        colors = segColors()) { Text(v) }
-                }
-            }
+            if (!narrow) { Spacer(Modifier.weight(1f)); views(Modifier) }
         }
+        } }
         val run = s.habits.filter { active(it, d) }
         when {
-            view == "cal" -> Month(month, { MiniAtom(dayProgress(s, it), it > t, Modifier.size(30.dp)) }, ahead = true) { ui.date = it; view = "day" }
+            view == "cal" -> Month(month, { MiniAtom(dayProgress(s, it), it > t, Modifier.size(26.dp)) }, ahead = true) { ui.date = it; view = "day" }
             s.habits.isEmpty() -> Empty(store, ui)
             view == "hist" -> History(s)
             run.isEmpty() -> Note("No habits run on this day.")
@@ -123,7 +132,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                 Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 96.dp)) { body() }
             }
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 96.dp)) {
-            Header("Habits", null, store, ui, lay)
+            Header("Habits", null, store, ui, lay, badge = true)
             Text(summary(s, d, p), Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             body()
         }
@@ -154,20 +163,24 @@ fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(vertical
 fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, open: (LocalDate) -> Unit) {
     val t = LocalDate.now()
     val lead = m.atDay(1).dayOfWeek.value - 1
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f), style = Label) } }
+    // a hairline grid: each week a ruled row, the day's mark under its number
+    Column {
+        Row(Modifier.padding(bottom = 6.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
         (0 until (lead + m.lengthOfMonth() + 6) / 7).forEach { w ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.material3.HorizontalDivider(color = W.line)
+            Row {
                 (0..6).forEach { i ->
                     val n = w * 7 + i - lead + 1
                     if (n < 1 || n > m.lengthOfMonth()) Spacer(Modifier.weight(1f)) else {
                         val d = m.atDay(n)
                         val off = d > t && !ahead
-                        Box(Modifier.weight(1f).aspectRatio(1.15f).clip(RoundedCornerShape(12.dp)).background(W.rail)
-                            .border(if (d == t) 2.dp else 1.dp, if (d == t) W.turq else W.line, RoundedCornerShape(12.dp))
-                            .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(8.dp)) {
-                            Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.orbit else W.text)
-                            Box(Modifier.align(Alignment.BottomEnd)) { mark(d) }
+                        Column(Modifier.weight(1f).heightIn(min = 64.dp).aspectRatio(1.25f).clip(RoundedCornerShape(10.dp))
+                            .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(6.dp)) {
+                            Box(Modifier.size(30.dp).border(2.dp, if (d == t) W.turq else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
+                                Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.orbit else W.text)
+                            }
+                            Spacer(Modifier.weight(1f))
+                            Box(Modifier.align(Alignment.End)) { mark(d) }
                         }
                     }
                 }
@@ -231,8 +244,22 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         else -> null
     }
     val seg = @Composable { opts: List<Pair<String, String>>, cur: String, set: (String) -> Unit ->
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            opts.forEachIndexed { i, (k, v) -> SegmentedButton(cur == k, { set(k) }, SegmentedButtonDefaults.itemShape(i, opts.size), icon = {}, colors = segColors()) { Text(v, maxLines = 2) } }
+        // past two options a narrow form lays the choices out two to a row
+        BoxWithConstraints {
+            if (opts.size > 2 && maxWidth < 560.dp) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                opts.chunked(2).forEach { r ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        r.forEach { (k, v) ->
+                            FilterChip(cur == k, { set(k) }, { Text(v, Modifier.padding(vertical = 8.dp)) }, Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.steel, selectedLabelColor = W.ground, labelColor = W.text),
+                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.orbit))
+                        }
+                        if (r.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            } else SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                opts.forEachIndexed { i, (k, v) -> SegmentedButton(cur == k, { set(k) }, SegmentedButtonDefaults.itemShape(i, opts.size), icon = {}, colors = segColors()) { Text(v, maxLines = 2) } }
+            }
         }
     }
     val field = @Composable { label: String, content: @Composable () -> Unit ->
@@ -241,7 +268,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay)
+        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay, badge = true)
         Column(Modifier.widthIn(max = 720.dp)) {
             OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Name") }, placeholder = { Text("Read 20 minutes") }, singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq, focusedLabelColor = W.turq))
