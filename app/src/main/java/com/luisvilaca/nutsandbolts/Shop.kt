@@ -1,5 +1,6 @@
 package com.luisvilaca.nutsandbolts
 
+import java.time.LocalDate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -56,7 +57,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     val detail = @Composable { m: Modifier -> Detail(store, ui, sel, m) }
     val catalog = @Composable {
         SecondaryScrollableTabRow(SLOTS.keys.indexOf(cat), containerColor = W.ground, contentColor = W.text, edgePadding = 0.dp, divider = {},
-            indicator = { TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(SLOTS.keys.indexOf(cat)), color = W.turq) }) {
+            indicator = { TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(SLOTS.keys.indexOf(cat)), color = W.act) }) {
             SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k; pick = null }, text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
         }
         BoxWithConstraints(Modifier.padding(top = 16.dp)) {
@@ -76,14 +77,14 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(0.46f).fillMaxHeight()) {
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), emptyList(), tryOn, plate = false)
+                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
                 detail(Modifier.padding(start = 28.dp, end = 12.dp, bottom = 20.dp))
             }
             Column(Modifier.weight(0.54f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { catalog() }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(300.dp), emptyList(), tryOn, plate = false)
+        BayPanel(store, Modifier.fillMaxWidth().height(300.dp), orbitsFor(store.s, LocalDate.now()), tryOn, plate = false)
         detail(Modifier.padding(vertical = 12.dp))
         catalog()
     }
@@ -103,7 +104,7 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
             Text("${p.no} · ${SLOTS[p.slot]}", style = Label)
             Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, has) }
         }
-        val btn = ButtonDefaults.buttonColors(W.turq, W.onTurq, W.raised, W.dim)
+        val btn = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)
         when {
             !has -> Button(onClick = {
                 val before = s.equip[p.slot]
@@ -115,8 +116,8 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                 }
             }, enabled = need.isEmpty(), modifier = Modifier.height(48.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
             !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(48.dp), shape = CircleShape, colors = btn) { Text(words.first) }
-            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Take off", color = W.text) }
-            else -> Text(words.second, style = MaterialTheme.typography.labelLarge, color = W.turq)
+            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
+            else -> Text(words.second, style = MaterialTheme.typography.labelLarge, color = W.act)
         }
     }
 }
@@ -141,7 +142,7 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(p.no, style = Label.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize))
         Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.turq) else Price(p, p.id in s.owned)
+            if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned)
         }
     }
 }

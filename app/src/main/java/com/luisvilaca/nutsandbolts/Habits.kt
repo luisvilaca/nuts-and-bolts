@@ -85,7 +85,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val d = ui.date
     val t = LocalDate.now()
-    val p = dayProgress(s, d)
+    val p = slotProgress(s, d)
 
     val body = @Composable {
         val views = @Composable { m: Modifier ->
@@ -104,13 +104,13 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                 "day" -> Stepper(d.format(shortFmt), { ui.date = d.minusDays(1) }, { ui.date = d.plusDays(1) })
                 "cal" -> Stepper(month.format(monthFmt), { month = month.minusMonths(1) }, { month = month.plusMonths(1) })
             }
-            if (view == "day" && d != t) TextButton({ ui.date = t }) { Text("Back to today", color = W.turq) }
+            if (view == "day" && d != t) TextButton({ ui.date = t }) { Text("Back to today", color = W.act) }
             if (!narrow) { Spacer(Modifier.weight(1f)); views(Modifier) }
         }
         } }
         val run = s.habits.filter { active(it, d) }
         when {
-            view == "cal" -> Month(month, { MiniAtom(dayProgress(s, it), it > t, Modifier.size(26.dp)) }, ahead = true) { ui.date = it; view = "day" }
+            view == "cal" -> Month(month, { DayMark(slotProgress(s, it), it > t, Modifier.size(26.dp)) }, ahead = true) { ui.date = it; view = "day" }
             s.habits.isEmpty() -> Empty(store, ui)
             view == "hist" -> History(s)
             run.isEmpty() -> Note("No habits run on this day.")
@@ -138,25 +138,25 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
             body()
         }
         ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null) }, onClick = { ui.edit = "" },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp), containerColor = W.turq, contentColor = W.onTurq)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp), containerColor = W.act, contentColor = W.onAct)
     }
 }
 
 private fun summary(s: Data, d: LocalDate, p: Progress) = when {
     s.habits.isEmpty() -> "No habits yet"
     d > LocalDate.now() -> "${plural(p.slots, "slot")} planned"
-    else -> "${p.done} of ${p.slots} lit" + if (p.fail > 0) ", ${p.fail} failed" else ""
+    else -> "${p.done} of ${p.slots} blossoms open" + if (p.fail > 0) ", ${p.fail} failed" else ""
 }
 
 @Composable
-fun segColors() = SegmentedButtonDefaults.colors(activeContainerColor = W.steel, activeContentColor = W.ground, inactiveContainerColor = W.ground,
-    inactiveContentColor = W.text, activeBorderColor = W.orbit, inactiveBorderColor = W.orbit)
+fun segColors() = SegmentedButtonDefaults.colors(activeContainerColor = W.raised, activeContentColor = W.text, inactiveContainerColor = W.ground,
+    inactiveContentColor = W.text, activeBorderColor = W.steel, inactiveBorderColor = W.edge)
 
 @Composable
 fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(verticalAlignment = Alignment.CenterVertically) {
     IconButton(prev) { Icon(ICONS.getValue("prev"), "Previous", tint = W.text) }
     Text(label, Modifier.widthIn(min = 120.dp), style = MaterialTheme.typography.titleMedium, maxLines = 1)
-    IconButton({ next?.invoke() }, enabled = next != null) { Icon(ICONS.getValue("next"), "Next", tint = if (next != null) W.text else W.orbit) }
+    IconButton({ next?.invoke() }, enabled = next != null) { Icon(ICONS.getValue("next"), "Next", tint = if (next != null) W.text else W.edge) }
 }
 
 // A month of day tiles; mark draws each day's sign. ahead: future days open too.
@@ -177,8 +177,8 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, o
                         val off = d > t && !ahead
                         Column(Modifier.weight(1f).height(cellH).clip(RoundedCornerShape(10.dp))
                             .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(6.dp)) {
-                            Box(Modifier.size(30.dp).border(2.dp, if (d == t) W.turq else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
-                                Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.orbit else W.text)
+                            Box(Modifier.size(30.dp).border(2.dp, if (d == t) W.act else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
+                                Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.edge else W.text)
                             }
                             Box(Modifier.width(30.dp).weight(1f), contentAlignment = Alignment.Center) { mark(d) }
                         }
@@ -210,7 +210,7 @@ private fun History(s: Data) {
                 val step = minOf(14f * density, size.width / maxOf(r.best, 1))
                 drawRoundRect(W.line, Offset.Zero, Size(size.width, size.height), CornerRadius(size.height / 2))
                 drawRoundRect(W.steel, Offset.Zero, Size(step * r.best, size.height), CornerRadius(size.height / 2), alpha = 0.55f)
-                drawRoundRect(W.turq, Offset.Zero, Size(step * r.now, size.height), CornerRadius(size.height / 2))
+                drawRoundRect(W.act, Offset.Zero, Size(step * r.now, size.height), CornerRadius(size.height / 2))
             }
         }
         androidx.compose.material3.HorizontalDivider(color = W.line)
@@ -252,8 +252,8 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         r.forEach { (k, v) ->
                             FilterChip(cur == k, { set(k) }, { Text(v, Modifier.padding(vertical = 8.dp)) }, Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.steel, selectedLabelColor = W.ground, labelColor = W.text),
-                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.orbit))
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
+                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.edge, selectedBorderColor = W.steel, selectedBorderWidth = 1.5.dp))
                         }
                         if (r.size == 1) Spacer(Modifier.weight(1f))
                     }
@@ -272,7 +272,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay, badge = true) // the form has no bay at any size
         Column(Modifier.widthIn(max = 720.dp)) {
             OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Name") }, placeholder = { Text("Read 20 minutes") }, singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq, focusedLabelColor = W.turq))
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act, focusedLabelColor = W.act))
             field("Type") {
                 seg(listOf("good" to "Build it", "bad" to "Break it"), kind) { kind = it }
                 Text("Build it: you earn each time you do it. Break it: you earn each time you resist it.", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
@@ -294,16 +294,16 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             field("Runs") {
                 FlowRow(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                     Text("From", style = MaterialTheme.typography.bodyLarge)
-                    OutlinedButton({ picking = "start" }, border = BorderStroke(1.dp, W.orbit)) { Text(start.format(shortFmt), color = W.text) }
+                    OutlinedButton({ picking = "start" }, border = BorderStroke(1.dp, W.edge)) { Text(start.format(shortFmt), color = W.text) }
                     Text("until", style = MaterialTheme.typography.bodyLarge)
                     Box(Modifier.widthIn(max = 320.dp)) { seg(listOf("never" to "Indefinitely", "on" to "A set day"), if (ends) "on" else "never") { ends = it == "on" } }
-                    if (ends) OutlinedButton({ picking = "end" }, border = BorderStroke(1.dp, W.orbit)) { Text(end?.format(shortFmt) ?: "Pick the day", color = W.text) }
+                    if (ends) OutlinedButton({ picking = "end" }, border = BorderStroke(1.dp, W.edge)) { Text(end?.format(shortFmt) ?: "Pick the day", color = W.text) }
                 }
                 FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DOW.forEachIndexed { i, n ->
                         FilterChip(i in days, { days = if (i in days) days - i else days + i }, { Text(n) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.steel, selectedLabelColor = W.ground, labelColor = W.text),
-                            border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.orbit))
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
+                            border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge, selectedBorderColor = W.steel, selectedBorderWidth = 1.5.dp))
                     }
                 }
             }
@@ -311,7 +311,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (h != null) TextButton({ confirm = true }) { Text("Delete habit", color = W.coral) }
                 Spacer(Modifier.weight(1f))
-                OutlinedButton({ ui.edit = null }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Cancel", color = W.text) }
+                OutlinedButton({ ui.edit = null }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Cancel", color = W.text) }
                 Button({
                     store.change {
                         val x = h ?: Habit(newId(), "").also { habits += it }
@@ -319,7 +319,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                         x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }
                     }
                     ui.edit = null
-                }, Modifier.height(48.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq, W.raised, W.dim)) {
+                }, Modifier.height(48.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
                     Text(if (h == null) "Add habit" else "Save changes")
                 }
             }
@@ -329,11 +329,11 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     picking?.let { which ->
         val st = rememberDatePickerState(initialSelectedDateMillis = (if (which == "start") start else end ?: start).millis())
         DatePickerDialog(onDismissRequest = { picking = null }, confirmButton = {
-            TextButton({ st.selectedDateMillis?.date()?.let { if (which == "start") start = it else end = it }; picking = null }) { Text("OK", color = W.turq) }
+            TextButton({ st.selectedDateMillis?.date()?.let { if (which == "start") start = it else end = it }; picking = null }) { Text("OK", color = W.act) }
         }, dismissButton = { TextButton({ picking = null }) { Text("Cancel", color = W.text) } }) { DatePicker(st) }
     }
     if (confirm && h != null) AlertDialog(onDismissRequest = { confirm = false },
-        title = { Text("Delete “${h.name}”?") }, text = { Text("Its orbit goes. What it already earned stays.") },
+        title = { Text("Delete “${h.name}”?") }, text = { Text("Its plant is pulled. What it already earned stays.") },
         confirmButton = { TextButton({ store.change { habits.remove(h) }; confirm = false; ui.edit = null }) { Text("Delete", color = W.coral) } },
         dismissButton = { TextButton({ confirm = false }) { Text("Keep it", color = W.text) } })
 }
