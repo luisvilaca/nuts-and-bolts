@@ -33,6 +33,8 @@ object W {
     val joint = Color(0xFF6C8F87)
     val glass = Color(0xFF081313)
     val grow = Color(0xFFE05AD0) // the grow light
+    val blossom = Color(0xFFFFB7C5) // a cherry blossom
+    val lily = Color(0xFFE8303F) // a red spider lily
 }
 
 private fun lexend(vararg w: Int) = FontFamily(w.map { Font(R.font.lexend, FontWeight(it), variationSettings = FontVariation.Settings(FontVariation.weight(it))) })

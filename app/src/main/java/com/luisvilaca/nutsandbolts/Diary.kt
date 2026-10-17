@@ -68,7 +68,10 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -204,7 +207,7 @@ private class Pad(val page: Page) {
     }
 }
 
-private class PenState { var sm = FloatArray(2); var last = FloatArray(3); var lastT = 0L; var nib = 0f; var pid = -1 }
+private class PenState { var sm = FloatArray(2); var last = FloatArray(3); var lastT = 0L; var nib = 0f; var pid = PointerId(-1); var pen = false }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -309,31 +312,40 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
             Box(Modifier.fillMaxWidth().aspectRatio(PAGE_W / PAGE_H).background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
                 Template(date, pad.page.paper, s.name, pad.ver)
                 Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Diary page for ${date.format(dayFmt)}" }
-                    .pointerInteropFilter { e ->
-                        val tool = e.getToolType(e.actionIndex)
-                        val isPen = tool == MotionEvent.TOOL_TYPE_STYLUS || tool == MotionEvent.TOOL_TYPE_ERASER
-                        if (isPen && !s.pen.seen) store.change { pen.seen = true }
-                        // palm rejection: once a pen has been used, a finger is left to scroll the page
-                        if (!isPen && s.pen.seen && pad.cur == null) return@pointerInteropFilter false
-                        val sc = PAGE_W / max(1, px.width)
-                        fun pt(x: Float, y: Float, pr: Float) = floatArrayOf(x * sc, y * sc, if (isPen) max(pr, 0.1f) else 0.5f)
-                        val rubbing = erase || tool == MotionEvent.TOOL_TYPE_ERASER || (e.buttonState and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
-                        when (e.actionMasked) {
-                            MotionEvent.ACTION_DOWN -> {
-                                ps.pid = e.getPointerId(0)
-                                pad.cur = InkStroke(s.pen.color, if (rubbing) ERASER_SIZES[s.pen.eraser].second / 5 else PEN_SIZES[s.pen.size].second, rubbing, FloatArray(0))
-                                ps.last = pt(e.x, e.y, e.pressure); ps.lastT = e.eventTime; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
-                                ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
-                                ring = if (rubbing) Offset(e.x, e.y) else null
-                                put(ps.sm[0], ps.sm[1], ps.nib)
-                            }
-                            MotionEvent.ACTION_MOVE -> {
-                                if (pad.cur == null) return@pointerInteropFilter true
+                    // A pen always writes; once a pen has been used, a finger scrolls (palm rejection). Every pointer is
+                    // consumed here while a stroke is live, before the scrolling page sees it, so a line drawn down the
+                    // page no longer drags the page and cuts the stroke, and a resting palm neither scrolls nor blocks the pen.
+                    .pointerInput(pad) {
+                        fun PointerType.pen() = this == PointerType.Stylus || this == PointerType.Eraser
+                        awaitPointerEventScope {
+                            while (true) {
+                                val ev = awaitPointerEvent()
+                                val s = store.s
+                                if (!s.pen.seen && ev.changes.any { it.type.pen() }) store.change { pen.seen = true }
+                                val sc = PAGE_W / max(1, px.width)
+                                fun pt(p: Offset, pr: Float) = floatArrayOf(p.x * sc, p.y * sc, if (ps.pen) max(pr, 0.1f) else 0.5f)
+                                if (pad.cur == null) {
+                                    val d = ev.changes.firstOrNull { it.changedToDown() && (it.type.pen() || !s.pen.seen) } ?: continue
+                                    ev.changes.forEach { it.consume() }
+                                    ps.pid = d.id; ps.pen = d.type.pen()
+                                    val rubbing = erase || d.type == PointerType.Eraser || ((ev.motionEvent?.buttonState ?: 0) and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
+                                    pad.cur = InkStroke(s.pen.color, if (rubbing) ERASER_SIZES[s.pen.eraser].second / 5 else PEN_SIZES[s.pen.size].second, rubbing, FloatArray(0))
+                                    ps.last = pt(d.position, d.pressure); ps.lastT = d.uptimeMillis; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
+                                    ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
+                                    ring = if (rubbing) d.position else null
+                                    put(ps.sm[0], ps.sm[1], ps.nib)
+                                    continue
+                                }
+                                val c = ev.changes.firstOrNull { it.id == ps.pid }
+                                ev.changes.forEach { it.consume() }
+                                if (c == null || !c.pressed) { finish(c != null, (c?.position?.x ?: 0f) * sc, (c?.position?.y ?: 0f) * sc); ring = null; continue }
                                 val k = STAB[s.pen.stab].second
-                                for (i in 0..e.historySize) {
-                                    val h = i < e.historySize
-                                    val raw = pt(if (h) e.getHistoricalX(i) else e.x, if (h) e.getHistoricalY(i) else e.y, if (h) e.getHistoricalPressure(i) else e.pressure)
-                                    val tm = if (h) e.getHistoricalEventTime(i) else e.eventTime
+                                // past samples carry no pressure of their own, so it is eased from the last sample to this one
+                                val p0 = ps.last[2]; val hs = c.historical
+                                for (i in 0..hs.size) {
+                                    val h = i < hs.size
+                                    val raw = pt(if (h) hs[i].position else c.position, p0 + (c.pressure - p0) * (i + 1) / (hs.size + 1))
+                                    val tm = if (h) hs[i].uptimeMillis else c.uptimeMillis
                                     val speed = hypot(raw[0] - ps.last[0], raw[1] - ps.last[1]) / max(1L, tm - ps.lastT) // page units per ms
                                     ps.nib += (min(1f, raw[2] * max(0.45f, 1.15f - NIB_SPEED * speed)) - ps.nib) * NIB_EASE
                                     ps.last = raw; ps.lastT = tm
@@ -341,12 +353,9 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     ps.sm[0] += (raw[0] - ps.sm[0]) * k; ps.sm[1] += (raw[1] - ps.sm[1]) * k
                                     put(ps.sm[0], ps.sm[1], ps.nib)
                                 }
-                                if (pad.cur?.e == true) ring = Offset(e.x, e.y)
+                                if (pad.cur?.e == true) ring = c.position
                             }
-                            MotionEvent.ACTION_UP -> { finish(true, e.x * sc, e.y * sc); ring = null }
-                            MotionEvent.ACTION_CANCEL -> { finish(false, 0f, 0f); ring = null }
                         }
-                        true
                     }) {
                     pad.ver; live // redraw when either changes
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
