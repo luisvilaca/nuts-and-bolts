@@ -121,13 +121,13 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
     val n = s.diary.count { YearMonth.from(it) == month }
     val sum = "${if (n == 0) "No pages" else plural(n, "page")} written in ${month.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))}"
     val write = @Composable {
-        Button({ ui.page = t }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.turq, W.onTurq)) {
+        Button({ ui.page = t }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
             Icon(ICONS.getValue("diary"), null, Modifier.size(20.dp)); Text(if (t in s.diary) "Open today's page" else "Write today's page", Modifier.padding(start = 8.dp))
         }
     }
     val cal = @Composable {
         Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
-        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.turq) }, ahead = false) { ui.page = it }
+        Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false) { ui.page = it }
     }
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Diary", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
@@ -374,7 +374,7 @@ private fun Tool(icon: String, label: String, on: Boolean, more: Boolean = false
     Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (on) W.raised else Color.Transparent)
         .combinedClickable(onClickLabel = label, onLongClick = onLong, onClick = onClick).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Icon(ICONS.getValue(icon), null, tint = if (on) W.text else W.dim)
-        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(16.dp, 2.dp).background(W.turq))
+        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(16.dp, 2.dp).background(W.act))
         if (more) Canvas(Modifier.align(Alignment.BottomEnd).padding(6.dp).size(5.dp)) {
             drawPath(Path().apply { moveTo(size.width, 0f); lineTo(size.width, size.height); lineTo(0f, size.height); close() }, W.dim)
         }
@@ -386,7 +386,7 @@ private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, onClic
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
     Box(Modifier.size(44.dp).clip(CircleShape).clickable(onClickLabel = label, onClick = onClick).semantics { contentDescription = label; selected = on }, contentAlignment = Alignment.Center) {
         Box(Modifier.size(if (on) 30.dp else 26.dp).clip(shape).background(hex(c))
-            .border(if (on) 2.dp else 1.dp, if (on) W.text else W.orbit, shape))
+            .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
     }
 }
 
@@ -409,15 +409,15 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
     store.s.papers.forEachIndexed { i, c ->
         var txt by remember(c) { mutableStateOf(c) }
         Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.orbit, RoundedCornerShape(6.dp)))
+            Box(Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.edge, RoundedCornerShape(6.dp)))
             OutlinedTextField(txt, { v ->
                 txt = "#" + v.filter { it.isLetterOrDigit() }.uppercase().filter { it in "0123456789ABCDEF" }.take(6)
                 if (txt.length == 7) { changed(i, txt); store.change { papers[i] = txt } }
             }, Modifier.padding(start = 12.dp).weight(1f), singleLine = true, label = { Text("Paper ${i + 1}") },
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq))
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act))
         }
     }
-    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Restore the originals", color = W.text) }
+    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore the originals", color = W.text) }
 }
 
 // The printed page: weekday and date, a five-electron charge gauge to fill in by hand, the day number and an atom,
@@ -440,14 +440,14 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
             atom(1290f, PAGE_H - 330, 250f, 88f, art, 2f); drawCircle(art, 10f, Offset(1290f, PAGE_H - 330))
             for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
             drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
-            val lbl = TextStyle(fontFamily = michroma, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
+            val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
             val txt = { s: String, st: TextStyle, x: Float, base: Float, end: Boolean ->
                 // sizes are in page units; the canvas is already scaled to the page
                 val r = tm.measure(s, st.copy(fontSize = (st.fontSize.value / (density * fontScale)).sp))
                 drawText(r, topLeft = Offset(if (end) x - r.size.width else x, base - r.firstBaseline))
             }
-            txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = michroma, fontSize = 50.sp, color = head), 88f, 100f, false)
-            txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = michroma, fontSize = 24.sp, color = sub), 90f, 138f, false)
+            txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
+            txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
             txt("CHARGE", lbl, 1014f, 58f, false)
             for (i in 0 until 5) drawCircle(sub, 15f, Offset(1028f + i * 46, 88f), style = Stroke(2f))
             txt("DAY $doy", lbl, 1392f, 96f, true)

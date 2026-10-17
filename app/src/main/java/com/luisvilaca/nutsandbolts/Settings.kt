@@ -84,21 +84,21 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         Column(Modifier.widthIn(max = 720.dp)) {
             SectionLabel("Robot")
             OutlinedTextField(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, Modifier.fillMaxWidth(), label = { Text("Name") }, singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq, focusedLabelColor = W.turq))
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act, focusedLabelColor = W.act))
 
             SectionLabel("Backup")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton({ save.launch("nuts-and-bolts-${LocalDate.now()}.json") }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Save a backup", color = W.text) }
-                OutlinedButton({ open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.orbit)) { Text("Restore a backup", color = W.text) }
+                OutlinedButton({ save.launch("nuts-and-bolts-${LocalDate.now()}.json") }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Save a backup", color = W.text) }
+                OutlinedButton({ open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore a backup", color = W.text) }
                 Text(s.backedUp?.let { "Last backup " + it.format(DateTimeFormatter.ofPattern("d MMMM", Locale.UK)) } ?: "Never backed up", style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
             Text("One file with every habit, mark, part and diary page. Keep a copy off this device, in Drive for example.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Daily reminder")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(s.remind.on, { remind(it) }, colors = SwitchDefaults.colors(checkedTrackColor = W.turq, checkedThumbColor = W.onTurq, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.orbit))
+                Switch(s.remind.on, { remind(it) }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
                 Text(if (s.remind.on) "On at" else "Off", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
-                OutlinedButton({ clock = true }, enabled = s.remind.on, border = BorderStroke(1.dp, W.orbit)) { Text(s.remind.time, style = Numeral, color = if (s.remind.on) W.text else W.dim) }
+                OutlinedButton({ clock = true }, enabled = s.remind.on, border = BorderStroke(1.dp, W.edge)) { Text(s.remind.time, style = Numeral, color = if (s.remind.on) W.text else W.dim) }
             }
             Text("A notification at this time, only on days with nothing logged yet.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             Spacer(Modifier.height(24.dp))
@@ -120,8 +120,8 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         val (h, m) = s.remind.time.split(":").map { it.toInt() }
         val st = rememberTimePickerState(h, m, is24Hour = true)
         AlertDialog(onDismissRequest = { clock = false }, text = {
-            TimePicker(st, colors = TimePickerDefaults.colors(selectorColor = W.turq, timeSelectorSelectedContainerColor = W.raised, clockDialColor = W.rail))
-        }, confirmButton = { TextButton({ remind(true, "%02d:%02d".format(st.hour, st.minute)); clock = false }) { Text("OK", color = W.turq) } },
+            TimePicker(st, colors = TimePickerDefaults.colors(selectorColor = W.act, timeSelectorSelectedContainerColor = W.raised, clockDialColor = W.rail))
+        }, confirmButton = { TextButton({ remind(true, "%02d:%02d".format(st.hour, st.minute)); clock = false }) { Text("OK", color = W.act) } },
             dismissButton = { TextButton({ clock = false }) { Text("Cancel", color = W.text) } })
     }
 }
