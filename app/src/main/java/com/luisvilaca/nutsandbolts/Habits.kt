@@ -119,22 +119,10 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     Box(Modifier.fillMaxSize()) {
-        if (lay.wide) Column(Modifier.fillMaxSize()) {
-            Header("Habits", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
-            Row(Modifier.fillMaxSize()) {
-                Column(Modifier.weight(0.3f).fillMaxHeight()) {
-                    Column(Modifier.padding(start = 28.dp)) {
-                        Text(if (d == t) "Today" else d.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), style = MaterialTheme.typography.titleLarge)
-                        Text(d.format(DateTimeFormatter.ofPattern("d MMMM", Locale.UK)), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-                        Text(summary(s, d, p), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-                    }
-                    BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(s, d), plate = false)
-                }
-                Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 96.dp)) { body() }
-            }
-        } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 96.dp)) {
-            Header("Habits", null, store, ui, lay, badge = !lay.wide)
-            Text(summary(s, d, p), Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        // the bay lives on Today and Shop; here the robot rides small in the header and the planner takes the width
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 28.dp else 20.dp).padding(bottom = 96.dp)) {
+            Header("Habits", summary(s, d, p).takeIf { lay.wide }, store, ui, lay, badge = true)
+            if (!lay.wide) Text(summary(s, d, p), Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             body()
         }
         ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null) }, onClick = { ui.edit = "" },

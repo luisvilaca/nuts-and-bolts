@@ -240,8 +240,8 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 Two window classes drive everything. A window is **wide** when it is landscape and at least 600dp wide: the Material navigation rail sits at the left and screens split into two panes. Otherwise the Material navigation bar sits at the foot and screens stack in one scroll. A window whose short side is under 600dp is a **phone**.
 
 - **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the list or catalogue 54% at right (8dp start, 32dp end padding). Shop's part detail sits under its bay.
-- **Wide Habits and Diary:** a 30% column with the day or month summary over a smaller bay, content at right (70%).
-- **Stacked:** 20dp side gutters; the bay sits under the header (560dp tall on a tablet in portrait, 360dp on a phone; 300dp on Shop). Habits, Diary and the form show a robot badge instead of a bay.
+- **Habits and Diary:** no bay at any size; the robot rides as a badge in the header, the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
+- **Stacked:** 20dp side gutters; the bay sits under the header (560dp tall on a tablet in portrait, 360dp on a phone; 300dp on Shop). Habits, Diary and the form show the robot badge.
 - **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.
 - **Rows:** 12dp vertical padding, a hairline under each. A habit row whose column is under 560dp puts its buttons on a second line with Done filling the width.
 - **Phone Today:** the next habit still to log leads the list at display size with a 64dp Done; the rest follow at normal size.
@@ -281,7 +281,7 @@ Confident on the primary, quiet on the rest.
 
 ### Cards / Containers
 - **Bay panel:** the bay clipped to 20dp corners inside 12dp of padding, with the robot's nameplate (name in tracked caps, mood and "building N frames" in dim body) 20dp inside its top corner on Today.
-- **Shop part tile:** one raised-graphite tile per part, 12dp corners, square art; the selection ring (2dp cool steel) sits on the tile itself. Name, catalogue number and price or status sit beneath it, unboxed.
+- **Shop part tile:** one raised-graphite tile per part, 12dp corners, square art; the selection ring (2dp cool steel) sits on the tile itself. Name and price or status sit beneath it (catalogue numbers stay in the data, never on screen), unboxed.
 - **Menus:** raised graphite, 16dp corners, 16dp padding, 300dp wide.
 - **Shadow Strategy:** none (see Elevation & Depth).
 
@@ -339,3 +339,14 @@ One frame clock drives every animation and freezes when the system's animations 
 - **Don't** add ornaments beyond bolts and frames, or bring back plants.
 - **Don't** put squared or grid paper anywhere; calendars use ruled rows, the diary ruled lines.
 - **Don't** draw icons outside the robot grammar (24dp, 1.8 stroke, square caps, pivot joints) or substitute glyphs and emoji for them.
+
+## Parts catalogue
+
+The shop sells parts in six slots. Every part is drawn from the robot roles in Theme.kt, so a new part needs no new colours. The workshop line added with the Reactor Workshop look:
+- **Welding Mask** (head): a box head behind a dark riveted visor; its eyes are one Cherenkov slit that blinks like a pair.
+- **Tokamak** (body): a rounded body with a torus window whose blue plasma ring circulates.
+- **Wrenches** and **Arc Welders** (arms): open-end wrenches; torch nozzles with a pulsing blue arc.
+- **Hydraulics** (legs): piston cylinders over flat feet.
+- **Dosimeter** and **Hard Hat** (accessories): a chest badge with a glowing reading; a gold hard hat with a blue lamp.
+- **Reactor Hall** (base, tier 5): two cooling towers breathing steam on the left of the bay.
+- The Aquarium became the **Coolant Tank** (bubbles instead of plants), and the Sprout the **Isotope Antenna**. No plants anywhere.

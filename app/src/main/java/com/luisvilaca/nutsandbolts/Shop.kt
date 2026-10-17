@@ -101,8 +101,8 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.titleLarge)
-            Text("${p.no} · ${SLOTS[p.slot]}", style = Label)
-            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, has) }
+            // owned parts say what they are through the button alone
+            if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false) }
         }
         val btn = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)
         when {
@@ -140,7 +140,6 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
         Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
             .border(if (sel) 2.dp else 0.dp, if (sel) W.steel else Color.Transparent, RoundedCornerShape(12.dp))) { thumb(p) }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(p.no, style = Label.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize))
         Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned)
         }
