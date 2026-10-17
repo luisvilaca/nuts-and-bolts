@@ -204,9 +204,9 @@ A dark workshop lit by one small reactor, where green means ready or pressable a
 The diary page keeps the owner's own materials, separate from the app palette (owner-pinned). Papers (three replaceable slots, each page keeps the paper it was written on): Matte Black (paper-matte-black), Cream (paper-cream), Night (paper-night). Inks with the owner's roles: Ice Blue (ink-ice-blue) for text, Matrix Green (ink-matrix-green) for headers, Electric Cyan (ink-electric-cyan) for vectors and equations, Neon Fuchsia (ink-neon-fuchsia) for annotations, Matte Black (ink-matte-black) for cream paper. The printed template follows the paper: on dark paper the weekday, header rule and small bolt emblem are Matrix Green, the date and field labels Ice Blue at 72%, the rules white at 15% and the large foot emblem Electric Cyan at 20%; on light paper all of it is Matte Black at matching strengths.
 
 ### Named Rules
-**The Ready Or Pressable Rule.** Ready green appears only where something can be pressed or marks where the owner is (plus the robot's eyes, smile and platform ring). Done is shown by a steel bolt, not by green. Selection that is not a place is cool steel.
+**The Ready Or Pressable Rule.** Ready green appears only where something can be pressed or marks where the owner is (plus the starter robot's eyes, smile and the platform ring; painted parts carry their finish's own eye colour). Done is shown by a steel bolt, not by green. Selection that is not a place is cool steel.
 
-**The Light Stays In The Reactor Rule.** Cherenkov blue is light, not paint: it lives inside the bay as the reactor and what it powers, and never colours a control, a label or a mark.
+**The Light Stays In The Bay Rule.** Cherenkov blue and each room's light colour are light, not paint: they live inside the bay (the reactor core, the light rail and its cone, the room's glow) and never colour a control, a label or a mark.
 
 **The One Meaning Rule.** Gold is nuts, coral is failed or destructive. Neither decorates, warns generally, or adds variety.
 
@@ -241,7 +241,7 @@ Two window classes drive everything. A window is **wide** when it is landscape a
 
 - **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the list or catalogue 54% at right (8dp start, 32dp end padding). Shop's part detail sits under its bay.
 - **Habits and Diary:** no bay at any size; the robot rides as a badge in the header, the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
-- **Stacked:** 20dp side gutters; the bay sits under the header (560dp tall on a tablet in portrait, 360dp on a phone; 300dp on Shop). Habits, Diary and the form show the robot badge.
+- **Stacked:** 20dp side gutters; the bay sits under the header (560dp tall on a tablet in portrait, 360dp on a phone, the same on Today and Shop). Habits, Diary and the form show the robot badge.
 - **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.
 - **Rows:** 12dp vertical padding, a hairline under each. A habit row whose column is under 560dp puts its buttons on a second line with Done filling the width.
 - **Phone Today:** the next habit still to log leads the list at display size with a 64dp Done; the rest follow at normal size.
@@ -342,7 +342,20 @@ One frame clock drives every animation and freezes when the system's animations 
 
 ## Parts catalogue
 
-The shop sells parts in six slots. Every part is drawn from the robot roles in Theme.kt, so a new part needs no new colours. The workshop line added with the Reactor Workshop look:
+The shop sells parts in six slots, drawn from the robot roles in Theme.kt.
+
+**One bay, everywhere.** Today, Shop and the base tiles all draw the same room picture with the same framing (scene x 40..960, y 120..880 always visible), so trying a part on in the Shop shows it exactly as it will look on Today.
+
+**Finishes.** The starter parts keep the white factory shell; every other part carries its own finish (shell gradient, flat panels, joints, eyes and glass): Copper, Cobalt, Signal orange, Mint enamel, Stealth, Brass, Violet, Uranium green, Chrome, Hazard yellow, Rose and Cherenkov navy. A robot built from the catalogue is a deliberate patchwork; the neck takes the body's joint colour.
+
+**Rooms.** Each base is a room with its own wall, floor and light colour, which tints the skirting, the light rail and its cone:
+- **Charging Bay:** graphite and Cherenkov blue; panelled walls and a charging station whose screen shows the Battery attribute in five cells, cabled to the platform.
+- **Workshop:** warm wood and amber light; a pegboard with spanner, hammer and screwdriver, copper, teal and amber parts bins, hazard tape along the skirting.
+- **Observatory:** violet night; a bolted porthole between the rail's wires onto a nebula and a ringed sunset planet.
+- **Star Deck:** teal station light; a panoramic window onto a planet's limb and its moon, and a console of coloured keys.
+- **Reactor Hall:** uranium green; an arched window onto cooling towers breathing steam at dusk, the radiation sign, and coolant pipes with an orange valve running into the reactor.
+
+**The reactor** under the bench in every room: a domed steel vessel on a plinth with two bolted flanges, a viewport where four fuel rods stand dark against Cherenkov light (brighter with Core), a conduit up to the bench, and a pressure gauge whose needle reads the Core attribute. The workshop line added with the Reactor Workshop look:
 - **Welding Mask** (head): a box head behind a dark riveted visor; its eyes are one Cherenkov slit that blinks like a pair.
 - **Tokamak** (body): a rounded body with a torus window whose blue plasma ring circulates.
 - **Wrenches** and **Arc Welders** (arms): open-end wrenches; torch nozzles with a pulsing blue arc.

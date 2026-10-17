@@ -31,7 +31,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
-class Shape(val roles: List<String>, val d: String, val m: FloatArray? = null, val layer: String = "", val pulse: Boolean = false, val tier: Int = 0) {
+class Shape(val roles: List<String>, val d: String, val m: FloatArray? = null, val layer: String = "", val pulse: Boolean = false) {
     val path: Path by lazy {
         PathParser().parsePathString(d).toPath().apply {
             if (m != null) transform(Matrix().apply { values[0] = m[0]; values[1] = m[1]; values[4] = m[2]; values[5] = m[3]; values[12] = m[4]; values[13] = m[5] })
@@ -42,7 +42,7 @@ class Shape(val roles: List<String>, val d: String, val m: FloatArray? = null, v
 class Part(
     val id: String, val slot: String, val name: String, val no: String,
     val bolts: Int = 0, val nuts: Int = 0, val box: FloatArray? = null, val at: String? = null, val tier: Int = 0,
-    val pivots: Map<String, Offset> = emptyMap(), val shapes: List<Shape> = emptyList(),
+    val pivots: Map<String, Offset> = emptyMap(), val shapes: List<Shape> = emptyList(), val pal: Map<String, Ink> = emptyMap(),
 )
 
 val PART = PARTS.associateBy { it.id }
@@ -67,10 +67,11 @@ fun since(t: Long, at: Long) = if (t == 0L) Long.MAX_VALUE / 2 else (t - at).coe
 
 private fun wave(t: Long, period: Float) = sin(2 * PI * (t % (period * 1000).toLong()) / (period * 1000)).toFloat()
 
-fun DrawScope.paint(sh: Shape, t: Long, alpha: Float = 1f) {
+// pal: the part's finish, which overrides the house roles it names.
+fun DrawScope.paint(sh: Shape, t: Long, alpha: Float = 1f, pal: Map<String, Ink> = emptyMap()) {
     val a = alpha * if (sh.pulse) 0.725f + 0.275f * cos(2 * PI * (t % 2200) / 2200).toFloat() else 1f
     for (r in sh.roles) {
-        val ink = ROLES[r] ?: continue
+        val ink = pal[r] ?: ROLES[r] ?: continue
         if (r == "spin") continue
         val spin = "spin" in sh.roles
         val draw: DrawScope.() -> Unit = {
@@ -108,18 +109,18 @@ fun DrawScope.robot(equip: Map<String, String?>, t: Long, mood: Int = 1, react: 
 
     fun part(pt: Part?) = pt?.shapes?.forEach { sh ->
         when (sh.layer) {
-            "armL" -> rotate(armL, Offset(120f, 264f)) { paint(sh, t) }
-            "armR" -> rotate(armR, Offset(280f, 264f)) { paint(sh, t) }
-            "eyes" -> scale(1f, eyes, pt.pivots["eyes"] ?: Offset(200f, 150f)) { paint(sh, t, eyeAlpha) }
-            "prop" -> scale(0.12f + 0.88f * kotlin.math.abs(cos(PI * (t % 450) / 450).toFloat()), 1f, pt.pivots["prop"] ?: Offset(200f, 54f)) { paint(sh, t) }
-            "hover" -> translate(0f, -3f * (1 - cos(2 * PI * (t % 2200) / 2200).toFloat())) { paint(sh, t) }
+            "armL" -> rotate(armL, Offset(120f, 264f)) { paint(sh, t, pal = pt.pal) }
+            "armR" -> rotate(armR, Offset(280f, 264f)) { paint(sh, t, pal = pt.pal) }
+            "eyes" -> scale(1f, eyes, pt.pivots["eyes"] ?: Offset(200f, 150f)) { paint(sh, t, eyeAlpha, pt.pal) }
+            "prop" -> scale(0.12f + 0.88f * kotlin.math.abs(cos(PI * (t % 450) / 450).toFloat()), 1f, pt.pivots["prop"] ?: Offset(200f, 54f)) { paint(sh, t, pal = pt.pal) }
+            "hover" -> translate(0f, -3f * (1 - cos(2 * PI * (t % 2200) / 2200).toFloat())) { paint(sh, t, pal = pt.pal) }
             "moon" -> {
                 // place the moon on its untilted orbit, then turn that offset by the tilt baked into the path
                 val a = 2 * PI * (t % 7000) / 7000
                 val x = (200 + 112 * cos(a)).toFloat(); val y = (150 + 34 * sin(a)).toFloat(); val m = sh.m!!
-                translate(m[0] * x + m[2] * y, m[1] * x + m[3] * y) { paint(sh, t) }
+                translate(m[0] * x + m[2] * y, m[1] * x + m[3] * y) { paint(sh, t, pal = pt.pal) }
             }
-            else -> if ("halo" in sh.roles) translate(0f, -3f * (1 - cos(2 * PI * (t % 2600) / 2600).toFloat())) { paint(sh, t) } else paint(sh, t)
+            else -> if ("halo" in sh.roles) translate(0f, -3f * (1 - cos(2 * PI * (t % 2600) / 2600).toFloat())) { paint(sh, t, pal = pt.pal) } else paint(sh, t, pal = pt.pal)
         }
     }
     fun accAt(k: String) { if (acc?.at == k) part(acc) }
@@ -129,7 +130,8 @@ fun DrawScope.robot(equip: Map<String, String?>, t: Long, mood: Int = 1, react: 
         part(p("legs"))
         translate(0f, bob) {
             accAt("body-back")
-            drawRoundRect(W.joint, Offset(187f, 198f), androidx.compose.ui.geometry.Size(26f, 42f), androidx.compose.ui.geometry.CornerRadius(6f))
+            // the neck takes the body's joint colour
+            drawRoundRect(p("body")?.pal?.get("zn")?.fill ?: androidx.compose.ui.graphics.SolidColor(W.joint), Offset(187f, 198f), androidx.compose.ui.geometry.Size(26f, 42f), androidx.compose.ui.geometry.CornerRadius(6f))
             part(p("body"))
             rotate(head, Offset(200f, 212f)) { accAt("head-back"); part(p("head")); accAt("head-front") }
             part(p("arms"))
@@ -144,19 +146,16 @@ fun DrawScope.fit(w: Float, h: Float, cover: Boolean = false, block: DrawScope.(
     withTransform({ translate((size.width - w * k) / 2, size.height - h * k); scale(k, k, Offset.Zero) }, block)
 }
 
-fun DrawScope.scene(tier: Int, t: Long) = SCENE.forEach { if (it.tier <= tier) paint(it, t) }
-
 @Composable
 fun RobotView(store: Store, modifier: Modifier = Modifier, equip: Map<String, String?> = store.s.equip) {
     val t = clock()
     Canvas(modifier) { fit(400f, 520f) { robot(equip, t, mood(store.s), store.react) } }
 }
 
-// One part on its own, square-cropped for a shop tile; base tiers show their bay.
+// One part on its own, square-cropped for a shop tile (bases draw their room instead, see Shop.kt).
 fun DrawScope.thumb(p: Part, t: Long = 0) {
-    if (p.slot == "base") { fit(1000f, 900f, cover = true) { scene(p.tier, t) }; return }
     val b = p.box ?: return
     val s = max(b[2], b[3]) * 1.12f
     val k = min(size.width, size.height) / s
-    withTransform({ translate(size.width / 2, size.height / 2); scale(k, k, Offset.Zero); translate(-(b[0] + b[2] / 2), -(b[1] + b[3] / 2)) }) { p.shapes.forEach { paint(it, t) } }
+    withTransform({ translate(size.width / 2, size.height / 2); scale(k, k, Offset.Zero); translate(-(b[0] + b[2] / 2), -(b[1] + b[3] / 2)) }) { p.shapes.forEach { paint(it, t, pal = p.pal) } }
 }

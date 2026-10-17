@@ -95,16 +95,20 @@ class ScreensTest {
     // Every part on its own tile, the robot in the workshop parts, and the bay at each base tier, to check the art by eye.
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun catalogue() {
         val st = seed()
+        // a robot per finish family, to see the palettes side by side
         val kits = listOf(
-            mapOf("head" to "head-weld", "body" to "body-tokamak", "arms" to "arms-wrench", "legs" to "legs-piston", "acc" to "acc-hardhat"),
-            mapOf("head" to "head-box", "body" to "body-tank", "arms" to "arms-welder", "legs" to "legs-stub", "acc" to "acc-dosimeter"),
+            mapOf("head" to "head-weld", "body" to "body-tokamak", "arms" to "arms-welder", "legs" to "legs-piston", "acc" to "acc-hardhat"),
+            mapOf("head" to "head-binoc", "body" to "body-tank", "arms" to "arms-flex", "legs" to "legs-spring", "acc" to "acc-pack"),
+            mapOf("head" to "head-cyclops", "body" to "body-rocket", "arms" to "arms-fin", "legs" to "legs-hover", "acc" to "acc-dosimeter"),
+            mapOf("head" to "head-dome", "body" to "body-capsule", "arms" to "arms-mitt", "legs" to "legs-boots", "acc" to "acc-drone"),
+            mapOf("head" to "head-saucer", "body" to "body-gumball", "arms" to "arms-tentacle", "legs" to "legs-spider", "acc" to "acc-crown"),
+            mapOf("head" to "head-hex", "body" to "body-reactor", "arms" to "arms-magnet", "legs" to "legs-tread", "acc" to "acc-sprout"),
+            mapOf("head" to "head-monitor", "body" to "body-crate", "arms" to "arms-wrench", "legs" to "legs-wheel", "acc" to "acc-prop"),
         )
         rule.setContent { NbTheme { Column(Modifier.background(W.ground).padding(8.dp)) {
             PARTS.filter { it.slot != "base" }.chunked(14).forEach { r -> Row { r.forEach { p -> Canvas(Modifier.padding(2.dp).size(86.dp).background(W.raised)) { thumb(p) } } } }
-            Row {
-                kits.forEach { RobotView(st, Modifier.size(110.dp, 143.dp), it) }
-                PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(200.dp, 160.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id), plate = false) }
-            }
+            Row { kits.forEach { RobotView(st, Modifier.size(110.dp, 143.dp), it) } }
+            Row { PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(252.dp, 230.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id)) } }
         } } }
         shot("catalogue")
     }

@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -14,6 +16,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
@@ -22,9 +25,12 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 // One slot of a habit's period: its state ("" open, done, skip, fail) and whether it was logged on another day of the week.
@@ -100,46 +106,58 @@ fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier, today: 
 
 class Orbit(val h: Habit, val slots: List<Slot>)
 
-// The bay: Rivet on its platform and, beside it, a workbench with one steel frame per habit running today, clamped
-// upright with a bolt hole per slot. Under the bench a small reactor powers it all; its Cherenkov glow and the light
-// rail it feeds brighten with the Core attribute. A habit just done screws its newest bolt in.
-// waiting: no habits yet, so the bench holds one dashed frame.
-fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?> = s.equip, waiting: Boolean = false) {
-    val tier = PART[equip["base"]]?.tier ?: 1
+// Each base is its own room: wall, floor and the colour of the light the reactor feeds, plus what hangs on the wall.
+class Room(val sky: Color, val wall: Color, val floor: Color, val light: Color)
+val ROOMS = listOf(
+    Room(Color(0xFF131D31), Color(0xFF0C1320), Color(0xFF0F1828), Color(0xFF4CC9FF)), // Charging Bay: graphite, Cherenkov blue
+    Room(Color(0xFF33231A), Color(0xFF181010), Color(0xFF26180F), Color(0xFFFFB547)), // Workshop: warm wood, amber lamp
+    Room(Color(0xFF261B4A), Color(0xFF110C24), Color(0xFF1A1430), Color(0xFFB48CFF)), // Observatory: violet night
+    Room(Color(0xFF0B2C33), Color(0xFF071518), Color(0xFF0C2226), Color(0xFF3FF0D0)), // Star Deck: teal station light
+    Room(Color(0xFF12291B), Color(0xFF08130C), Color(0xFF0E1D12), Color(0xFF9CFF6A)), // Reactor Hall: uranium green
+)
+
+// The whole bay, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
+// show, so Today, Shop and the base tiles all frame the same picture. band: room left at the top for the nameplate.
+fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f) {
+    val tier = (PART[equip["base"]]?.tier ?: 1).coerceIn(1, ROOMS.size)
+    val r = ROOMS[tier - 1]
+    val k = min(size.width / 920f, (size.height - band) / 760f)
+    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 120f * k
+    val fy = oy + 700f * k
+    drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
+    drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
+    withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, t, react, orbits, fresh, equip, tier, r) }
+}
+
+// Rivet on its platform and, beside it, a workbench with one steel frame per habit running today, clamped upright
+// with a bolt hole per slot. Under the bench a small reactor powers it all; its Cherenkov glow, the light rail it
+// feeds and the gauge on its side follow the Core attribute. A habit just done screws its newest bolt in.
+// With no habits yet the bench holds one dashed frame.
+private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, tier: Int, r: Room) {
     val core = s.stats.getValue("core") / 100f
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
-    val bench = 600f
-    val heart = Offset(765f, 700f)
-    drawCircle(Brush.radialGradient(listOf(W.glow.copy(alpha = (0.1f + 0.22f * core) * pulse), Color.Transparent), heart, 480f), 480f, heart)
-    // Rivet and its base step left to share the floor with the bench
+    val bench = 596f
+    drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
+    when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); else -> chargingBay(s) }
+    val heart = Offset(765f, 702f)
+    drawCircle(Brush.radialGradient(listOf(W.glow.copy(alpha = (0.08f + 0.18f * core) * pulse), Color.Transparent), heart, 420f), 420f, heart)
+    lightRail(r.light, core)
+    // Rivet and its platform stand left to share the floor with the bench
     translate(-140f, 0f) {
-        // the charger would sit off the frame and its cable cut by it, and the base's own pieces would land on the
-        // bench, so this look draws the base without them
-        SCENE.forEach { sh -> if (sh.tier <= tier && "cable" !in sh.roles && sh.path.getBounds().let { b -> b.right > 140f && !(b.left > 740f && b.top > 400f) }) paint(sh, t) }
+        SCENE.forEach { paint(it, t) }
         translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
     }
-    // the light rail on its hanging wires
-    for (x in listOf(650f, 880f)) drawLine(W.joint, Offset(x, 60f), Offset(x, 364f), 3f)
-    drawRoundRect(W.glow, Offset(620f, 360f), Size(290f, 14f), CornerRadius(7f), alpha = 0.3f * (0.4f + 0.6f * core), style = Stroke(16f))
-    drawRoundRect(W.glow, Offset(620f, 360f), Size(290f, 14f), CornerRadius(7f), alpha = 0.5f + 0.5f * core)
+    benchBase()
+    reactor(core, pulse)
+    benchTop()
 
-    // the bench: a steel top on two legs, and the reactor between them feeding it through a short conduit
-    for (x in listOf(628f, 888f)) drawRect(W.edge, Offset(x, bench + 16f), Size(14f, 150f))
-    drawRect(W.joint, Offset(758f, bench + 16f), Size(14f, 30f))
-    drawRoundRect(W.raised, Offset(712f, bench + 44f), Size(106f, 124f), CornerRadius(30f))
-    drawRoundRect(W.joint, Offset(712f, bench + 44f), Size(106f, 124f), CornerRadius(30f), style = Stroke(4f))
-    drawRoundRect(W.glow, Offset(736f, bench + 66f), Size(58f, 80f), CornerRadius(16f), alpha = (0.35f + 0.55f * core) * pulse)
-    for (x in listOf(752f, 765f, 778f)) drawLine(W.rail, Offset(x, bench + 74f), Offset(x, bench + 138f), 5f, StrokeCap.Round)
-    drawRoundRect(W.edge, Offset(608f, bench), Size(314f, 18f), CornerRadius(6f))
-    drawLine(W.steel, Offset(614f, bench + 1f), Offset(916f, bench + 1f), 2.5f, alpha = 0.7f)
-
-    if (waiting) drawRoundRect(W.dim, Offset(750f, bench - 90f), Size(30f, 90f), CornerRadius(6f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
+    if (s.habits.isEmpty()) drawRoundRect(W.dim, Offset(750f, bench - 90f), Size(30f, 90f), CornerRadius(6f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
     val shown = orbits.take(6)
     val gap = 290f / max(1, shown.size)
-    val r = min(13f, gap * 0.3f) // bolts shrink on a crowded bench so neighbours do not overlap
+    val br = min(13f, gap * 0.3f) // bolts shrink on a crowded bench so neighbours do not overlap
     shown.forEachIndexed { k, o ->
         val x = 620f + gap * (k + 0.5f)
-        val w = r * 2.6f
+        val w = br * 2.6f
         val top = bench - 30f - 44f * o.slots.size
         drawRoundRect(W.raised, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f))
         drawRoundRect(if (o.slots.any { it.s == "fail" }) W.joint else W.steel, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f), alpha = 0.7f, style = Stroke(2.5f))
@@ -148,9 +166,190 @@ fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh
         o.slots.forEachIndexed { j, sl ->
             var drive = 1f
             if (fresh != null && fresh.first == o.h.id && j == newest) drive = min(1f, since(t, fresh.second) / 700f).let { 1 - (1 - it).pow(3) }
-            bolt(Offset(x, bench - 38f - 44f * j), r, sl, drive)
+            bolt(Offset(x, bench - 38f - 44f * j), br, sl, drive)
         }
     }
+}
+
+// The light rail hangs on two wires and throws a soft cone of the room's light down onto the bench.
+private fun DrawScope.lightRail(light: Color, core: Float) {
+    for (x in listOf(650f, 880f)) drawLine(W.joint, Offset(x, -300f), Offset(x, 346f), 3f)
+    drawPath(Path().apply { moveTo(624f, 370f); lineTo(906f, 370f); lineTo(934f, 596f); lineTo(596f, 596f); close() },
+        Brush.verticalGradient(listOf(light.copy(alpha = 0.12f + 0.1f * core), Color.Transparent), 370f, 596f))
+    drawRoundRect(Color(0xFF1A2233), Offset(612f, 344f), Size(306f, 22f), CornerRadius(8f))
+    drawLine(Color.White.copy(alpha = 0.18f), Offset(620f, 347f), Offset(910f, 347f), 2f)
+    drawRoundRect(light, Offset(622f, 362f), Size(286f, 9f), CornerRadius(4.5f), alpha = 0.3f, style = Stroke(12f))
+    drawRoundRect(light, Offset(622f, 362f), Size(286f, 9f), CornerRadius(4.5f), alpha = 0.6f + 0.4f * core)
+}
+
+private val BENCH = Color(0xFF2A3A55)
+
+private fun DrawScope.benchBase() {
+    for (x in listOf(628f, 888f)) {
+        drawRect(BENCH, Offset(x, 618f), Size(14f, 150f))
+        drawRect(Color.Black.copy(alpha = 0.25f), Offset(x + 9f, 618f), Size(5f, 150f))
+    }
+    drawRect(BENCH, Offset(642f, 744f), Size(246f, 8f))
+}
+
+private fun DrawScope.benchTop() {
+    drawRect(Color(0xFF22304A), Offset(604f, 606f), Size(322f, 16f))
+    drawRect(Color(0xFF8FA0BC), Offset(604f, 596f), Size(322f, 10f))
+    drawLine(Color.White.copy(alpha = 0.35f), Offset(604f, 597f), Offset(926f, 597f), 2f)
+    for (i in 0 until 8) drawCircle(W.joint, 2.5f, Offset(620f + i * 41f, 614f))
+}
+
+// The reactor: a domed steel vessel on a plinth, bolted flanges, a viewport onto the core where the fuel rods stand
+// dark against Cherenkov light, a conduit up to the bench and a pressure gauge whose needle reads the Core attribute.
+private fun DrawScope.reactor(core: Float, pulse: Float) {
+    val metal = Brush.horizontalGradient(listOf(Color(0xFF1A2438), Color(0xFF45597F), Color(0xFF1A2438)), 716f, 814f)
+    drawRoundRect(Color(0xFF151C2B), Offset(704f, 752f), Size(122f, 18f), CornerRadius(6f))
+    drawRect(W.joint, Offset(760f, 620f), Size(10f, 12f))
+    drawPath(Path().apply { moveTo(722f, 664f); quadraticBezierTo(722f, 630f, 765f, 628f); quadraticBezierTo(808f, 630f, 808f, 664f); close() }, metal)
+    drawRoundRect(metal, Offset(716f, 660f), Size(98f, 94f), CornerRadius(10f))
+    for (y in listOf(656f, 736f)) {
+        drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF9AAAC4), Color(0xFF55657F)), y, y + 12f), Offset(710f, y), Size(110f, 12f), CornerRadius(3f))
+        for (i in 0 until 8) drawCircle(Color(0xFF2A3446), 2f, Offset(718f + i * 13.5f, y + 6f))
+    }
+    drawRoundRect(Color(0xFF0B1626), Offset(736f, 672f), Size(58f, 60f), CornerRadius(12f))
+    drawRoundRect(Brush.radialGradient(listOf(Color(0xFFE6FBFF), W.glow, Color(0xFF0B3A66)), Offset(765f, 702f), 44f), Offset(740f, 676f), Size(50f, 52f),
+        CornerRadius(10f), alpha = (0.4f + 0.6f * core) * pulse)
+    for (x in listOf(749f, 759f, 771f, 781f)) drawLine(Color(0xFF0B1626), Offset(x, 684f), Offset(x, 720f), 5f, StrokeCap.Round, alpha = 0.85f)
+    drawRoundRect(W.steel, Offset(736f, 672f), Size(58f, 60f), CornerRadius(12f), alpha = 0.55f, style = Stroke(3f))
+    drawLine(Color.White.copy(alpha = 0.25f), Offset(744f, 690f), Offset(756f, 678f), 3f, StrokeCap.Round)
+    drawRect(W.joint, Offset(814f, 688f), Size(18f, 8f))
+    val g = Offset(846f, 692f)
+    drawCircle(Color(0xFFE8EEF7), 16f, g)
+    drawCircle(W.joint, 16f, g, style = Stroke(3f))
+    drawArc(W.dim, 150f, 240f, false, g - Offset(11f, 11f), Size(22f, 22f), style = Stroke(2f))
+    val a = (150.0 + 240.0 * core) * PI / 180
+    drawLine(Color(0xFF1A2233), g, g + Offset(12f * cos(a).toFloat(), 12f * sin(a).toFloat()), 2.5f, StrokeCap.Round)
+    drawCircle(Color(0xFF1A2233), 3f, g)
+}
+
+// Charging Bay: panelled walls and the charging station Rivet's platform is plugged into; its screen shows the
+// Battery attribute in five cells.
+private fun DrawScope.chargingBay(s: Data) {
+    for (x in listOf(90f, 300f, 540f)) drawLine(Color.White.copy(alpha = 0.04f), Offset(x, -300f), Offset(x, 692f), 3f)
+    drawLine(Color.White.copy(alpha = 0.04f), Offset(-600f, 430f), Offset(600f, 430f), 3f)
+    drawRoundRect(W.raised, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f))
+    drawRoundRect(W.joint, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f), style = Stroke(3f))
+    drawRoundRect(W.rail, Offset(84f, 468f), Size(68f, 44f), CornerRadius(8f))
+    val cells = (s.stats.getValue("battery") / 20f).roundToInt().coerceIn(0, 5)
+    for (i in 0 until 5) drawRoundRect(if (i < cells) W.act else W.line, Offset(92f + i * 11f, 478f), Size(8f, 24f), CornerRadius(2f))
+    drawCircle(W.rail, 14f, Offset(118f, 556f))
+    for (dx in listOf(-5f, 5f)) drawCircle(W.joint, 3f, Offset(118f + dx, 556f))
+    drawPath(Path().apply { moveTo(118f, 570f); cubicTo(118f, 680f, 150f, 740f, 220f, 770f) }, W.rail, style = Stroke(9f, cap = StrokeCap.Round))
+}
+
+// Workshop: a pegboard with a spanner, a hammer and a screwdriver, bins of parts, hazard tape along the skirting.
+private fun DrawScope.workshop() {
+    val board = Color(0xFF3A2A20)
+    val steel = Color(0xFFCAD5E3)
+    drawRoundRect(board, Offset(56f, 190f), Size(176f, 250f), CornerRadius(12f))
+    drawRoundRect(Color(0xFF5A4232), Offset(56f, 190f), Size(176f, 250f), CornerRadius(12f), style = Stroke(4f))
+    for (i in 0 until 7) for (j in 0 until 10) drawCircle(Color(0xFF22170F), 2.5f, Offset(72f + i * 24f, 204f + j * 24f))
+    drawLine(steel, Offset(92f, 246f), Offset(92f, 318f), 10f, StrokeCap.Round)
+    drawCircle(steel, 15f, Offset(92f, 236f)); drawRect(board, Offset(86f, 218f), Size(12f, 16f))
+    drawCircle(steel, 9f, Offset(92f, 326f)); drawCircle(board, 4f, Offset(92f, 326f))
+    drawRoundRect(Color(0xFFA0683C), Offset(139f, 240f), Size(12f, 96f), CornerRadius(5f))
+    drawRoundRect(steel, Offset(120f, 226f), Size(50f, 22f), CornerRadius(4f))
+    drawRect(Color(0xFF8E9AAE), Offset(120f, 240f), Size(50f, 8f))
+    drawRoundRect(Color(0xFFFF9A3C), Offset(186f, 224f), Size(20f, 46f), CornerRadius(8f))
+    drawRect(steel, Offset(190f, 270f), Size(12f, 6f)); drawRect(steel, Offset(194f, 276f), Size(4f, 52f))
+    listOf(0xFFC8743F, 0xFF3FA9A0, 0xFFE0A62F).forEachIndexed { i, c ->
+        val x = 70f + i * 52f
+        drawRoundRect(Color(c), Offset(x, 372f), Size(44f, 50f), CornerRadius(6f))
+        drawRect(Color.Black.copy(alpha = 0.25f), Offset(x + 8f, 386f), Size(28f, 8f))
+    }
+    drawRect(Color(0xFFFFC83D), Offset(-600f, 680f), Size(2200f, 14f))
+    var x = -600f
+    while (x < 1600f) {
+        drawPath(Path().apply { moveTo(x, 680f); lineTo(x + 14f, 680f); lineTo(x + 4f, 694f); lineTo(x - 10f, 694f); close() }, Color(0xFF1A1410))
+        x += 28f
+    }
+}
+
+private val STARS = listOf(Offset(-60f, -40f), Offset(-20f, -70f), Offset(30f, -50f), Offset(70f, -10f), Offset(-75f, 20f), Offset(-40f, 55f),
+    Offset(10f, 70f), Offset(55f, 50f), Offset(-10f, -15f), Offset(85f, -45f), Offset(-85f, -15f), Offset(25f, 20f))
+
+// Observatory: a bolted porthole between the rail's wires onto a violet nebula and a ringed sunset planet.
+private fun DrawScope.observatory() {
+    val c = Offset(765f, 222f)
+    drawCircle(Color(0xFF3A3360), 114f, c)
+    clipPath(Path().apply { addOval(Rect(c, 104f)) }) {
+        drawCircle(Brush.radialGradient(listOf(Color(0xFF3B1E6E), Color(0xFF0A0618)), c + Offset(-30f, -30f), 160f), 104f, c)
+        drawCircle(Brush.radialGradient(listOf(Color(0x66FF5FD2), Color.Transparent), c + Offset(-40f, -20f), 80f), 80f, c + Offset(-40f, -20f))
+        drawCircle(Brush.radialGradient(listOf(Color(0x444CC9FF), Color.Transparent), c + Offset(45f, 40f), 70f), 70f, c + Offset(45f, 40f))
+        STARS.forEachIndexed { i, o -> drawCircle(Color.White, if (i % 4 == 0) 2.6f else 1.6f, c + o, alpha = 0.85f) }
+        // the ring passes behind the planet, then in front
+        val p = c + Offset(30f, -18f)
+        rotate(-18f, p) { drawArc(Color(0xFFFFE0B0), 180f, 180f, false, p - Offset(58f, 13f), Size(116f, 26f), alpha = 0.8f, style = Stroke(4f)) }
+        drawCircle(Brush.linearGradient(listOf(Color(0xFFFFB86B), Color(0xFFE0568A)), p - Offset(30f, 30f), p + Offset(30f, 30f)), 32f, p)
+        rotate(-18f, p) { drawArc(Color(0xFFFFE0B0), 0f, 180f, false, p - Offset(58f, 13f), Size(116f, 26f), alpha = 0.9f, style = Stroke(4f)) }
+        drawArc(Color.White, 200f, 50f, false, c - Offset(92f, 92f), Size(184f, 184f), alpha = 0.12f, style = Stroke(6f))
+    }
+    for (i in 0 until 12) {
+        val a = i * PI / 6
+        drawCircle(W.steel, 3f, c + Offset(109f * cos(a).toFloat(), 109f * sin(a).toFloat()), alpha = 0.6f)
+    }
+}
+
+// Star Deck: a panoramic window onto a planet's limb and its moon, and a console of coloured keys.
+private fun DrawScope.starDeck() {
+    val frame = Color(0xFF12313A)
+    val win = Rect(-600f, 140f, 1600f, 330f)
+    clipPath(Path().apply { addRect(win) }) {
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF02060C), Color(0xFF06223A)), 140f, 330f), win.topLeft, win.size)
+        for (i in 0 until 40) drawCircle(Color.White, if (i % 5 == 0) 2.4f else 1.4f, Offset((i * 137 % 1000).toFloat(), 150f + i * 53 % 160), alpha = 0.8f)
+        val pc = Offset(320f, 820f)
+        drawCircle(Brush.verticalGradient(listOf(Color(0xFF2A9FD6), Color(0xFF0B3A5A)), 280f, 420f), 540f, pc)
+        drawCircle(Color(0xFF7FF5FF), 540f, pc, alpha = 0.5f, style = Stroke(6f))
+        drawCircle(Color(0xFFDDE6F0), 13f, Offset(860f, 190f))
+    }
+    drawRect(frame, Offset(-600f, 130f), Size(2200f, 12f))
+    drawRect(frame, Offset(-600f, 328f), Size(2200f, 12f))
+    for (x in listOf(100f, 280f, 460f, 640f, 820f)) drawRect(frame, Offset(x - 5f, 140f), Size(10f, 190f))
+    drawPath(Path().apply { moveTo(56f, 600f); lineTo(196f, 600f); lineTo(210f, 690f); lineTo(44f, 690f); close() }, Color(0xFF14323A))
+    drawRoundRect(Color(0xFF041014), Offset(70f, 540f), Size(112f, 66f), CornerRadius(8f))
+    drawRoundRect(Color(0xFF3FF0D0), Offset(80f, 550f), Size(92f, 46f), CornerRadius(4f), alpha = 0.18f)
+    for (i in 0 until 4) drawLine(Color(0xFF3FF0D0), Offset(86f, 560f + i * 10f), Offset(116f + i * 19 % 50, 560f + i * 10f), 3f, alpha = 0.8f)
+    listOf(0xFFF2C14E, 0xFF3FF0D0, 0xFFFF5FD2, 0xFF6EE787).forEachIndexed { i, cl -> drawCircle(Color(cl), 6f, Offset(82f + i * 30f, 642f)) }
+}
+
+// Reactor Hall: an arched window onto cooling towers breathing steam at dusk, the radiation sign, and coolant pipes
+// running along the wall into the reactor.
+private fun DrawScope.reactorHall(t: Long) {
+    val frame = Color(0xFF1E3A26)
+    val win = Rect(46f, 150f, 218f, 560f)
+    val pane = Path().apply { addRoundRect(RoundRect(win, CornerRadius(86f), CornerRadius(86f), CornerRadius(8f), CornerRadius(8f))) }
+    clipPath(pane) {
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF0E2A1F), Color(0xFF3F6B3A), Color(0xFFE89A4F)), 150f, 560f), win.topLeft, win.size)
+        val tower = Color(0xFF0A1410)
+        drawPath(Path().apply { moveTo(60f, 560f); quadraticBezierTo(80f, 470f, 64f, 400f); lineTo(138f, 400f); quadraticBezierTo(122f, 470f, 142f, 560f); close() }, tower)
+        drawPath(Path().apply { moveTo(150f, 560f); quadraticBezierTo(164f, 500f, 152f, 450f); lineTo(206f, 450f); quadraticBezierTo(194f, 500f, 208f, 560f); close() }, tower)
+        val puff = 0.22f + 0.06f * sin(t / 900.0).toFloat()
+        for ((x, y, rr) in listOf(Triple(100f, 380f, 30f), Triple(86f, 340f, 38f), Triple(112f, 296f, 44f), Triple(180f, 430f, 22f), Triple(172f, 400f, 28f)))
+            drawCircle(Color.White, rr, Offset(x, y), alpha = puff)
+        for (o in listOf(Offset(101f, 400f), Offset(179f, 450f))) drawCircle(Color(0xFFFF5A5A), 3f, o)
+    }
+    drawPath(pane, frame, style = Stroke(10f))
+    drawLine(frame, Offset(132f, 150f), Offset(132f, 560f), 6f)
+    drawLine(frame, Offset(46f, 380f), Offset(218f, 380f), 6f)
+    for (y in listOf(612f, 640f)) {
+        drawRect(Color(0xFF2C4A32), Offset(-600f, y), Size(1236f, 16f))
+        drawRect(Color.White.copy(alpha = 0.12f), Offset(-600f, y + 2f), Size(1236f, 3f))
+    }
+    val v = Offset(540f, 620f)
+    drawCircle(Color(0xFFFF8A3D), 16f, v, style = Stroke(5f))
+    for (i in 0 until 3) rotate(i * 60f, v) { drawLine(Color(0xFFFF8A3D), v - Offset(14f, 0f), v + Offset(14f, 0f), 3f) }
+    val ink = Color(0xFF1A1410)
+    drawRoundRect(Color(0xFFFFC83D), Offset(504f, 196f), Size(96f, 96f), CornerRadius(12f))
+    drawRoundRect(ink, Offset(504f, 196f), Size(96f, 96f), CornerRadius(12f), style = Stroke(5f))
+    val c = Offset(552f, 244f)
+    for (mid in listOf(-90f, 30f, 150f)) drawArc(ink, mid - 30f, 60f, true, c - Offset(36f, 36f), Size(72f, 72f))
+    drawCircle(Color(0xFFFFC83D), 11f, c)
+    drawCircle(ink, 7f, c)
 }
 
 fun orbitsFor(s: Data, d: LocalDate) = s.habits.filter { active(it, d) }.map { Orbit(it, slots(s, it, d)) }
