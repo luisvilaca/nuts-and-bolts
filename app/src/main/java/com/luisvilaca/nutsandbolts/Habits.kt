@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -132,7 +133,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                 Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 96.dp)) { body() }
             }
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 96.dp)) {
-            Header("Habits", null, store, ui, lay, badge = true)
+            Header("Habits", null, store, ui, lay, badge = !lay.wide)
             Text(summary(s, d, p), Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             body()
         }
@@ -164,7 +165,7 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, o
     val t = LocalDate.now()
     val lead = m.atDay(1).dayOfWeek.value - 1
     // a hairline grid: each week a ruled row, the day's mark under its number
-    Column {
+    BoxWithConstraints { val cellH = maxOf(64.dp, maxWidth / 7 / 1.25f); Column {
         Row(Modifier.padding(bottom = 6.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
         (0 until (lead + m.lengthOfMonth() + 6) / 7).forEach { w ->
             androidx.compose.material3.HorizontalDivider(color = W.line)
@@ -174,19 +175,19 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, o
                     if (n < 1 || n > m.lengthOfMonth()) Spacer(Modifier.weight(1f)) else {
                         val d = m.atDay(n)
                         val off = d > t && !ahead
-                        Column(Modifier.weight(1f).heightIn(min = 64.dp).aspectRatio(1.25f).clip(RoundedCornerShape(10.dp))
+                        Column(Modifier.weight(1f).height(cellH).clip(RoundedCornerShape(10.dp))
                             .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(6.dp)) {
                             Box(Modifier.size(30.dp).border(2.dp, if (d == t) W.turq else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
                                 Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.orbit else W.text)
                             }
-                            Spacer(Modifier.weight(1f))
-                            Box(Modifier.align(Alignment.End)) { mark(d) }
+                            Box(Modifier.width(30.dp).weight(1f), contentAlignment = Alignment.Center) { mark(d) }
                         }
                     }
                 }
             }
         }
     }
+}
 }
 
 // Every habit's lifetime. A run is drawn exactly its length: one step per day or week.
@@ -268,7 +269,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay, badge = true)
+        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay, badge = true) // the form has no bay at any size
         Column(Modifier.widthIn(max = 720.dp)) {
             OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Name") }, placeholder = { Text("Read 20 minutes") }, singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.turq, unfocusedBorderColor = W.orbit, cursorColor = W.turq, focusedLabelColor = W.turq))

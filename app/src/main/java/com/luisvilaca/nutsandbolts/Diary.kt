@@ -139,7 +139,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
             Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { cal() }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Diary", null, store, ui, lay, badge = true)
+        Header("Diary", null, store, ui, lay, badge = !lay.wide)
         Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         write()
         Spacer(Modifier.height(20.dp))

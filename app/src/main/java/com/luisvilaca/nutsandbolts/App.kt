@@ -152,17 +152,17 @@ fun AtomMark(modifier: Modifier) = androidx.compose.foundation.Canvas(modifier) 
 val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK)
 fun plural(n: Int, w: String) = "$n $w${if (n == 1) "" else "s"}"
 
-// badge: screens without the bay show the robot small beside the title on narrow windows, in place of the wallet.
+// badge: a screen showing no bay puts the robot small beside its title; on a phone it takes the wallet's place.
 @Composable
 fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier, badge: Boolean = false) {
-    val small = badge && !lay.wide
+    val small = badge && lay.phone
     Row(modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (small) RobotView(store, Modifier.padding(end = 10.dp).size(40.dp, 52.dp))
+        if (badge) RobotView(store, Modifier.padding(end = 10.dp).size(40.dp, 52.dp))
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Text(title, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (!small || !lay.phone) Wallet(store.s)
+        if (!small) Wallet(store.s)
         if (!lay.rail) IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
     }
 }

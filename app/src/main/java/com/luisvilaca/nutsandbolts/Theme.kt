@@ -93,10 +93,10 @@ val ROLES: Map<String, Ink> = mapOf(
     "water" to f(Color(0x4D00E5FF)), "bub" to s(Color.White, 2f, 0.7f), "smile" to s(W.turq, 5f), "mag" to s(W.coral, 12f).let { Ink(stroke = it.stroke, width = 12f, butt = true) },
     "magtip" to Ink(stroke = W.steel, width = 12f, butt = true), "tent" to s(Color(0xFFDFE6F5), 16f), "mono" to Ink(SolidColor(Color(0x26AAD7FF)), W.gold, 4f),
     "chain" to s(W.gold, 2.5f), "orbit" to s(Color.White, 2f, 0.3f),
-    // the bay
+    // the bay (its floor is transparent: BayPanel lays the floor edge to edge)
     "wire" to s(W.glass, 3f), "stars" to s(Color.White, 5f, 0.8f), "pring" to s(W.steel, 5f), "cone" to f(Color.White, 0.05f),
     "panel" to f(Color(0xFF1B2558)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
-    "floor" to f(Color.Transparent), // BayPanel lays the floor edge to edge "skirt" to f(W.steel, 0.12f), "orb" to s(W.turq, 2.5f, 0.45f), "cable" to s(W.glass, 9f),
+    "floor" to f(Color.Transparent), "skirt" to f(W.steel, 0.12f), "orb" to s(W.turq, 2.5f, 0.45f), "cable" to s(W.glass, 9f),
     "pot" to f(W.steel), "plat-side" to f(Color(0xFF141C45)), "plat-top" to Ink(SolidColor(Color(0xFF26336E)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.turq, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )
