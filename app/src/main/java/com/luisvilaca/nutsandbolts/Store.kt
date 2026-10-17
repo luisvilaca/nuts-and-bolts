@@ -98,7 +98,7 @@ class Page(var paper: String, val strokes: MutableList<InkStroke>)
 private fun JSONObject.str(k: String) = if (has(k) && !isNull(k)) getString(k) else null
 private fun JSONObject.date(k: String) = str(k)?.let(LocalDate::parse)
 
-private fun json(s: Data): JSONObject = JSONObject()
+internal fun json(s: Data): JSONObject = JSONObject()
     .put("name", s.name).put("bolts", s.bolts).put("nuts", s.nuts)
     .put("stats", JSONObject(s.stats as Map<*, *>))
     .put("owned", JSONArray(s.owned))
@@ -113,11 +113,11 @@ private fun json(s: Data): JSONObject = JSONObject()
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
-    .put("pen", JSONObject().put("color", s.pen.color).put("size", s.pen.size).put("stab", s.pen.stab).put("eraser", s.pen.eraser).put("paper", s.pen.paper).put("seen", s.pen.seen))
+    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("backedUp", s.backedUp?.toString())
 
-private fun dataFrom(o: JSONObject) = Data().apply {
+internal fun dataFrom(o: JSONObject) = Data().apply {
     name = o.optString("name", name)
     bolts = o.optInt("bolts").coerceAtLeast(0)
     nuts = o.optInt("nuts").coerceAtLeast(0)
@@ -140,7 +140,14 @@ private fun dataFrom(o: JSONObject) = Data().apply {
     }
     o.optJSONArray("diary")?.let { a -> for (i in 0 until a.length()) diary += LocalDate.parse(a.getString(i)) }
     o.optJSONArray("papers")?.let { a -> if (a.length() == 3) for (i in 0..2) papers[i] = a.getString(i) }
-    o.optJSONObject("pen")?.let { j -> pen = Pen(j.optString("color", pen.color), j.optInt("size", 1), j.optInt("stab", 1), j.optInt("eraser", 1), j.optInt("paper", 0), j.optBoolean("seen")) }
+    o.optJSONObject("pen")?.let { j ->
+        // files from before the sliders kept three-step choices (size, stab, eraser); each maps to its nearest new value
+        val nib = if (j.has("nib")) j.optDouble("nib").toFloat() else listOf(0.35f, 0.6f, 1f)[j.optInt("size", 1).coerceIn(0, 2)]
+        val stab = if (j.has("stabPct")) j.optInt("stabPct") else listOf(0, 60, 90)[j.optInt("stab", 1).coerceIn(0, 2)]
+        val rub = if (j.has("rub")) j.optDouble("rub").toFloat() else listOf(2f, 4f, 7f)[j.optInt("eraser", 1).coerceIn(0, 2)]
+        pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
+            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"))
+    }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     backedUp = o.date("backedUp")
 }
