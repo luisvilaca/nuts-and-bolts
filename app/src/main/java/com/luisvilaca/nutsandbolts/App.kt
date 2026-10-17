@@ -28,9 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -74,8 +71,8 @@ class Ui(val scope: CoroutineScope) {
     }
 }
 
-// wide: a landscape window with room for the rail and two panes side by side. phone: a narrow window.
-class Lay(val wide: Boolean, val phone: Boolean) { val rail get() = wide }
+// wide: a landscape window with room for two panes side by side. phone: a narrow window.
+class Lay(val wide: Boolean, val phone: Boolean)
 
 private val TABS = listOf("today" to "Today", "shop" to "Shop", "habits" to "Habits", "diary" to "Diary")
 private val TAB_ICON = mapOf("today" to "base", "shop" to "shop", "habits" to "habits", "diary" to "diary")
@@ -86,26 +83,21 @@ fun App(store: Store) {
     val ui = remember { Ui(scope) }
     store.tick // every change recomposes the screens
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
-        val rail = maxWidth > maxHeight && maxWidth >= 600.dp
-        val lay = Lay(rail, minOf(maxWidth, maxHeight) < 600.dp)
-        val tall = maxHeight >= 560.dp
+        val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
         // system Back: close what is open, then return to Today, then leave
         BackHandler(enabled = ui.tab != "today" && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = "today" }
         Scaffold(
             containerColor = W.ground,
             snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act) } },
-            bottomBar = { if (!rail) BottomBar(ui) },
+            bottomBar = { BottomBar(ui) }, // the owner wants the tabs at the bottom at every size
         ) { pad ->
-            Row(Modifier.fillMaxSize().padding(pad)) {
-                if (rail) Rail(ui, tall)
-                Box(Modifier.weight(1f).fillMaxSize()) {
-                    when {
-                        ui.settings -> SettingsScreen(store, ui, lay)
-                        ui.tab == "today" -> TodayScreen(store, ui, lay)
-                        ui.tab == "shop" -> ShopScreen(store, ui, lay)
-                        ui.tab == "habits" -> HabitsScreen(store, ui, lay)
-                        else -> DiaryScreen(store, ui, lay)
-                    }
+            Box(Modifier.fillMaxSize().padding(pad)) {
+                when {
+                    ui.settings -> SettingsScreen(store, ui, lay)
+                    ui.tab == "today" -> TodayScreen(store, ui, lay)
+                    ui.tab == "shop" -> ShopScreen(store, ui, lay)
+                    ui.tab == "habits" -> HabitsScreen(store, ui, lay)
+                    else -> DiaryScreen(store, ui, lay)
                 }
             }
         }
@@ -113,19 +105,6 @@ fun App(store: Store) {
 }
 
 private fun go(ui: Ui, tab: String) { ui.tab = tab; ui.settings = false; ui.edit = null; ui.page = null }
-
-@Composable
-private fun Rail(ui: Ui, tall: Boolean) {
-    val item = NavigationRailItemDefaults.colors(selectedIconColor = W.act, selectedTextColor = W.text, indicatorColor = W.raised, unselectedIconColor = W.dim, unselectedTextColor = W.dim)
-    NavigationRail(containerColor = W.rail, header = { if (tall) AtomMark(Modifier.padding(vertical = 18.dp).size(40.dp)) }) {
-        TABS.forEach { (k, v) ->
-            NavigationRailItem(selected = ui.tab == k && !ui.settings, onClick = { go(ui, k) }, icon = { Icon(ICONS.getValue(TAB_ICON.getValue(k)), null) }, label = { Text(v) }, colors = item)
-        }
-        Spacer(Modifier.weight(1f))
-        NavigationRailItem(selected = ui.settings, onClick = { ui.settings = true; ui.edit = null; ui.page = null }, icon = { Icon(ICONS.getValue("settings"), null) }, label = { Text("Settings") }, colors = item)
-        if (tall) Spacer(Modifier.height(12.dp))
-    }
-}
 
 @Composable
 private fun BottomBar(ui: Ui) {
@@ -137,13 +116,13 @@ private fun BottomBar(ui: Ui) {
     }
 }
 
-// The app's mark: a sprout with two leaves in a small tray.
+// The app's mark: a steel stem with a cherry blossom and a spider lily in a small tray.
 @Composable
 fun AtomMark(modifier: Modifier) = androidx.compose.foundation.Canvas(modifier) {
     val w = size.width
     drawLine(W.steel, androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.88f), androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.42f), w * 0.05f)
-    leaf(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.58f), w / 30f, Slot("done", false))
-    leaf(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.72f), w / 38f, Slot("done", false), flip = true)
+    bloom(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.58f), w / 30f, Slot("done", false))
+    bloom(androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.72f), w / 38f, Slot("done", false), flip = true, lily = true)
     drawRoundRect(W.steel, androidx.compose.ui.geometry.Offset(w * 0.24f, w * 0.82f), androidx.compose.ui.geometry.Size(w * 0.52f, w * 0.13f),
         androidx.compose.ui.geometry.CornerRadius(w * 0.05f), style = androidx.compose.ui.graphics.drawscope.Stroke(w * 0.045f))
 }
@@ -164,7 +143,7 @@ fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier
             if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (!small) Wallet(store.s)
-        if (!lay.rail) IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
+        IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
     }
 }
 
@@ -221,7 +200,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false)
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             slots(s, h, d).forEachIndexed { i, sl ->
                 val own = sl.s != "" && !sl.other
-                SlotMark(sl, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
+                SlotMark(sl, lily = lily(s, h), modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
                     // the newest mark of the day is the one that comes off
                     var m: Mark? = null
                     store.change { m = undo(this, h, d) }
