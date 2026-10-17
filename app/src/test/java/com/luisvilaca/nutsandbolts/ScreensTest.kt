@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -80,6 +81,6 @@ class ScreensTest {
         val st = seed(empty = true)
         rule.setContent { NbTheme { App(st) } }
         shot("tablet-empty")
-        tap("Settings"); shot("tablet-settings")
+        rule.onNodeWithContentDescription("Settings").performClick(); rule.waitForIdle(); shot("tablet-settings")
     }
 }

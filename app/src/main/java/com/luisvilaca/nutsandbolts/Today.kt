@@ -54,7 +54,7 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
     val t = LocalDate.now()
     val run = s.habits.filter { active(it, t) }
     val p = slotProgress(s, t)
-    val lit = "Today · ${p.done} of ${p.slots} blossoms open" + if (p.fail > 0) " · ${p.fail} failed" else ""
+    val lit = "Today · ${p.done} of ${p.slots} bolts fastened" + if (p.fail > 0) " · ${p.fail} failed" else ""
 
     val list = @Composable { lead: Boolean ->
         when {
@@ -105,14 +105,14 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
             val band = if (plate) 72.dp.toPx() else 0f
             val k = min(size.width / 880f, (size.height - band) / 760f)
             val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 140f * k
-            drawRect(Brush.verticalGradient(listOf(Color(0xFF0F2424), W.ground)))
+            drawRect(Brush.verticalGradient(listOf(Color(0xFF111A2C), W.ground)))
             drawRect(Brush.verticalGradient(listOf(FLOOR, W.rail), oy + 700f * k, oy + 900f * k), Offset(0f, oy + 700f * k), Size(size.width, size.height - oy - 700f * k))
             drawRect(W.steel.copy(alpha = 0.1f), Offset(0f, oy + 692f * k), Size(size.width, 6f * k))
             withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, tm, store.react, orbits, store.fresh, equip, waiting = s.habits.isEmpty() && plate) }
         }
         if (plate) Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
-            Text(MOOD[mood(s)] + if (orbits.isNotEmpty()) " · tending ${plural(min(orbits.size, 6), "plant")}" else "", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Text(MOOD[mood(s)] + if (orbits.isNotEmpty()) " · building ${plural(min(orbits.size, 6), "frame")}" else "", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }
     }
 }
@@ -171,8 +171,8 @@ fun newId() = "h" + System.currentTimeMillis().toString(36) + (0..999).random()
 
 @Composable
 fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
-    Text("Nothing planted yet", style = MaterialTheme.typography.headlineSmall)
-    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes a mechanical flower that ${store.s.name} tends.",
+    Text("The bench is empty", style = MaterialTheme.typography.headlineSmall)
+    Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes a frame on ${store.s.name}'s workbench, and every time you do it a bolt goes in.",
         Modifier.padding(top = 8.dp, bottom = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
     Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
         Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))

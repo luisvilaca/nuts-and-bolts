@@ -145,7 +145,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
 private fun summary(s: Data, d: LocalDate, p: Progress) = when {
     s.habits.isEmpty() -> "No habits yet"
     d > LocalDate.now() -> "${plural(p.slots, "slot")} planned"
-    else -> "${p.done} of ${p.slots} blossoms open" + if (p.fail > 0) ", ${p.fail} failed" else ""
+    else -> "${p.done} of ${p.slots} bolts fastened" + if (p.fail > 0) ", ${p.fail} failed" else ""
 }
 
 @Composable
@@ -333,7 +333,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         }, dismissButton = { TextButton({ picking = null }) { Text("Cancel", color = W.text) } }) { DatePicker(st) }
     }
     if (confirm && h != null) AlertDialog(onDismissRequest = { confirm = false },
-        title = { Text("Delete “${h.name}”?") }, text = { Text("Its plant is pulled. What it already earned stays.") },
+        title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
         confirmButton = { TextButton({ store.change { habits.remove(h) }; confirm = false; ui.edit = null }) { Text("Delete", color = W.coral) } },
         dismissButton = { TextButton({ confirm = false }) { Text("Keep it", color = W.text) } })
 }

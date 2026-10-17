@@ -287,10 +287,11 @@ val PARTS = listOf(
         Shape(listOf("scarf"), "M168 240l-14 50 26-8 6-38z"),
         Shape(listOf("scarf"), "M158 218q42 24 84 0l4 18q-46 26-92 0z"),
     )),
-    Part("acc-sprout", "acc", "Sprout", "NB-X03", bolts = 60, box = floatArrayOf(140f, 20f, 120f, 128f), at = "head-back", shapes = listOf(
-        Shape(listOf("stem"), "M200 140V62"),
-        Shape(listOf("leaf"), "M200 72c-24-2-34-18-32-30 20 2 32 14 32 30z"),
-        Shape(listOf("leaf"), "M200 62c22 0 34-14 34-28-20 0-32 12-34 28z"),
+    // keeps the old sprout's id so an owned or equipped one carries over
+    Part("acc-sprout", "acc", "Isotope Antenna", "NB-X03", bolts = 60, box = floatArrayOf(140f, 20f, 120f, 128f), at = "head-back", shapes = listOf(
+        Shape(listOf("rod"), "M200 140V62"),
+        Shape(listOf("orbit"), "M172 48a28 10 0 1 0 56 0a28 10 0 1 0 -56 0z", m = floatArrayOf(0.94f, -0.34f, 0.34f, 0.94f, -4.3f, 70.9f)),
+        Shape(listOf("core"), "M188 48a12 12 0 1 0 24 0a12 12 0 1 0 -24 0z", pulse = true),
     )),
     Part("acc-bow", "acc", "Bow Tie", "NB-X06", bolts = 70, box = floatArrayOf(160f, 196f, 80f, 60f), at = "front", shapes = listOf(
         Shape(listOf("cr"), "M200 226l-28-15v30zM200 226l28-15v30z"),
@@ -377,10 +378,6 @@ val SCENE = listOf(
     Shape(listOf("zn"), "M96 520h28a10 10 0 0 1 10 10v42a10 10 0 0 1 -10 10h-28a10 10 0 0 1 -10 -10v-42a10 10 0 0 1 10 -10z", tier = 1),
     Shape(listOf("ey"), "M105 540a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z", pulse = true, tier = 1),
     Shape(listOf("cable"), "M262 772c-100 12-142-28-152-120v-70", tier = 1),
-    Shape(listOf("stem"), "M860 700v-60", tier = 3),
-    Shape(listOf("leaf"), "M860 660c-30-4-42-26-40-44 26 4 40 22 40 44z", tier = 3),
-    Shape(listOf("leaf"), "M860 644c28 0 44-18 44-38-26 0-42 16-44 38z", tier = 3),
-    Shape(listOf("pot"), "M830 696h60l-8 62h-44z", tier = 3),
     Shape(listOf("plat-side"), "M250 780a250 52 0 1 0 500 0a250 52 0 1 0 -500 0z", tier = 1),
     Shape(listOf("plat-top"), "M250 760a250 52 0 1 0 500 0a250 52 0 1 0 -500 0z", tier = 1),
     Shape(listOf("plat-ring"), "M304 760a196 40 0 1 0 392 0a196 40 0 1 0 -392 0z", tier = 1),
