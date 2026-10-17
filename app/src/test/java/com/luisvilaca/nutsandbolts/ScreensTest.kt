@@ -2,7 +2,15 @@ package com.luisvilaca.nutsandbolts
 
 import android.graphics.Bitmap
 import android.provider.Settings
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -82,5 +90,22 @@ class ScreensTest {
         rule.setContent { NbTheme { App(st) } }
         shot("tablet-empty")
         rule.onNodeWithContentDescription("Settings").performClick(); rule.waitForIdle(); shot("tablet-settings")
+    }
+
+    // Every part on its own tile, the robot in the workshop parts, and the bay at each base tier, to check the art by eye.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun catalogue() {
+        val st = seed()
+        val kits = listOf(
+            mapOf("head" to "head-weld", "body" to "body-tokamak", "arms" to "arms-wrench", "legs" to "legs-piston", "acc" to "acc-hardhat"),
+            mapOf("head" to "head-box", "body" to "body-tank", "arms" to "arms-welder", "legs" to "legs-stub", "acc" to "acc-dosimeter"),
+        )
+        rule.setContent { NbTheme { Column(Modifier.background(W.ground).padding(8.dp)) {
+            PARTS.filter { it.slot != "base" }.chunked(14).forEach { r -> Row { r.forEach { p -> Canvas(Modifier.padding(2.dp).size(86.dp).background(W.raised)) { thumb(p) } } } }
+            Row {
+                kits.forEach { RobotView(st, Modifier.size(110.dp, 143.dp), it) }
+                PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(200.dp, 160.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id), plate = false) }
+            }
+        } } }
+        shot("catalogue")
     }
 }

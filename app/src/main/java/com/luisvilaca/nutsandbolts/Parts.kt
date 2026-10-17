@@ -39,6 +39,16 @@ val PARTS = listOf(
         Shape(listOf("ey"), "M143 147a13 13 0 1 0 26 0a13 13 0 1 0 -26 0z", layer = "eyes"),
         Shape(listOf("ey"), "M231 147a13 13 0 1 0 26 0a13 13 0 1 0 -26 0z", layer = "eyes"),
     )),
+    Part("head-weld", "head", "Welding Mask", "NB-H09", bolts = 230, nuts = 3, box = floatArrayOf(96f, 70f, 208f, 152f), pivots = mapOf("eyes" to Offset(200f, 152f)), shapes = listOf(
+        Shape(listOf("zn"), "M103 152a10 10 0 1 0 20 0a10 10 0 1 0 -20 0z"),
+        Shape(listOf("zn"), "M277 152a10 10 0 1 0 20 0a10 10 0 1 0 -20 0z"),
+        Shape(listOf("sh"), "M146 94h108a30 30 0 0 1 30 30v56a30 30 0 0 1 -30 30h-108a30 30 0 0 1 -30 -30v-56a30 30 0 0 1 30 -30z"),
+        Shape(listOf("gl"), "M132 120h136a10 10 0 0 1 10 10v44a10 10 0 0 1 -10 10h-136a10 10 0 0 1 -10 -10v-44a10 10 0 0 1 10 -10z"),
+        Shape(listOf("zn"), "M133 128a3 3 0 1 0 6 0a3 3 0 1 0 -6 0zM261 128a3 3 0 1 0 6 0a3 3 0 1 0 -6 0zM133 176a3 3 0 1 0 6 0a3 3 0 1 0 -6 0zM261 176a3 3 0 1 0 6 0a3 3 0 1 0 -6 0z"),
+        Shape(listOf("hl"), "M150 106q20-5 46-5"),
+        // one Cherenkov slit for eyes; it blinks like any pair
+        Shape(listOf("core"), "M156 146h88a6 6 0 0 1 0 12h-88a6 6 0 0 1 0 -12z", layer = "eyes"),
+    )),
     Part("head-cyclops", "head", "Cyclops", "NB-H05", bolts = 260, nuts = 2, box = floatArrayOf(96f, 70f, 208f, 152f), pivots = mapOf("eyes" to Offset(200f, 152f)), shapes = listOf(
         Shape(listOf("sh"), "M168 92h64a46 46 0 0 1 46 46v28a46 46 0 0 1 -46 46h-64a46 46 0 0 1 -46 -46v-28a46 46 0 0 1 46 -46z"),
         Shape(listOf("zn"), "M153 150a47 47 0 1 0 94 0a47 47 0 1 0 -94 0z"),
@@ -128,18 +138,28 @@ val PARTS = listOf(
         Shape(listOf("gl"), "M177 284a23 23 0 1 0 46 0a23 23 0 1 0 -46 0z"),
         Shape(listOf("ey"), "M191 284a9 9 0 1 0 18 0a9 9 0 1 0 -18 0z", pulse = true),
     )),
-    Part("body-tank", "body", "Aquarium", "NB-B06", bolts = 450, nuts = 10, box = floatArrayOf(106f, 222f, 188f, 158f), shapes = listOf(
+    Part("body-tank", "body", "Coolant Tank", "NB-B06", bolts = 450, nuts = 10, box = floatArrayOf(106f, 222f, 188f, 158f), shapes = listOf(
         Shape(listOf("zn"), "M124 258h152a6 6 0 0 1 6 6v0a6 6 0 0 1 -6 6h-152a6 6 0 0 1 -6 -6v0a6 6 0 0 1 6 -6z"),
         Shape(listOf("bowl"), "M132 246h136v110h-136z"),
         Shape(listOf("water"), "M134 268q17-8 34 0t34 0t34 0t30 0v86H134z"),
-        Shape(listOf("stem"), "M152 352q-8-14 0-26t0-22"),
-        Shape(listOf("stem"), "M248 352q8-12 0-22"),
+        Shape(listOf("bub"), "M148 336a3 3 0 1 0 6 0a3 3 0 1 0 -6 0z"),
+        Shape(listOf("bub"), "M154 318a2 2 0 1 0 4 0a2 2 0 1 0 -4 0z"),
+        Shape(listOf("bub"), "M244 326a4 4 0 1 0 8 0a4 4 0 1 0 -8 0z"),
         Shape(listOf("cr"), "M170 312q14-12 28 0q-14 12-28 0zM198 312l10-8v16z"),
         Shape(listOf("br"), "M246 290q-11-9-22 0q11 9 22 0zM224 290l-8-6v12z"),
         Shape(listOf("bub"), "M210 334a4 4 0 1 0 8 0a4 4 0 1 0 -8 0z"),
         Shape(listOf("bub"), "M219.5 320a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0z"),
         Shape(listOf("sh"), "M134 232h132a10 10 0 0 1 10 10v0a10 10 0 0 1 -10 10h-132a10 10 0 0 1 -10 -10v0a10 10 0 0 1 10 -10z"),
         Shape(listOf("sh"), "M134 350h132a10 10 0 0 1 10 10v0a10 10 0 0 1 -10 10h-132a10 10 0 0 1 -10 -10v0a10 10 0 0 1 10 -10z"),
+    )),
+    Part("body-tokamak", "body", "Tokamak", "NB-B07", bolts = 520, nuts = 12, box = floatArrayOf(106f, 222f, 188f, 158f), shapes = listOf(
+        Shape(listOf("sh"), "M150 232h100a34 34 0 0 1 34 34v70a34 34 0 0 1 -34 34h-100a34 34 0 0 1 -34 -34v-70a34 34 0 0 1 34 -34z"),
+        Shape(listOf("zn"), "M142 298a58 34 0 1 0 116 0a58 34 0 1 0 -116 0z"),
+        Shape(listOf("gl"), "M148 298a52 29 0 1 0 104 0a52 29 0 1 0 -104 0z"),
+        // the plasma ring circulates (its dashes run, like the platform's)
+        Shape(listOf("plasma"), "M164 298a36 16 0 1 0 72 0a36 16 0 1 0 -72 0z"),
+        Shape(listOf("zn"), "M186 298a14 6 0 1 0 28 0a14 6 0 1 0 -28 0z"),
+        Shape(listOf("ln"), "M150 350h100M150 360h100"),
     )),
     Part("arms-clamp", "arms", "Clamps", "NB-A01", box = floatArrayOf(70f, 240f, 260f, 130f), pivots = mapOf("armL" to Offset(112f, 289f), "armR" to Offset(112f, 289f)), shapes = listOf(
         Shape(listOf("zn"), "M106 264a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z", layer = "armL"),
@@ -172,6 +192,16 @@ val PARTS = listOf(
         Shape(listOf("zn"), "M105 262h1a5 5 0 0 1 5 5v50a5 5 0 0 1 -5 5h-1a5 5 0 0 1 -5 -5v-50a5 5 0 0 1 5 -5z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
         Shape(listOf("sh"), "M115 330a9 9 0 1 0 18 0a9 9 0 1 0 -18 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
         Shape(listOf("sh"), "M84 340a21 24 0 1 0 42 0a21 24 0 1 0 -42 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+    )),
+    Part("arms-wrench", "arms", "Wrenches", "NB-A09", bolts = 130, box = floatArrayOf(70f, 240f, 260f, 130f), pivots = mapOf("armL" to Offset(112f, 289f), "armR" to Offset(112f, 289f)), shapes = listOf(
+        Shape(listOf("zn"), "M106 264a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z", layer = "armL"),
+        Shape(listOf("sh"), "M105 256h0a15 15 0 0 1 15 15v42a15 15 0 0 1 -15 15h0a15 15 0 0 1 -15 -15v-42a15 15 0 0 1 15 -15z", layer = "armL"),
+        Shape(listOf("zn"), "M100 326h10v16h-10z", layer = "armL"),
+        Shape(listOf("zn"), "M86 340h38v14l-8 10h-6v-12h-10v12h-6l-8-10z", layer = "armL"),
+        Shape(listOf("zn"), "M106 264a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("sh"), "M105 256h0a15 15 0 0 1 15 15v42a15 15 0 0 1 -15 15h0a15 15 0 0 1 -15 -15v-42a15 15 0 0 1 15 -15z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("zn"), "M100 326h10v16h-10z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("zn"), "M86 340h38v14l-8 10h-6v-12h-10v12h-6l-8-10z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
     )),
     Part("arms-fin", "arms", "Fins", "NB-A04", bolts = 100, nuts = 2, box = floatArrayOf(70f, 240f, 260f, 130f), shapes = listOf(
         Shape(listOf("sh"), "M112 248c-26 20-32 76-14 114 18-24 26-74 22-112z", layer = "armL"),
@@ -209,6 +239,18 @@ val PARTS = listOf(
         Shape(listOf("zn"), "M93.5 316a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
         Shape(listOf("zn"), "M84.5 340a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
     )),
+    Part("arms-welder", "arms", "Arc Welders", "NB-A10", bolts = 320, nuts = 6, box = floatArrayOf(70f, 240f, 260f, 136f), pivots = mapOf("armL" to Offset(112f, 289f), "armR" to Offset(112f, 289f)), shapes = listOf(
+        Shape(listOf("zn"), "M106 264a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z", layer = "armL"),
+        Shape(listOf("sh"), "M105 256h0a15 15 0 0 1 15 15v42a15 15 0 0 1 -15 15h0a15 15 0 0 1 -15 -15v-42a15 15 0 0 1 15 -15z", layer = "armL"),
+        Shape(listOf("zn"), "M97 326h16l-4 24h-8z", layer = "armL"),
+        Shape(listOf("orb"), "M94 358a11 11 0 1 0 22 0a11 11 0 1 0 -22 0z", pulse = true, layer = "armL"),
+        Shape(listOf("core"), "M99 358a6 6 0 1 0 12 0a6 6 0 1 0 -12 0z", pulse = true, layer = "armL"),
+        Shape(listOf("zn"), "M106 264a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("sh"), "M105 256h0a15 15 0 0 1 15 15v42a15 15 0 0 1 -15 15h0a15 15 0 0 1 -15 -15v-42a15 15 0 0 1 15 -15z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("zn"), "M97 326h16l-4 24h-8z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), layer = "armR"),
+        Shape(listOf("orb"), "M94 358a11 11 0 1 0 22 0a11 11 0 1 0 -22 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), pulse = true, layer = "armR"),
+        Shape(listOf("core"), "M99 358a6 6 0 1 0 12 0a6 6 0 1 0 -12 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f), pulse = true, layer = "armR"),
+    )),
     Part("arms-wing", "arms", "Wings", "NB-A08", bolts = 500, nuts = 12, box = floatArrayOf(20f, 176f, 360f, 170f), pivots = mapOf("armL" to Offset(120f, 266f), "armR" to Offset(120f, 266f)), shapes = listOf(
         Shape(listOf("sh2"), "M116 268 28 248q6 38 38 46z", layer = "armL"),
         Shape(listOf("sh"), "M118 260 40 188q-8 44 20 66z", layer = "armL"),
@@ -241,6 +283,16 @@ val PARTS = listOf(
         Shape(listOf("tread"), "M142 388h10a34 34 0 0 1 34 34v12a34 34 0 0 1 -34 34h-10a34 34 0 0 1 -34 -34v-12a34 34 0 0 1 34 -34z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
         Shape(listOf("sh"), "M136 412a11 11 0 1 0 22 0a11 11 0 1 0 -22 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
         Shape(listOf("sh"), "M136 446a11 11 0 1 0 22 0a11 11 0 1 0 -22 0z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
+    )),
+    Part("legs-piston", "legs", "Hydraulics", "NB-L08", bolts = 190, nuts = 2, box = floatArrayOf(100f, 350f, 200f, 126f), shapes = listOf(
+        Shape(listOf("rod"), "M170 404v40"),
+        Shape(listOf("sh"), "M156 356h28a6 6 0 0 1 6 6v40a6 6 0 0 1 -6 6h-28a6 6 0 0 1 -6 -6v-40a6 6 0 0 1 6 -6z"),
+        Shape(listOf("ln"), "M158 372h24M158 384h24"),
+        Shape(listOf("sh"), "M146 442h48a8 8 0 0 1 8 8v10a8 8 0 0 1 -8 8h-48a8 8 0 0 1 -8 -8v-10a8 8 0 0 1 8 -8z"),
+        Shape(listOf("rod"), "M170 404v40", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
+        Shape(listOf("sh"), "M156 356h28a6 6 0 0 1 6 6v40a6 6 0 0 1 -6 6h-28a6 6 0 0 1 -6 -6v-40a6 6 0 0 1 6 -6z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
+        Shape(listOf("ln"), "M158 372h24M158 384h24", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
+        Shape(listOf("sh"), "M146 442h48a8 8 0 0 1 8 8v10a8 8 0 0 1 -8 8h-48a8 8 0 0 1 -8 -8v-10a8 8 0 0 1 8 -8z", m = floatArrayOf(-1f, 0f, 0f, 1f, 400f, 0f)),
     )),
     Part("legs-hover", "legs", "Hover Jet", "NB-L04", bolts = 220, nuts = 5, box = floatArrayOf(100f, 350f, 200f, 126f), shapes = listOf(
         Shape(listOf("zn"), "M166 364h68l-14 34h-40z"),
@@ -286,6 +338,20 @@ val PARTS = listOf(
     Part("acc-scarf", "acc", "Scarf", "NB-X02", bolts = 50, box = floatArrayOf(140f, 208f, 120f, 94f), at = "front", shapes = listOf(
         Shape(listOf("scarf"), "M168 240l-14 50 26-8 6-38z"),
         Shape(listOf("scarf"), "M158 218q42 24 84 0l4 18q-46 26-92 0z"),
+    )),
+    Part("acc-dosimeter", "acc", "Dosimeter", "NB-X13", bolts = 90, box = floatArrayOf(222f, 286f, 54f, 60f), at = "front", shapes = listOf(
+        Shape(listOf("zn"), "M243 294h12v10h-12z"),
+        Shape(listOf("sh2"), "M236 302h26a4 4 0 0 1 4 4v28a4 4 0 0 1 -4 4h-26a4 4 0 0 1 -4 -4v-28a4 4 0 0 1 4 -4z"),
+        Shape(listOf("gl"), "M240 308h18v14h-18z"),
+        Shape(listOf("core"), "M243 313h10v4h-10z", pulse = true),
+        Shape(listOf("ln"), "M241 330h16"),
+    )),
+    Part("acc-hardhat", "acc", "Hard Hat", "NB-X14", bolts = 120, box = floatArrayOf(112f, 36f, 176f, 80f), at = "head-front", shapes = listOf(
+        Shape(listOf("br"), "M138 100q0-52 62-52t62 52z"),
+        Shape(listOf("br"), "M122 98h156a6 6 0 0 1 6 6v0a6 6 0 0 1 -6 6h-156a6 6 0 0 1 -6 -6v0a6 6 0 0 1 6 -6z"),
+        Shape(listOf("hl"), "M156 82q10-20 30-24"),
+        Shape(listOf("zn"), "M186 76a14 14 0 1 0 28 0a14 14 0 1 0 -28 0z"),
+        Shape(listOf("core"), "M191 76a9 9 0 1 0 18 0a9 9 0 1 0 -18 0z", pulse = true),
     )),
     // keeps the old sprout's id so an owned or equipped one carries over
     Part("acc-sprout", "acc", "Isotope Antenna", "NB-X03", bolts = 60, box = floatArrayOf(140f, 20f, 120f, 128f), at = "head-back", shapes = listOf(
@@ -345,10 +411,14 @@ val PARTS = listOf(
     Part("base-shop", "base", "Workshop", "NB-Z02", nuts = 4, tier = 2),
     Part("base-dome", "base", "Observatory", "NB-Z03", nuts = 10, tier = 3),
     Part("base-deck", "base", "Star Deck", "NB-Z04", nuts = 25, tier = 4),
+    Part("base-hall", "base", "Reactor Hall", "NB-Z05", nuts = 40, tier = 5),
 )
 
 // The bay around the robot. tier is the first base evolution that shows the shape.
 val SCENE = listOf(
+    Shape(listOf("steam"), "M210 500a40 30 0 1 0 80 0a40 30 0 1 0 -80 0zM236 452a50 34 0 1 0 100 0a50 34 0 1 0 -100 0zM300 528a30 22 0 1 0 60 0a30 22 0 1 0 -60 0z", pulse = true, tier = 5),
+    Shape(listOf("tower"), "M200 700q22-90 0-170h100q-22 80 0 170z", tier = 5),
+    Shape(listOf("tower"), "M304 700q14-60 0-112h64q-14 52 0 112z", tier = 5),
     Shape(listOf("wire"), "M640 104Q820 190 1000 100", tier = 4),
     Shape(listOf("br"), "M721 145a9 9 0 1 0 18 0a9 9 0 1 0 -18 0z", pulse = true, tier = 4),
     Shape(listOf("cr"), "M811 155a9 9 0 1 0 18 0a9 9 0 1 0 -18 0z", pulse = true, tier = 4),

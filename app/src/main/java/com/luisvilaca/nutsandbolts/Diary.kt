@@ -134,18 +134,10 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
         Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
         Month(month, { if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false) { ui.page = it }
     }
-    if (lay.wide) Column(Modifier.fillMaxSize()) {
-        Header("Diary", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
-        Row(Modifier.fillMaxSize()) {
-            Column(Modifier.weight(0.3f).fillMaxHeight()) {
-                Column(Modifier.padding(start = 28.dp)) { Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim); write() }
-                BayPanel(store, Modifier.weight(1f).fillMaxWidth(), orbitsFor(store.s, LocalDate.now()), plate = false)
-            }
-            Column(Modifier.weight(0.7f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 32.dp, bottom = 24.dp)) { cal() }
-        }
-    } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Diary", null, store, ui, lay, badge = !lay.wide)
-        Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+    // like Habits: no bay here, the robot rides small in the header and the calendar takes the width
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 28.dp else 20.dp).padding(bottom = 24.dp)) {
+        Header("Diary", sum.takeIf { lay.wide }, store, ui, lay, badge = true)
+        if (!lay.wide) Text(sum, Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         write()
         Spacer(Modifier.height(20.dp))
         cal()

@@ -30,7 +30,7 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Shop: item shop to evolve the character; categories Head, Body, Arms, Legs, Accessories, Base.
 - Habits: planning and managing: calendar and history (each habit's share of slots done, fails, best and current run); add and edit habits. Every date, past and future, opens to show the habits that run on it and can be logged there.
 - Settings, from the top bar: backup and restore, the daily reminder, the robot's name.
-- The robot is big where it matters: on tablet landscape a bay on Today and Shop and a smaller one on Habits and Diary; on a phone the full robot on Today and Shop only, a small robot badge elsewhere.
+- The robot is big where it matters: on tablet landscape a bay on Today and Shop, and on Habits and Diary only a small robot badge so the planner and calendar get the full width (2026-10-17 streamlining); on a phone the full robot on Today and Shop only, a small robot badge elsewhere.
 - Each habit row has one clear Done; Skip and Fail are smaller, still one tap. Logging a habit or buying a part shows a message with Undo; tapping a filled nut also undoes.
 - Diary: calendar view; pen entry on a printed diary page (dated header, ruled lines).
 

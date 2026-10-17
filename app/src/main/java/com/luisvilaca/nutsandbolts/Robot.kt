@@ -76,7 +76,7 @@ fun DrawScope.paint(sh: Shape, t: Long, alpha: Float = 1f) {
         val draw: DrawScope.() -> Unit = {
             ink.fill?.let { drawPath(sh.path, it, alpha = ink.alpha * a) }
             ink.stroke?.let {
-                val phase = if (r == "plat-ring") -(t % 3000) / 3000f * 88f else 0f
+                val phase = if (r == "plat-ring" || r == "plasma") -(t % 3000) / 3000f * 88f else 0f
                 drawPath(sh.path, it, alpha = ink.alpha * a, style = Stroke(ink.width, cap = if (ink.butt) StrokeCap.Butt else StrokeCap.Round, join = StrokeJoin.Round,
                     pathEffect = ink.dash?.let { d -> PathEffect.dashPathEffect(d, phase) }))
             }

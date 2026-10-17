@@ -82,7 +82,7 @@ val FLOOR = Color(0xFF0F1828)
 val ROLES: Map<String, Ink> = mapOf(
     "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE3EAF3), width = 14f), "sh2" to f(Color(0xFFA9B7CB)),
     "gl" to f(W.glass), "space" to f(W.glass), "zn" to f(W.joint), "br" to f(W.gold), "ey" to f(W.act), "mt" to f(W.act),
-    "cr" to f(W.coral), "ice" to f(Color(0xFF9FDCFF)), "moon" to f(W.steel), "leaf" to f(W.act), "core" to f(W.glow), "scarf" to f(W.coral),
+    "cr" to f(W.coral), "ice" to f(Color(0xFF9FDCFF)), "moon" to f(W.steel), "leaf" to f(W.act), "core" to f(W.glow), "plasma" to s(W.glow, 5f, dash = floatArrayOf(14f, 10f)), "scarf" to f(W.coral),
     "ln" to s(W.dim, 3.5f), "hl" to s(Color.White, 5f, 0.28f), "claw" to s(W.joint, 8f), "spring" to s(W.joint, 8f),
     "tread" to s(W.joint, 6f, dash = floatArrayOf(6f, 8f)), "ring" to s(W.act, 5f, dash = floatArrayOf(20f, 12f)), "rod" to s(W.joint, 6f),
     "stem" to s(Color(0xFF3FA866), 6f), "halo" to s(W.gold, 7f), "bowl" to Ink(SolidColor(Color(0x339FE3D6)), Color(0xBFFFFFFF), 4f),
@@ -92,7 +92,7 @@ val ROLES: Map<String, Ink> = mapOf(
     // the bay (its floor is transparent: BayPanel lays the floor edge to edge)
     "wire" to s(W.glass, 3f), "stars" to s(Color.White, 4f, 0.4f), "pring" to s(W.steel, 5f), "cone" to f(W.glow, 0.05f),
     "panel" to f(Color(0xFF15213A)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
-    "floor" to f(Color.Transparent), "skirt" to f(W.steel, 0.1f), "orb" to s(W.glow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
+    "floor" to f(Color.Transparent), "tower" to Ink(SolidColor(Color(0xFF22304A)), W.glow.copy(alpha = 0.35f), 3f), "steam" to f(Color.White, 0.1f), "skirt" to f(W.steel, 0.1f), "orb" to s(W.glow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
     "plat-side" to f(Color(0xFF0E1626)), "plat-top" to Ink(SolidColor(Color(0xFF22304A)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.act, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )
