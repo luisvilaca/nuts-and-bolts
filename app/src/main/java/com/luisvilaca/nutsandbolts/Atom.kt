@@ -35,8 +35,8 @@ fun slots(s: Data, h: Habit, d: LocalDate): List<Slot> {
 
 // Leaf shapes in a 22 x 26 box, each anchored where it meets the stem at (11, 24).
 private fun shape(d: String) = PathParser().parsePathString(d).toPath()
-private val LEAF = shape("M11 24C11 14 4 10 3 3C10 3 16 9 11 24Z")
-private val BUD = shape("M11 24C11 18 8 15 8 11C8 8 10 6 11 5C12 6 14 8 14 11C14 15 11 18 11 24Z")
+val LEAF = shape("M11 24C11 14 4 10 3 3C10 3 16 9 11 24Z")
+val BUD = shape("M11 24C11 18 8 15 8 11C8 8 10 6 11 5C12 6 14 8 14 11C14 15 11 18 11 24Z")
 private val WILT = shape("M11 24C11 18 12 14 18 12C16 17 13 18 11 24Z")
 
 // A slot is a leaf: done has unfurled (solid green), skipped is a dashed leaf, failed has wilted (coral, drooping),
@@ -61,7 +61,8 @@ fun SlotMark(slot: Slot, size: Dp = 26.dp, modifier: Modifier = Modifier) =
 // A day as a small sprout: it stands taller and puts out more leaves the more was done; a wilted leaf when something
 // failed; a dashed seed while the day is ahead.
 @Composable
-fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier) = Canvas(modifier) {
+fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier, today: Boolean = false) = Canvas(modifier) {
+    if (today) drawCircle(W.steel, size.minDimension * 0.47f, center, style = Stroke(1.5.dp.toPx()))
     val base = Offset(size.width / 2, size.height * 0.92f)
     val k = size.height / 44f
     if (future || p.slots == 0) {
@@ -79,35 +80,38 @@ fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier) = Canva
 
 class Orbit(val h: Habit, val slots: List<Slot>)
 
-// The bay: Rivet on its platform and, beside it under a magenta grow light, a glass tray with one sprout per
-// habit running today and a leaf per slot. A habit just done unfurls its newest leaf.
+// The bay: Rivet on its platform and, beside it on the floor under a hanging magenta grow light, a glass tray with
+// one sprout per habit running today and a leaf per slot. A habit just done unfurls its newest leaf.
 // waiting: no habits yet, so the tray holds one dashed seed.
 fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?> = s.equip, waiting: Boolean = false) {
     val tier = PART[equip["base"]]?.tier ?: 1
-    val glow = Offset(760f, 210f)
-    drawCircle(Brush.radialGradient(listOf(W.grow.copy(alpha = 0.2f), Color.Transparent), glow, 440f), 440f, glow)
-    scene(tier, t)
-    for (x in listOf(640f, 880f)) drawLine(W.joint, Offset(x, 100f), Offset(x, 206f), 3f)
-    drawRoundRect(W.grow, Offset(610f, 200f), Size(300f, 14f), CornerRadius(7f), alpha = 0.3f, style = Stroke(16f))
-    drawRoundRect(W.grow, Offset(610f, 200f), Size(300f, 14f), CornerRadius(7f))
-    translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
+    val ground = 680f
+    val glow = Offset(765f, ground - 300f)
+    drawCircle(Brush.radialGradient(listOf(W.grow.copy(alpha = 0.22f), Color.Transparent), glow, 460f), 460f, glow)
+    // Rivet and its base step left to share the floor with the tray
+    translate(-140f, 0f) {
+        scene(tier, t)
+        translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
+    }
+    for (x in listOf(650f, 880f)) drawLine(W.joint, Offset(x, 60f), Offset(x, ground - 316f), 3f)
+    drawRoundRect(W.grow, Offset(620f, ground - 320f), Size(290f, 14f), CornerRadius(7f), alpha = 0.3f, style = Stroke(16f))
+    drawRoundRect(W.grow, Offset(620f, ground - 320f), Size(290f, 14f), CornerRadius(7f))
 
-    val ground = 412f
-    drawRoundRect(Color(0x229FE3D6), Offset(620f, ground - 8f), Size(280f, 50f), CornerRadius(14f))
-    drawRoundRect(Color(0x332FC6B8), Offset(626f, ground + 12f), Size(268f, 26f), CornerRadius(10f))
-    drawRoundRect(W.steel, Offset(620f, ground - 8f), Size(280f, 50f), CornerRadius(14f), alpha = 0.7f, style = Stroke(2.5f))
-    if (waiting) drawCircle(W.dim, 10f, Offset(760f, ground - 12f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
+    drawRoundRect(Color(0x229FE3D6), Offset(620f, ground - 8f), Size(290f, 60f), CornerRadius(14f))
+    drawRoundRect(Color(0x332FC6B8), Offset(626f, ground + 16f), Size(278f, 30f), CornerRadius(10f))
+    drawRoundRect(W.steel, Offset(620f, ground - 8f), Size(290f, 60f), CornerRadius(14f), alpha = 0.7f, style = Stroke(2.5f))
+    if (waiting) drawCircle(W.dim, 12f, Offset(765f, ground - 14f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
     val shown = orbits.take(6)
-    val gap = 280f / max(1, shown.size)
+    val gap = 290f / max(1, shown.size)
     shown.forEachIndexed { k, o ->
         val x = 620f + gap * (k + 0.5f)
         val failed = o.slots.any { it.s == "fail" }
-        drawLine(if (failed) W.joint else W.act, Offset(x, ground), Offset(x, ground - 50f - 36f * o.slots.size), 4f, StrokeCap.Round)
+        drawLine(if (failed) W.joint else W.act, Offset(x, ground), Offset(x, ground - 54f - 44f * o.slots.size), 5f, StrokeCap.Round)
         val newest = o.slots.indexOfLast { it.s == "done" && !it.other }
         o.slots.forEachIndexed { j, sl ->
             var grow = 1f
             if (fresh != null && fresh.first == o.h.id && j == newest) grow = min(1f, (t - fresh.second).coerceAtLeast(0) / 700f).let { 1 - (1 - it).pow(3) }
-            leaf(Offset(x, ground - 30f - 36f * j), 2.2f * grow, sl, j % 2 == 1)
+            leaf(Offset(x, ground - 34f - 44f * j), 2.8f * grow, sl, j % 2 == 1)
         }
     }
 }
