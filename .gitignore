@@ -1,3 +1,11 @@
+# build output and machine-local settings
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+
 # review screenshots and local tool state
 .impeccable/review/
 .impeccable/build/
