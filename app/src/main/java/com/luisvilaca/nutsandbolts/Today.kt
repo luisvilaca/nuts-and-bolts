@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -68,8 +69,6 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
             }
         }
         if (s.habits.isNotEmpty()) {
-            SectionLabel("Attributes")
-            Attributes(s)
             SectionLabel("This week")
             Week(s, ui)
         }
@@ -93,7 +92,9 @@ fun TodayScreen(store: Store, ui: Ui, lay: Lay) {
 }
 
 // The bay is the same picture on Today and Shop: same height, same framing, the nameplate in its top corner.
-fun bayHeight(lay: Lay) = if (lay.phone) 360.dp else 560.dp
+fun bayHeight(lay: Lay) = if (lay.phone) 400.dp else 600.dp
+private val TILE = 54.dp
+private val FOOT = TILE + 20.dp
 
 @Composable
 fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip) {
@@ -101,38 +102,43 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     val tm = clock()
     Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp))) {
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
-            room(s, tm, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
+            room(s, tm, store.react, orbits, store.fresh, equip, band = 72.dp.toPx(), foot = FOOT.toPx())
         }
         Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
             Text(MOOD[mood(s)] + if (orbits.isNotEmpty()) " · building ${plural(min(orbits.size, 6), "frame")}" else "", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }
+        Levels(s, Modifier.align(Alignment.BottomCenter))
     }
 }
 
+// The four attributes as levels, standing on the bay's floor so they are always in view on Today and Shop: each
+// shows its level, the stage it has reached and how far it is to the next.
 @Composable
-fun Attributes(s: Data) = androidx.compose.foundation.layout.BoxWithConstraints {
-    val twoCols = maxWidth >= 600.dp
-    val rows = STATS.entries.toList()
-    val one = @Composable { e: Map.Entry<String, Stat>, m: Modifier ->
-        val v = s.stats.getValue(e.key)
-        Row(m.padding(vertical = 6.dp).semantics(mergeDescendants = true) { contentDescription = "${e.value.name}, $v of 100" }, verticalAlignment = Alignment.CenterVertically) {
-            Icon(ICONS.getValue(e.key), null, Modifier.size(20.dp), tint = W.steel)
-            Column(Modifier.padding(start = 10.dp).weight(1.1f)) {
-                Text(e.value.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, softWrap = false)
-                Text(e.value.gloss, style = MaterialTheme.typography.labelMedium, color = W.dim)
+private fun Levels(s: Data, modifier: Modifier) = androidx.compose.foundation.layout.BoxWithConstraints(modifier.fillMaxWidth().padding(10.dp)) {
+    val roomy = maxWidth >= 520.dp
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        STATS.forEach { (k, st) ->
+            val p = s.stats.getValue(k)
+            val l = level(p)
+            Column(Modifier.weight(1f).height(TILE).clip(RoundedCornerShape(10.dp)).background(W.rail.copy(alpha = 0.8f)).padding(horizontal = 8.dp, vertical = 6.dp)
+                .semantics(mergeDescendants = true) { contentDescription = "${st.name}, level $l of 10, ${st.stages[l - 1]}" }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(ICONS.getValue(k), null, Modifier.size(14.dp), tint = W.steel)
+                    if (roomy) Text(st.name, Modifier.padding(start = 5.dp).weight(1f), style = MaterialTheme.typography.labelMedium, color = W.dim, maxLines = 1)
+                    else Spacer(Modifier.weight(1f))
+                    Text("LV $l", style = Numeral.copy(fontSize = 12.sp), color = W.text)
+                }
+                Text(st.stages[l - 1], style = MaterialTheme.typography.labelMedium.copy(fontSize = if (roomy) 13.sp else 11.sp, letterSpacing = 0.sp), color = W.text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Gauge(levelShare(p), Modifier.fillMaxWidth().padding(top = 4.dp), 4.dp)
             }
-            Gauge(v / 100f, Modifier.weight(1.4f))
-            Text("$v", Modifier.padding(start = 12.dp).size(width = 40.dp, height = 22.dp), style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = W.text)
         }
     }
-    if (twoCols) Column { rows.chunked(2).forEach { r -> Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) { r.forEach { one(it, Modifier.weight(1f)) } } } }
-    else Column { rows.forEach { one(it, Modifier.fillMaxWidth()) } }
 }
 
 // A steel bar on a dark track.
 @Composable
-fun Gauge(v: Float, modifier: Modifier) = Box(modifier.height(8.dp).clip(CircleShape).background(W.line)) {
+fun Gauge(v: Float, modifier: Modifier, h: androidx.compose.ui.unit.Dp = 8.dp) = Box(modifier.height(h).clip(CircleShape).background(W.line)) {
     Box(Modifier.fillMaxWidth(v.coerceIn(0f, 1f)).fillMaxHeight().background(W.steel))
 }
 
@@ -167,7 +173,7 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
     Text("The bench is empty", style = MaterialTheme.typography.headlineSmall)
     Text("A habit is something you want to do, or stop doing, a set number of times a day or a week. Each one becomes a frame on ${store.s.name}'s workbench, and every time you do it a bolt goes in.",
         Modifier.padding(top = 8.dp, bottom = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
-    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(48.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
+    Button(onClick = { ui.tab = "habits"; ui.edit = "" }, Modifier.height(44.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
         Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))
     }
     Text("Or start from one of these:", Modifier.padding(top = 20.dp, bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)

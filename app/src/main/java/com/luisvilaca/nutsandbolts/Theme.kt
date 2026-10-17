@@ -44,7 +44,7 @@ val Label = TextStyle(fontFamily = body, fontWeight = FontWeight.Medium, fontSiz
 val Numeral = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, fontFeatureSettings = "tnum")
 
 private val type = Typography(
-    displaySmall = TextStyle(fontFamily = display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 40.sp, letterSpacing = (-0.01).em),
+    displaySmall = TextStyle(fontFamily = display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.01).em),
     headlineSmall = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp),
     titleLarge = TextStyle(fontFamily = body, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, lineHeight = 28.sp),
     titleMedium = TextStyle(fontFamily = body, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 24.sp),

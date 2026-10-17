@@ -87,7 +87,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     val t = LocalDate.now()
     val p = slotProgress(s, d)
 
-    val body = @Composable {
+    val controls = @Composable {
         val views = @Composable { m: Modifier ->
             SingleChoiceSegmentedButtonRow(m) {
                 listOf("day" to "Day", "cal" to "Calendar", "hist" to "History").forEachIndexed { i, (k, v) ->
@@ -98,35 +98,37 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
         }
         // a narrow column gives the view switch its own line
         BoxWithConstraints { val narrow = maxWidth < 560.dp; Column {
-        if (narrow) views(Modifier.fillMaxWidth().padding(bottom = 8.dp))
-        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            when (view) {
-                "day" -> Stepper(d.format(shortFmt), { ui.date = d.minusDays(1) }, { ui.date = d.plusDays(1) })
-                "cal" -> Stepper(month.format(monthFmt), { month = month.minusMonths(1) }, { month = month.plusMonths(1) })
+            if (narrow) views(Modifier.fillMaxWidth().padding(bottom = 4.dp))
+            Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                when (view) {
+                    "day" -> Stepper(d.format(shortFmt), { ui.date = d.minusDays(1) }, { ui.date = d.plusDays(1) })
+                    "cal" -> Stepper(month.format(monthFmt), { month = month.minusMonths(1) }, { month = month.plusMonths(1) })
+                }
+                if (view == "day" && d != t) TextButton({ ui.date = t }) { Text("Back to today", color = W.act) }
+                if (!narrow) { Spacer(Modifier.weight(1f)); views(Modifier) }
             }
-            if (view == "day" && d != t) TextButton({ ui.date = t }) { Text("Back to today", color = W.act) }
-            if (!narrow) { Spacer(Modifier.weight(1f)); views(Modifier) }
-        }
         } }
-        val run = s.habits.filter { active(it, d) }
-        when {
-            view == "cal" -> Month(month, { DayMark(slotProgress(s, it), it > t, Modifier.size(26.dp)) }, ahead = true) { ui.date = it; view = "day" }
-            s.habits.isEmpty() -> Empty(store, ui)
-            view == "hist" -> History(s)
-            run.isEmpty() -> Note("No habits run on this day.")
-            else -> run.forEach { HabitRow(store, ui, it, d) }
-        }
     }
+    val run = s.habits.filter { active(it, d) }
 
     Box(Modifier.fillMaxSize()) {
-        // the bay lives on Today and Shop; here the robot rides small in the header and the planner takes the width
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 28.dp else 20.dp).padding(bottom = 96.dp)) {
-            Header("Habits", summary(s, d, p).takeIf { lay.wide }, store, ui, lay, badge = true)
-            if (!lay.wide) Text(summary(s, d, p), Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-            body()
+        // only what overflows scrolls: the calendar always fits the screen, the day and the history scroll if they must
+        Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
+            Header("Habits", summary(s, d, p).takeIf { lay.wide }, store, ui, lay)
+            if (!lay.wide) Text(summary(s, d, p), Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            controls()
+            if (view == "cal") Month(month, { DayMark(slotProgress(s, it), it > t, Modifier.size(24.dp)) }, ahead = true, Modifier.weight(1f).padding(bottom = 8.dp)) { ui.date = it; view = "day" }
+            else Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 80.dp)) {
+                when {
+                    s.habits.isEmpty() -> Empty(store, ui)
+                    view == "hist" -> History(s)
+                    run.isEmpty() -> Note("No habits run on this day.")
+                    else -> run.forEach { HabitRow(store, ui, it, d) }
+                }
+            }
         }
-        ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null) }, onClick = { ui.edit = "" },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp), containerColor = W.act, contentColor = W.onAct)
+        if (view != "cal") ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.edit = "" },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp).height(48.dp), containerColor = W.act, contentColor = W.onAct)
     }
 }
 
@@ -142,40 +144,45 @@ fun segColors() = SegmentedButtonDefaults.colors(activeContainerColor = W.raised
 
 @Composable
 fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(verticalAlignment = Alignment.CenterVertically) {
-    IconButton(prev) { Icon(ICONS.getValue("prev"), "Previous", tint = W.text) }
+    IconButton(prev, Modifier.size(40.dp)) { Icon(ICONS.getValue("prev"), "Previous", tint = W.text) }
     Text(label, Modifier.widthIn(min = 120.dp), style = MaterialTheme.typography.titleMedium, maxLines = 1)
-    IconButton({ next?.invoke() }, enabled = next != null) { Icon(ICONS.getValue("next"), "Next", tint = if (next != null) W.text else W.edge) }
+    IconButton({ next?.invoke() }, Modifier.size(40.dp), enabled = next != null) { Icon(ICONS.getValue("next"), "Next", tint = if (next != null) W.text else W.edge) }
 }
 
-// A month of day tiles; mark draws each day's sign. ahead: future days open too.
+// A month of day tiles that always fills the space it is given, so it never scrolls: each week a ruled row of equal
+// height, the day's mark under its number, or beside it when the rows are short. ahead: future days open too.
 @Composable
-fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, open: (LocalDate) -> Unit) {
+fun Month(m: YearMonth, mark: @Composable (LocalDate) -> Unit, ahead: Boolean, modifier: Modifier = Modifier, open: (LocalDate) -> Unit) {
     val t = LocalDate.now()
     val lead = m.atDay(1).dayOfWeek.value - 1
-    // a hairline grid: each week a ruled row, the day's mark under its number
-    BoxWithConstraints { val cellH = maxOf(64.dp, maxWidth / 7 / 1.25f); Column {
-        Row(Modifier.padding(bottom = 6.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
-        (0 until (lead + m.lengthOfMonth() + 6) / 7).forEach { w ->
-            androidx.compose.material3.HorizontalDivider(color = W.line)
-            Row {
-                (0..6).forEach { i ->
-                    val n = w * 7 + i - lead + 1
-                    if (n < 1 || n > m.lengthOfMonth()) Spacer(Modifier.weight(1f)) else {
-                        val d = m.atDay(n)
-                        val off = d > t && !ahead
-                        Column(Modifier.weight(1f).height(cellH).clip(RoundedCornerShape(10.dp))
-                            .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(6.dp)) {
-                            Box(Modifier.size(30.dp).border(2.dp, if (d == t) W.act else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
-                                Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.edge else W.text)
+    val weeks = (lead + m.lengthOfMonth() + 6) / 7
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val compact = (maxHeight - 24.dp) / weeks < 60.dp
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.padding(bottom = 4.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
+            (0 until weeks).forEach { w ->
+                androidx.compose.material3.HorizontalDivider(color = W.line)
+                Row(Modifier.weight(1f)) {
+                    (0..6).forEach { i ->
+                        val n = w * 7 + i - lead + 1
+                        if (n < 1 || n > m.lengthOfMonth()) Spacer(Modifier.weight(1f)) else {
+                            val d = m.atDay(n)
+                            val off = d > t && !ahead
+                            val cell = Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(10.dp))
+                                .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) }.padding(4.dp)
+                            val num = @Composable {
+                                Box(Modifier.size(28.dp).border(2.dp, if (d == t) W.act else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
+                                    Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.edge else W.text)
+                                }
                             }
-                            Box(Modifier.width(30.dp).weight(1f), contentAlignment = Alignment.Center) { mark(d) }
+                            if (compact) Row(cell, verticalAlignment = Alignment.CenterVertically) { num(); Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { mark(d) } }
+                            else Column(cell) { num(); Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { mark(d) } }
                         }
                     }
                 }
             }
         }
     }
-}
 }
 
 // Every habit's lifetime. A run is drawn exactly its length: one step per day or week.
@@ -257,7 +264,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay, badge = true) // the form has no bay at any size
+        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay)
         Column(Modifier.widthIn(max = 720.dp)) {
             OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Name") }, placeholder = { Text("Read 20 minutes") }, singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act, focusedLabelColor = W.act))
@@ -299,7 +306,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             Row(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (h != null) TextButton({ confirm = true }) { Text("Delete habit", color = W.coral) }
                 Spacer(Modifier.weight(1f))
-                OutlinedButton({ ui.edit = null }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Cancel", color = W.text) }
+                OutlinedButton({ ui.edit = null }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Cancel", color = W.text) }
                 Button({
                     store.change {
                         val x = h ?: Habit(newId(), "").also { habits += it }
@@ -307,7 +314,7 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                         x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }
                     }
                     ui.edit = null
-                }, Modifier.height(48.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
+                }, Modifier.height(44.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
                     Text(if (h == null) "Add habit" else "Save changes")
                 }
             }

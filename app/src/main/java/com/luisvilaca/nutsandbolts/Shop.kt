@@ -115,9 +115,9 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                     store.react("cheer")
                     ui.tell("${p.name} is yours") { store.change { owned -= p.id; bolts += p.bolts; nuts += p.nuts; equip[p.slot] = before } }
                 }
-            }, enabled = need.isEmpty(), modifier = Modifier.height(48.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
-            !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(48.dp), shape = CircleShape, colors = btn) { Text(words.first) }
-            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(48.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
+            }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
+            !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
+            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
             else -> Text(words.second, style = MaterialTheme.typography.labelLarge, color = W.act)
         }
     }

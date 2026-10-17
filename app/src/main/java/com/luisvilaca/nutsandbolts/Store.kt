@@ -101,6 +101,7 @@ private fun JSONObject.date(k: String) = str(k)?.let(LocalDate::parse)
 internal fun json(s: Data): JSONObject = JSONObject()
     .put("name", s.name).put("bolts", s.bolts).put("nuts", s.nuts)
     .put("stats", JSONObject(s.stats as Map<*, *>))
+    .put("peak", JSONObject(s.peak as Map<*, *>))
     .put("owned", JSONArray(s.owned))
     .put("equip", JSONObject().apply { s.equip.forEach { (k, v) -> put(k, v ?: JSONObject.NULL) } })
     .put("habits", JSONArray(s.habits.map { h ->
@@ -109,11 +110,11 @@ internal fun json(s: Data): JSONObject = JSONObject()
             .put("days", h.days?.let { JSONArray(it.sorted()) })
     }))
     .put("marks", JSONObject().apply {
-        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s, it.b, it.p, it.n)) })) } }) }
+        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s, it.b, it.p, it.n, it.l)) })) } }) }
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
-    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen))
+    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("backedUp", s.backedUp?.toString())
 
@@ -121,7 +122,9 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
     name = o.optString("name", name)
     bolts = o.optInt("bolts").coerceAtLeast(0)
     nuts = o.optInt("nuts").coerceAtLeast(0)
-    o.optJSONObject("stats")?.let { j -> stats.keys.forEach { stats[it] = j.optInt(it, 30).coerceIn(0, 100) } }
+    o.optJSONObject("stats")?.let { j -> stats.keys.forEach { stats[it] = j.optInt(it, 30).coerceAtLeast(0) } }
+    // files from before levels have no peak: an attribute has at least reached the level it is at
+    stats.keys.forEach { peak[it] = maxOf(level(stats.getValue(it)), o.optJSONObject("peak")?.optInt(it) ?: 0) }
     o.optJSONArray("owned")?.let { a -> owned.clear(); for (i in 0 until a.length()) owned += a.getString(i) }
     o.optJSONObject("equip")?.let { j -> equip.keys.toList().forEach { k -> equip[k] = j.str(k)?.takeIf { it in owned } ?: equip[k] } }
     o.getJSONArray("habits").let { a ->
@@ -134,7 +137,7 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
     o.optJSONObject("marks")?.let { m ->
         for (d in m.keys()) m.getJSONObject(d).let { hs ->
             marks[LocalDate.parse(d)] = hs.keys().asSequence().associateWith { id ->
-                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(x.getString(0), x.getInt(1), x.getInt(2), x.getInt(3)) } }.toMutableList() }
+                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(x.getString(0), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4)) } }.toMutableList() }
             }.toMutableMap()
         }
     }
@@ -146,7 +149,7 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
         val stab = if (j.has("stabPct")) j.optInt("stabPct") else listOf(0, 60, 90)[j.optInt("stab", 1).coerceIn(0, 2)]
         val rub = if (j.has("rub")) j.optDouble("rub").toFloat() else listOf(2f, 4f, 7f)[j.optInt("eraser", 1).coerceIn(0, 2)]
         pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
-            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"))
+            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true))
     }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     backedUp = o.date("backedUp")

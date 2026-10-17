@@ -72,4 +72,18 @@ class LogicTest {
         assertEquals(listOf(50, 0, "head-hex"), listOf(s.bolts, s.nuts, s.equip["head"]))
         assertFalse(buy(s, p))
     }
+
+    @Test fun levelsPayNutsOnceAndUndoIsExact() {
+        val s = fresh().apply { stats["core"] = 58 } // level 2, two points short of level 3
+        val h = Habit("x", "X", per = "day", target = 3, stat = "core", weight = "heavy", start = d("2026-10-01"))
+        val day = d("2026-10-05")
+        val m = mark(s, h, day, "done")!!
+        assertEquals(listOf(62, 3, 1, 2), listOf(s.stats["core"], s.peak["core"], m.l, s.nuts))
+        undo(s, h, day)
+        assertEquals(listOf(58, 2, 0), listOf(s.stats["core"], s.peak["core"], s.nuts))
+        mark(s, h, day, "done"); mark(s, h, day, "fail") // up to level 3 and its nuts, then back down
+        val again = mark(s, h, day, "done")!!
+        assertEquals(listOf(62, 0, 2), listOf(s.stats["core"], again.l, s.nuts)) // level 3 again pays nothing
+        assertEquals(listOf(1, 2, 3, 10, 10), listOf(level(0), level(20), level(60), level(900), level(5000)))
+    }
 }
