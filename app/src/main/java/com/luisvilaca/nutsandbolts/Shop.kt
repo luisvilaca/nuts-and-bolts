@@ -68,6 +68,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     val items = PARTS.filter { it.slot == cat }.sortedWith(compareBy({ s.equip[it.slot] != it.id }, { it.id !in s.owned }, { it.bolts }, { it.nuts }))
     val sel = PART[trying[cat]] ?: PART[s.equip[cat]] ?: items.first()
     val wear = s.equip + trying
+    val orbits = derived(store) { orbitsFor(s, LocalDate.now()) }
     val tried = trying.filter { (k, v) -> s.equip[k] != v }.mapNotNull { PART[it.value]?.name }
 
     val detail = @Composable { m: Modifier ->
@@ -92,7 +93,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
                 items.chunked(cols).forEach { r ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         r.forEach { p ->
-                            Tile(store, p, p.id == sel.id, Modifier.weight(1f)) { if (s.equip[p.slot] == p.id) trying.remove(p.slot) else trying[p.slot] = p.id }
+                            Tile(store, p, p.id == sel.id, orbits, Modifier.weight(1f)) { if (s.equip[p.slot] == p.id) trying.remove(p.slot) else trying[p.slot] = p.id }
                         }
                         repeat(cols - r.size) { Spacer(Modifier.weight(1f)) }
                     }
@@ -105,7 +106,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
         // the same bay as the Lab, so trying a part on shows it exactly where it will live
         Row(Modifier.fillMaxSize()) {
-            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbitsFor(store.s, LocalDate.now()), wear)
+            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits, wear)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 32.dp)) {
                 detail(Modifier.padding(bottom = 12.dp))
                 tabs() // pinned: only the grid scrolls
@@ -114,7 +115,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(store.s, LocalDate.now()), wear)
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits, wear)
         detail(Modifier.padding(vertical = 12.dp))
         tabs()
         grid()
@@ -186,14 +187,14 @@ private fun Price(p: Part, owned: Boolean, short: Pair<Int, Int> = 0 to 0) {
 private fun lack(s: Data, p: Part) = (p.bolts - s.bolts).coerceAtLeast(0) to (p.nuts - s.nuts).coerceAtLeast(0)
 
 @Composable
-private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun Tile(store: Store, p: Part, sel: Boolean, orbits: List<Orbit>, modifier: Modifier, onClick: () -> Unit) {
     val s = store.s
     val eq = s.equip[p.slot] == p.id
     // one panel per part; the selection ring sits on the panel itself
     Column(modifier.clip(RoundedCornerShape(12.dp)).selectable(sel, role = Role.RadioButton, onClick = onClick).padding(bottom = 6.dp)) {
         val owned = p.id in s.owned && !eq
         // a base tile draws its whole room once and reuses the picture until the base, the robot or today's bolts change
-        val key = if (p.slot == "base") listOf(p.id, s.equip.toMap(), orbitsFor(s, LocalDate.now()).map { o -> o.h.id to o.slots.map { it.s } }).hashCode() else 0
+        val key = if (p.slot == "base") listOf(p.id, s.equip.toMap(), orbits.map { o -> o.h.id to o.slots.map { it.s } }).hashCode() else 0
         val cache = remember { arrayOfNulls<Any>(2) }
         Box {
             Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
@@ -204,7 +205,7 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
                     if (cache[0] != k) {
                         val b = ImageBitmap(size.width.toInt().coerceAtLeast(1), size.height.toInt().coerceAtLeast(1))
                         CanvasDrawScope().draw(this, layoutDirection, androidx.compose.ui.graphics.Canvas(b), size) {
-                            room(s, 0L, null, orbitsFor(s, LocalDate.now()), null, s.equip + ("base" to p.id))
+                            room(s, 0L, null, orbits, null, s.equip + ("base" to p.id))
                         }
                         cache[0] = k; cache[1] = b
                     }

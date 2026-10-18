@@ -100,6 +100,8 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
         } }
     }
     val run = s.habits.filter { active(it, d) }
+    val records = derived(store) { s.habits.associateWith { record(s, it, t) } }
+    val monthP = derived(store, month) { (1..month.lengthOfMonth()).associate { n -> month.atDay(n).let { it to slotProgress(s, it) } } }
     var sel by remember { mutableStateOf<String?>(null) } // the habit in the side panel, on a split screen
 
     Box(Modifier.fillMaxSize()) {
@@ -107,8 +109,8 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
         Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
             val sum = when {
                 s.habits.isEmpty() -> "No habits yet"
-                view == "cal" -> monthSummary(s, month)
-                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> record(s, h, t).best.let { it to h.per } }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
+                view == "cal" -> monthSummary(month, monthP)
+                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> records.getValue(h).best to h.per }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
                 else -> boltsIn(p, d > t)
             }
             Header("Habits", sum.takeIf { lay.wide }, store, ui, lay)
@@ -116,8 +118,8 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
             controls()
             if (view == "cal") Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
                 Card(Modifier.weight(1f), pad = 12.dp) {
-                    Month(month, { day, room -> CalendarMark(slotProgress(s, day), day > t, room) }, ahead = true, Modifier.weight(1f),
-                        say = { day -> slotProgress(s, day).let { if (it.slots == 0) "nothing ran" else boltsIn(it, day > t) } }) { ui.date = it; view = "day" }
+                    Month(month, { day, room -> CalendarMark(monthP.getValue(day), day > t, room) }, ahead = true, Modifier.weight(1f),
+                        say = { day -> monthP.getValue(day).let { if (it.slots == 0) "nothing ran" else boltsIn(it, day > t) } }) { ui.date = it; view = "day" }
                 }
                 Legend(Modifier.padding(top = 8.dp, start = 4.dp))
             }
@@ -130,13 +132,13 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         when {
                             s.habits.isEmpty() -> Empty(store, ui)
-                            view == "hist" -> History(s)
+                            view == "hist" -> History(s, records)
                             run.isEmpty() -> Note("No habits run on this day.")
                             split -> run.forEach { HabitRow(store, ui, it, d, selected = it === picked, select = { sel = it.id }) }
                             else -> run.forEach { HabitRow(store, ui, it, d) }
                         }
                     }
-                    if (split && picked != null) Detail(s, ui, picked, Modifier.weight(0.44f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(top = 4.dp, bottom = 88.dp))
+                    if (split && picked != null) Detail(s, ui, picked, records.getValue(picked), Modifier.weight(0.44f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(top = 4.dp, bottom = 88.dp))
                 }
             }
         }
@@ -146,12 +148,12 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     }
 }
 
-// A month's bolts up to today: "41 of 60 bolts in October".
-private fun monthSummary(s: Data, m: YearMonth): String {
+// A month's bolts up to today: "41 of 60 bolts in October". days: each day's progress, worked out once.
+private fun monthSummary(m: YearMonth, days: Map<LocalDate, Progress>): String {
     val t = LocalDate.now()
-    val ps = (1..m.lengthOfMonth()).map { m.atDay(it) }.filter { it <= t }.map { slotProgress(s, it) }
+    val ps = days.filterKeys { it <= t }.values
     val name = m.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))
-    if (ps.isEmpty()) return "${plural((1..m.lengthOfMonth()).sumOf { slotProgress(s, m.atDay(it)).slots }, "bolt")} planned in $name"
+    if (ps.isEmpty()) return "${plural(days.values.sumOf { it.slots }, "bolt")} planned in $name"
     return "${ps.sumOf { it.done }} of ${plural(ps.sumOf { it.slots }, "bolt")} in $name" + ps.sumOf { it.fail }.let { if (it > 0) ", $it sheared" else "" }
 }
 
@@ -227,10 +229,9 @@ private fun Legend(modifier: Modifier) = Row(modifier.semantics(mergeDescendants
 
 // Every habit's lifetime: its rate and runs, the run bar across its whole life, and its last twelve weeks.
 @Composable
-private fun History(s: Data) {
-    val t = LocalDate.now()
+private fun History(s: Data, records: Map<Habit, Record>) {
     s.habits.forEach { h ->
-        val r = record(s, h, t)
+        val r = records.getValue(h)
         val pct = if (r.slots > 0) r.done * 100 / r.slots else 0
         val unit = { n: Int -> plural(n, h.per) }
         Card(Modifier.fillMaxWidth()) {
@@ -301,9 +302,8 @@ private fun Strip(s: Data, h: Habit, modifier: Modifier) {
 
 // The picked habit in full: its rate, runs and failures, the run bar, and every day it was logged, newest first.
 @Composable
-private fun Detail(s: Data, ui: Ui, h: Habit, modifier: Modifier) = Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
     val t = LocalDate.now()
-    val r = record(s, h, t)
     val unit = { n: Int -> plural(n, h.per) }
     Card(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {

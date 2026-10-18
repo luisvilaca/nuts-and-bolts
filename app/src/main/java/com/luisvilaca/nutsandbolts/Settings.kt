@@ -34,6 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
@@ -62,18 +65,20 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        try {
-            ctx.contentResolver.openOutputStream(uri)!!.use { it.write(store.backup().toByteArray()) }
-            store.change { backedUp = LocalDate.now() }
-            ui.tell("Backup saved")
-        } catch (e: Exception) { ui.tell("The backup could not be made.") }
+        // every diary page is read for the file, so the work runs off the main thread
+        ui.scope.launch {
+            val ok = withContext(Dispatchers.IO) { runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(store.backup().toByteArray()) } }.isSuccess }
+            if (ok) { store.change { backedUp = LocalDate.now() }; ui.tell("Backup saved") } else ui.tell("The backup could not be made.")
+        }
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        val text = try { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() } } catch (e: Exception) { null }
-        val b = text?.let(store::checkBackup)
-        if (b == null) ui.tell("That file is not a Nuts And Bolts backup.")
-        else { pending = b; pendingDate = Regex("\"saved\":\"([0-9-]+)\"").find(text)?.groupValues?.get(1) }
+        ui.scope.launch {
+            val text = withContext(Dispatchers.IO) { runCatching { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() } }.getOrNull() }
+            val b = text?.let { withContext(Dispatchers.Default) { store.checkBackup(it) } }
+            if (b == null) ui.tell("That file is not a Nuts And Bolts backup.")
+            else { pending = b; pendingDate = Regex("\"saved\":\"([0-9-]+)\"").find(text)?.groupValues?.get(1) }
+        }
     }
     val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (!ok) ui.tell("Notifications are off for Nuts And Bolts, so the reminder cannot show.")
@@ -133,9 +138,11 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         AlertDialog(onDismissRequest = { pending = null }, title = { Text("Replace everything?") },
             text = { Text("Everything on this device is replaced with the backup$when_. Habits, robot and diary pages written since then are lost.") },
             confirmButton = { TextButton({
-                try { store.restore(b); name = store.s.name; Reminder.schedule(ctx, store.s.remind); ui.tell("Backup restored") }
-                catch (e: Exception) { ui.tell("The backup could not be restored.") }
                 pending = null
+                ui.scope.launch {
+                    val ok = withContext(Dispatchers.IO) { runCatching { store.restore(b) }.isSuccess }
+                    if (ok) { name = store.s.name; Reminder.schedule(ctx, store.s.remind); ui.tell("Backup restored") } else ui.tell("The backup could not be restored.")
+                }
             }) { Text("Replace", color = W.coral) } },
             dismissButton = { TextButton({ pending = null }) { Text("Keep what is here", color = W.text) } })
     }

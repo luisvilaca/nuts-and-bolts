@@ -36,6 +36,12 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +70,7 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val t = LocalDate.now()
     val run = s.habits.filter { active(it, t) }
+    val orbits = derived(store) { orbitsFor(s, t) }
     val habits = @Composable {
         when {
             s.habits.isEmpty() -> Empty(store, ui)
@@ -75,7 +82,7 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Lab", t.format(dayFmt), store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
-            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbitsFor(s, t))
+            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 28.dp, top = 12.dp, bottom = 12.dp)) {
                 // the list takes what it needs and scrolls only past the room there is; the attributes follow it
                 Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
@@ -85,12 +92,12 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     } else if (!lay.phone) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
         // a tablet held upright has the height to keep the attributes pinned too
         Header("Lab", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(s, t))
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
         Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
         Attributes(s, Modifier.padding(top = 12.dp))
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Lab", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(s, t))
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
         Attributes(s, Modifier.padding(vertical = 8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
     }
@@ -102,10 +109,11 @@ fun bayHeight(lay: Lay) = if (lay.phone) 400.dp else 600.dp
 @Composable
 fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip) {
     val s = store.s
-    val tm = clock()
-    Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp))) {
+    var shown by remember { mutableStateOf(true) }
+    val tm = clock(shown)
+    Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp)).onGloballyPositioned { shown = it.boundsInWindow().height > 0f }) {
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
-            room(s, tm, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
+            room(s, tm.value, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
         }
         Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))

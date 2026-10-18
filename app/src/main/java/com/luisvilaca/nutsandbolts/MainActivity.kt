@@ -37,6 +37,11 @@ class MainActivity : ComponentActivity() {
         return true
     }
 
+    override fun onStop() {
+        super.onStop()
+        Store.get(this).flush() // the last save reaches the disk before the system may end the app
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         go.value = intent.getStringExtra(Reminder.TAB)

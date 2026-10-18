@@ -6,6 +6,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -45,7 +51,16 @@ class Store private constructor(private val dir: File) {
         }
     }
 
-    fun save() = writeAtomic(stateFile, json(s).toString())
+    // Saving: the state is turned into text here (cheap, and a true snapshot), then written on one background thread.
+    // Saves that pile up while a write is under way collapse into the latest one. flush() finishes any write waiting.
+    private val disk = Dispatchers.IO.limitedParallelism(1)
+    private val writer = CoroutineScope(SupervisorJob() + disk)
+    private val waiting = AtomicReference<String?>(null)
+    fun save() {
+        waiting.set(json(data).toString())
+        writer.launch { waiting.getAndSet(null)?.let { writeAtomic(stateFile, it) } }
+    }
+    fun flush() = runBlocking(disk) { waiting.getAndSet(null)?.let { writeAtomic(stateFile, it) } }
 
     fun page(d: LocalDate): Page? = File(pagesDir, "$d.json").takeIf { it.exists() }?.let { pageFrom(JSONObject(it.readText())) }
     // runs off the main thread; the caller marks the day in diary afterwards
@@ -121,7 +136,28 @@ class Page(var paper: String, val strokes: MutableList<InkStroke>)
 private fun JSONObject.str(k: String) = if (has(k) && !isNull(k)) getString(k) else null
 private fun JSONObject.date(k: String) = str(k)?.let(LocalDate::parse)
 
+// The saved state's shape; files without "v" are version 1.
+const val SCHEMA = 2
+
+// Brings a saved state of any earlier shape up to this one, so dataFrom reads only the current shape. Each step looks
+// for what it fixes rather than trusting the version, so a partly old file is mended too.
+internal fun migrate(o: JSONObject): JSONObject {
+    // before levels there was no peak: an attribute has at least reached the level it is at
+    val stats = o.optJSONObject("stats")
+    val peak = o.optJSONObject("peak") ?: JSONObject()
+    STATS.keys.forEach { k -> peak.put(k, maxOf(level(stats?.optInt(k, 30) ?: 30), peak.optInt(k))) }
+    o.put("peak", peak)
+    // before the sliders the pen kept three-step choices (size, stab, eraser); each maps to its nearest new value
+    o.optJSONObject("pen")?.let { j ->
+        if (!j.has("nib")) j.put("nib", listOf(0.35, 0.6, 1.0)[j.optInt("size", 1).coerceIn(0, 2)])
+        if (!j.has("stabPct")) j.put("stabPct", listOf(0, 60, 90)[j.optInt("stab", 1).coerceIn(0, 2)])
+        if (!j.has("rub")) j.put("rub", listOf(2.0, 4.0, 7.0)[j.optInt("eraser", 1).coerceIn(0, 2)])
+    }
+    return o.put("v", SCHEMA)
+}
+
 internal fun json(s: Data): JSONObject = JSONObject()
+    .put("v", SCHEMA)
     .put("name", s.name).put("bolts", s.bolts).put("nuts", s.nuts)
     .put("stats", JSONObject(s.stats as Map<*, *>))
     .put("peak", JSONObject(s.peak as Map<*, *>))
@@ -142,13 +178,13 @@ internal fun json(s: Data): JSONObject = JSONObject()
     .put("sound", s.sound)
     .put("backedUp", s.backedUp?.toString())
 
-internal fun dataFrom(o: JSONObject) = Data().apply {
+internal fun dataFrom(raw: JSONObject) = Data().apply {
+    val o = migrate(raw)
     name = o.optString("name", name)
     bolts = o.optInt("bolts").coerceAtLeast(0)
     nuts = o.optInt("nuts").coerceAtLeast(0)
     o.optJSONObject("stats")?.let { j -> stats.keys.forEach { stats[it] = j.optInt(it, 30).coerceAtLeast(0) } }
-    // files from before levels have no peak: an attribute has at least reached the level it is at
-    stats.keys.forEach { peak[it] = maxOf(level(stats.getValue(it)), o.optJSONObject("peak")?.optInt(it) ?: 0) }
+    stats.keys.forEach { peak[it] = o.getJSONObject("peak").optInt(it, level(stats.getValue(it))) }
     o.optJSONArray("owned")?.let { a -> owned.clear(); for (i in 0 until a.length()) owned += a.getString(i) }
     o.optJSONObject("equip")?.let { j -> equip.keys.toList().forEach { k -> equip[k] = j.str(k)?.takeIf { it in owned } ?: equip[k] } }
     o.getJSONArray("habits").let { a ->
@@ -168,10 +204,7 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
     o.optJSONArray("diary")?.let { a -> for (i in 0 until a.length()) diary += LocalDate.parse(a.getString(i)) }
     o.optJSONArray("papers")?.let { a -> if (a.length() == 3) for (i in 0..2) papers[i] = a.getString(i) }
     o.optJSONObject("pen")?.let { j ->
-        // files from before the sliders kept three-step choices (size, stab, eraser); each maps to its nearest new value
-        val nib = if (j.has("nib")) j.optDouble("nib").toFloat() else listOf(0.35f, 0.6f, 1f)[j.optInt("size", 1).coerceIn(0, 2)]
-        val stab = if (j.has("stabPct")) j.optInt("stabPct") else listOf(0, 60, 90)[j.optInt("stab", 1).coerceIn(0, 2)]
-        val rub = if (j.has("rub")) j.optDouble("rub").toFloat() else listOf(2f, 4f, 7f)[j.optInt("eraser", 1).coerceIn(0, 2)]
+        val nib = j.optDouble("nib").toFloat(); val stab = j.optInt("stabPct"); val rub = j.optDouble("rub").toFloat()
         pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
             rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true), j.optString("b1", "eraser"), j.optString("b2", "ink"))
     }
