@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Offset
 
 // Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep greenhouse teal (the Grow Room's
 // tint), uranium green as every glow (the reactor, its light, the gauges, a completed habit), ready green only where
@@ -80,7 +81,7 @@ fun NbTheme(content: @Composable () -> Unit) = MaterialTheme(
 // How each drawing role in Parts.kt is painted.
 class Ink(val fill: Brush? = null, val stroke: Color? = null, val width: Float = 0f, val alpha: Float = 1f, val dash: FloatArray? = null, val butt: Boolean = false)
 
-private val shell = Brush.linearGradient(listOf(Color(0xFFF7FCFA), Color(0xFFBFD9D1)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
+private val shell = Brush.linearGradient(listOf(Color(0xFFF7FCFA), Color(0xFFBFD9D1)), start = Offset(0f, 0f), end = Offset(150f, 500f))
 private fun f(c: Color, a: Float = 1f) = Ink(fill = SolidColor(c), alpha = a)
 private fun s(c: Color, w: Float, a: Float = 1f, dash: FloatArray? = null) = Ink(stroke = c, width = w, alpha = a, dash = dash)
 
@@ -107,7 +108,7 @@ val ROLES: Map<String, Ink> = mapOf(
 private fun finish(top: Long, bottom: Long, flat: Long, joint: Long, eye: Long, glass: Long): Map<String, Ink> {
     val j = Color(joint)
     return mapOf(
-        "sh" to Ink(fill = Brush.linearGradient(listOf(Color(top), Color(bottom)), androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(150f, 500f))),
+        "sh" to Ink(fill = Brush.linearGradient(listOf(Color(top), Color(bottom)), Offset(0f, 0f), Offset(150f, 500f))),
         "shr" to Ink(stroke = Color(top), width = 14f), "sh2" to f(Color(flat)), "zn" to f(j), "gl" to f(Color(glass)),
         "ey" to f(Color(eye)), "smile" to s(Color(eye), 5f), "tent" to s(Color(flat), 16f),
         "claw" to s(j, 8f), "spring" to s(j, 8f), "rod" to s(j, 6f), "tread" to s(j, 6f, dash = floatArrayOf(6f, 8f)),

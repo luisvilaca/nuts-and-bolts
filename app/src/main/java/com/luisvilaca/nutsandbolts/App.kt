@@ -77,11 +77,13 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.MutableState
+import androidx.compose.ui.unit.Dp
 
 // What the screens share: where the owner is (kept across the system ending the app in the background, see saver) and
 // the message bar.
 class Ui(val scope: CoroutineScope) {
-    var tab by mutableStateOf("today")
+    var tab by mutableStateOf(Tab.Lab)
     var settings by mutableStateOf(false)
     var edit by mutableStateOf<String?>(null) // habit id in the form; "" is a new habit
     fun openForm(id: String) { edit = id; settings = false } // the form opens over the current tab, which it returns to
@@ -96,8 +98,8 @@ class Ui(val scope: CoroutineScope) {
 
     companion object {
         fun saver(scope: CoroutineScope) = Saver<Ui, List<Any?>>(
-            save = { listOf(it.tab, it.edit, it.page?.toString(), it.date.toString(), it.settings) },
-            restore = { l -> Ui(scope).apply { tab = l[0] as String; edit = l[1] as String?; page = (l[2] as String?)?.let(LocalDate::parse); date = LocalDate.parse(l[3] as String); settings = l[4] as Boolean } },
+            save = { listOf(it.tab.name, it.edit, it.page?.toString(), it.date.toString(), it.settings) },
+            restore = { l -> Ui(scope).apply { tab = Tab.valueOf(l[0] as String); edit = l[1] as String?; page = (l[2] as String?)?.let(LocalDate::parse); date = LocalDate.parse(l[3] as String); settings = l[4] as Boolean } },
         )
     }
 }
@@ -105,21 +107,21 @@ class Ui(val scope: CoroutineScope) {
 // wide: a landscape window with room for two panes side by side. phone: a narrow window.
 class Lay(val wide: Boolean, val phone: Boolean)
 
-private val TABS = listOf("today" to "Lab", "shop" to "Shop", "habits" to "Habits", "diary" to "Diary")
-private val TAB_ICON = mapOf("today" to "base", "shop" to "shop", "habits" to "habits", "diary" to "diary")
+// The four sections on the bottom bar, each with its label and icon.
+enum class Tab(val label: String, val icon: String) { Lab("Lab", "base"), Shop("Shop", "shop"), Habits("Habits", "habits"), Diary("Diary", "diary") }
 
 @Composable
-fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remember { mutableStateOf(null) }) {
+fun App(store: Store, go: MutableState<String?> = remember { mutableStateOf(null) }) {
     val scope = rememberCoroutineScope()
     val ui = rememberSaveable(saver = Ui.saver(scope)) { Ui(scope) }
     LaunchedEffect(store) { snapshotFlow { store.s.sound }.collect { Sfx.on = it } }
-    androidx.compose.runtime.LaunchedEffect(go.value) {
-        go.value?.let { ui.tab = it; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
+    LaunchedEffect(go.value) {
+        go.value?.let { g -> ui.tab = Tab.entries.firstOrNull { it.name.equals(g, ignoreCase = true) } ?: Tab.Lab; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
     }
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
         val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
         // system Back: close what is open, then return to the Lab, then leave
-        BackHandler(enabled = ui.tab != "today" && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = "today" }
+        BackHandler(enabled = ui.tab != Tab.Lab && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = Tab.Lab }
         Scaffold(
             containerColor = W.ground,
             snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act) } },
@@ -130,9 +132,9 @@ fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remem
                 when {
                     ui.settings -> SettingsScreen(store, ui, lay)
                     ui.edit != null -> { BackHandler { ui.edit = null }; HabitForm(store, ui, lay, store.s.habits.find { it.id == ui.edit }) }
-                    ui.tab == "today" -> LabScreen(store, ui, lay)
-                    ui.tab == "shop" -> ShopScreen(store, ui, lay)
-                    ui.tab == "habits" -> HabitsScreen(store, ui, lay)
+                    ui.tab == Tab.Lab -> LabScreen(store, ui, lay)
+                    ui.tab == Tab.Shop -> ShopScreen(store, ui, lay)
+                    ui.tab == Tab.Habits -> HabitsScreen(store, ui, lay)
                     else -> DiaryScreen(store, ui, lay)
                 }
             }
@@ -140,20 +142,20 @@ fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remem
     }
 }
 
-private fun go(ui: Ui, tab: String) { ui.tab = tab; ui.settings = false; ui.edit = null; ui.page = null }
+private fun go(ui: Ui, tab: Tab) { ui.tab = tab; ui.settings = false; ui.edit = null; ui.page = null }
 
 @Composable
 private fun BottomBar(ui: Ui) {
     // a compact bar: 60dp of tabs above the system's own navigation area
     Row(Modifier.fillMaxWidth().background(W.rail).navigationBarsPadding().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
-        TABS.forEach { (k, v) ->
+        Tab.entries.forEach { k ->
             val on = ui.tab == k && !ui.settings
             Column(Modifier.weight(1f).fillMaxHeight().selectable(on, role = Role.Tab) { go(ui, k) },
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Box(Modifier.size(52.dp, 28.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
-                    Icon(ICONS.getValue(TAB_ICON.getValue(k)), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
+                    Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
                 }
-                Text(v, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
+                Text(k.label, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
             }
         }
     }
@@ -198,23 +200,23 @@ fun Coin(k: String, n: Int, small: Boolean = false, short: Boolean = false) = Ro
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) = Text(text.uppercase(), modifier.padding(top = 28.dp, bottom = 10.dp), style = Label)
 
-private val BTN = mapOf("good" to listOf("Done", "Skip", "Fail"), "bad" to listOf("Resisted", "Skip", "Gave in"))
+private val BTN = mapOf(Kind.Build to listOf("Done", "Skip", "Fail"), Kind.Break to listOf("Resisted", "Skip", "Gave in"))
 
-fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
-    val st = STATS.getValue(h.stat)
+fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: Outcome) {
+    val st = h.stat
     val before = level(store.s.stats.getValue(h.stat))
     var m: Mark? = null
     store.change { m = mark(this, h, d, kind) }
     val k = m ?: return
     val after = level(store.s.stats.getValue(h.stat))
-    Sfx.play(if (after > before) "level" else kind)
-    when (kind) { "done" -> { store.fresh = h.id to now(); store.react("cheer") }; "fail" -> store.react("sad") }
+    Sfx.play(if (after > before) "level" else kind.id)
+    when (kind) { Outcome.Done -> { store.fresh = h.id to now(); store.react("cheer") }; Outcome.Fail -> store.react("sad"); else -> {} }
     // crossing a level is the news; the points come second
     ui.tell(when {
-        after > before -> "Level up! ${st.name} is now ${st.stages[after - 1]}, level $after" + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
-        after < before -> "${st.name} fell back to ${st.stages[after - 1]}, level $after. Lost ${plural(-k.b, "bolt")}."
-        kind == "done" -> "+${plural(k.b, "bolt")} · +${k.p} ${st.name}" + if (k.n > 0) " · +1 nut for the streak" else ""
-        kind == "fail" -> "Sheared · −${plural(-k.b, "bolt")} · −${-k.p} ${st.name}"
+        after > before -> "Level up! ${st.title} is now ${st.stages[after - 1]}, level $after" + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
+        after < before -> "${st.title} fell back to ${st.stages[after - 1]}, level $after. Lost ${plural(-k.b, "bolt")}."
+        kind == Outcome.Done -> "+${plural(k.b, "bolt")} · +${k.p} ${st.title}" + if (k.n > 0) " · +1 nut for the streak" else ""
+        kind == Outcome.Fail -> "Sheared · −${plural(-k.b, "bolt")} · −${-k.p} ${st.title}"
         else -> "Skipped. Nothing gained, nothing lost."
     }) { store.change { undo(this, h, d) } }
 }
@@ -222,10 +224,10 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
 fun meta(s: Data, h: Habit, d: LocalDate): String {
     val st = streak(s, h, d)
     return listOfNotNull(
-        if (h.kind == "bad") "Break it" else null, "${h.target} a ${h.per}", STATS.getValue(h.stat).name,
+        if (h.kind == Kind.Break) "Break it" else null, "${h.target} a ${h.per.id}", h.stat.title,
         h.days?.let { ds -> ds.sorted().joinToString(" ") { DOW[it] } },
         h.end?.let { "until ${it.format(DateTimeFormatter.ofPattern("d MMM", Locale.UK))}" },
-        if (st > 1) "$st ${h.per}s running" else null,
+        if (st > 1) "$st ${h.per.id}s running" else null,
     ).joinToString(" · ")
 }
 val DOW = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -239,21 +241,21 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
     val stacked = big || maxWidth < 480.dp
     val s = store.s
     val sl = slots(s, h, d)
-    val logged = sl.count { it.s != "" }
+    val logged = sl.count { it.s != null }
     val ahead = d > LocalDate.now()
     val full = logged >= h.target || ahead
-    val complete = !ahead && sl.all { it.s == "done" }
+    val complete = !ahead && sl.all { it.s == Outcome.Done }
     val label = BTN.getValue(h.kind)
     val mine = !s.marks[d]?.get(h.id).isNullOrEmpty() // a mark made on this day, which can be taken back here
     var menu by remember { mutableStateOf<String?>(null) } // which anchor the menu opened from: "more" or "done"
     var deleting by remember { mutableStateOf(false) }
     val items = @Composable {
-        val item = @Composable { text: String, icon: String, tint: androidx.compose.ui.graphics.Color, on: Boolean, go: () -> Unit ->
+        val item = @Composable { text: String, icon: String, tint: Color, on: Boolean, go: () -> Unit ->
             DropdownMenuItem({ Text(text, color = if (on) tint else W.dim.copy(alpha = 0.6f)) }, { menu = null; go() }, enabled = on,
                 leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.dim.copy(alpha = 0.6f)) })
         }
-        item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
-        item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }
+        item(label[1], "minus", W.text, !full) { log(store, ui, h, d, Outcome.Skip) }
+        item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, Outcome.Fail) }
         item("Take back the last bolt", "undo", W.text, mine) {
             var m: Mark? = null
             store.change { m = undo(this, h, d) }
@@ -265,7 +267,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
     }
     val counter = @Composable { m: Modifier ->
         Column(m.semantics(mergeDescendants = true) {
-            contentDescription = boltsIn(Progress(sl.count { it.s == "done" }, sl.count { it.s == "fail" }, h.target), false) + ", $logged of ${h.target} logged"
+            contentDescription = boltsIn(Progress(sl.count { it.s == Outcome.Done }, sl.count { it.s == Outcome.Fail }, h.target), false) + ", $logged of ${h.target} logged"
         }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp), tint = W.steel)
@@ -283,10 +285,10 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                     Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.steel else W.edge, CircleShape).longPress { menu = "done" }
                         .semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         if (complete) Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
-                        Text(if (!complete) "Closed" else if (h.kind == "bad") "Held" else "All in", Modifier.padding(start = if (complete) 6.dp else 0.dp),
+                        Text(if (!complete) "Closed" else if (h.kind == Kind.Break) "Held" else "All in", Modifier.padding(start = if (complete) 6.dp else 0.dp),
                             style = MaterialTheme.typography.labelLarge, color = if (complete) W.steel else W.dim)
                     }
-                } else Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = Modifier.matchParentSize().longPress { menu = "done" },
+                } else Button(onClick = { log(store, ui, h, d, Outcome.Done) }, enabled = !full, modifier = Modifier.matchParentSize().longPress { menu = "done" },
                     shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
                     Text(if (ahead) "Not yet" else label[0])
                 }
@@ -358,4 +360,4 @@ fun Modifier.longPress(go: () -> Unit) = pointerInput(go) {
 fun Note(text: String, modifier: Modifier = Modifier) = Text(text, modifier.padding(vertical = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
 
 @Composable
-fun Gap(w: androidx.compose.ui.unit.Dp) = Spacer(Modifier.width(w))
+fun Gap(w: Dp) = Spacer(Modifier.width(w))

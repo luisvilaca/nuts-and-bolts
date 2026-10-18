@@ -69,6 +69,7 @@ import java.time.YearMonth
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material3.HorizontalDivider
 
 private val monthFmt = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)
 private val shortFmt = DateTimeFormatter.ofPattern("EEE d MMM", Locale.UK)
@@ -110,7 +111,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
             val sum = when {
                 s.habits.isEmpty() -> "No habits yet"
                 view == "cal" -> monthSummary(month, monthP)
-                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> records.getValue(h).best to h.per }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
+                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> records.getValue(h).best to h.per.id }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
                 else -> boltsIn(p, d > t)
             }
             Header("Habits", sum.takeIf { lay.wide }, store, ui, lay)
@@ -183,7 +184,7 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate, Int) -> Unit, ahead: Boole
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.padding(bottom = 4.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
             (0 until weeks).forEach { w ->
-                androidx.compose.material3.HorizontalDivider(color = W.line)
+                HorizontalDivider(color = W.line)
                 Row(Modifier.weight(1f)) {
                     (0..6).forEach { i ->
                         val n = w * 7 + i - lead + 1
@@ -221,7 +222,7 @@ private fun CalendarMark(p: Progress, future: Boolean, room: Int) {
 // What the plates' holes mean, drawn with the real bolts.
 @Composable
 private fun Legend(modifier: Modifier) = Row(modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
-    listOf("done" to "driven = done", "" to "ring = open", "fail" to "split = sheared").forEach { (st, words) ->
+    listOf(Outcome.Done to "driven = done", null to "ring = open", Outcome.Fail to "split = sheared").forEach { (st, words) ->
         SlotMark(Slot(st, false), 18.dp)
         Text(words, Modifier.padding(start = 6.dp, end = 18.dp), style = MaterialTheme.typography.labelMedium, color = W.dim)
     }
@@ -233,10 +234,10 @@ private fun History(s: Data, records: Map<Habit, Record>) {
     s.habits.forEach { h ->
         val r = records.getValue(h)
         val pct = if (r.slots > 0) r.done * 100 / r.slots else 0
-        val unit = { n: Int -> plural(n, h.per) }
+        val unit = { n: Int -> plural(n, h.per.id) }
         Card(Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(ICONS.getValue(h.stat), null, Modifier.size(20.dp), tint = W.steel)
+                Icon(ICONS.getValue(h.stat.id), null, Modifier.size(20.dp), tint = W.steel)
                 Text(h.name, Modifier.padding(start = 10.dp).weight(1f), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("$pct%", style = Numeral, color = W.text)
             }
@@ -252,7 +253,7 @@ private fun History(s: Data, records: Map<Habit, Record>) {
 // in glow, both reaching to today at the right, so a one-day run reads as one day of a long life, not an empty bar.
 @Composable
 private fun RunBar(h: Habit, r: Record, modifier: Modifier) = Column(modifier) {
-    val unit = { n: Int -> plural(n, h.per) }
+    val unit = { n: Int -> plural(n, h.per.id) }
     Canvas(Modifier.fillMaxWidth().height(8.dp).semantics { contentDescription = "best run ${unit(r.best)}, current ${unit(r.now)}, over ${unit(r.periods)}" }) {
         val step = size.width / maxOf(r.periods, 1)
         val cr = CornerRadius(size.height / 2)
@@ -273,13 +274,13 @@ private fun RunBar(h: Habit, r: Record, modifier: Modifier) = Column(modifier) {
 private fun Strip(s: Data, h: Habit, modifier: Modifier) {
     val t = LocalDate.now()
     val first = weekStart(t).minusWeeks(11)
-    if (h.per == "week") Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    if (h.per == Per.Week) Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         (0 until 12L).forEach { w ->
             val d = first.plusWeeks(w)
             val ms = periodMarks(s, h, d)
             // a week before the habit began stays empty
             if (!periodDates(h, d).any { active(h, it) }) Spacer(Modifier.size(28.dp))
-            else DayMark(Progress(ms.count { it.second.s == "done" }, ms.count { it.second.s == "fail" }, h.target), d > t, Modifier.size(28.dp))
+            else DayMark(Progress(ms.count { it.second.s == Outcome.Done }, ms.count { it.second.s == Outcome.Fail }, h.target), d > t, Modifier.size(28.dp))
         }
     } else Canvas(modifier.size(14.dp * 12, 14.dp * 7).semantics { contentDescription = "the last twelve weeks of ${h.name}" }) {
         val cw = size.width / 12f; val ch = size.height / 7f
@@ -289,9 +290,9 @@ private fun Strip(s: Data, h: Habit, modifier: Modifier) {
             if (d > t || !active(h, d)) continue
             val c = Offset(cw * (w + 0.5f), ch * (i + 0.5f))
             val ms = s.marks[d]?.get(h.id).orEmpty()
-            val done = ms.count { it.s == "done" }
+            val done = ms.count { it.s == Outcome.Done }
             when {
-                ms.any { it.s == "fail" } -> drawCircle(W.coral, rr, c)
+                ms.any { it.s == Outcome.Fail } -> drawCircle(W.coral, rr, c)
                 done >= h.target -> drawCircle(W.steel, rr, c)
                 done > 0 -> { drawCircle(W.edge, rr, c); drawArc(W.steel, 90f, 180f, true, c - Offset(rr, rr), Size(rr * 2, rr * 2)) }
                 else -> drawCircle(W.edge, rr - 1f, c, style = Stroke(1.5f))
@@ -304,10 +305,10 @@ private fun Strip(s: Data, h: Habit, modifier: Modifier) {
 @Composable
 private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
     val t = LocalDate.now()
-    val unit = { n: Int -> plural(n, h.per) }
+    val unit = { n: Int -> plural(n, h.per.id) }
     Card(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(ICONS.getValue(h.stat), null, Modifier.size(22.dp), tint = W.steel)
+            Icon(ICONS.getValue(h.stat.id), null, Modifier.size(22.dp), tint = W.steel)
             Text(h.name, Modifier.padding(start = 10.dp).weight(1f), style = MaterialTheme.typography.headlineSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             TextButton({ ui.openForm(h.id) }) { Text("Edit", color = W.act) }
         }
@@ -330,11 +331,11 @@ private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = C
         days.forEach { (day, hs) ->
             val ms = hs.getValue(h.id)
             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { ui.date = day }.padding(vertical = 6.dp)
-                .semantics(mergeDescendants = true) { contentDescription = "${day.format(dayFmt)}: " + ms.joinToString { it.s } }, verticalAlignment = Alignment.CenterVertically) {
+                .semantics(mergeDescendants = true) { contentDescription = "${day.format(dayFmt)}: " + ms.joinToString { it.s.id } }, verticalAlignment = Alignment.CenterVertically) {
                 Text(day.format(shortFmt), Modifier.width(110.dp), style = MaterialTheme.typography.bodyMedium, color = if (day == t) W.text else W.dim)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { ms.forEach { SlotMark(Slot(it.s, false), 20.dp) } }
                 Spacer(Modifier.weight(1f))
-                Text(ms.groupingBy { it.s }.eachCount().entries.joinToString(" · ") { (k, n) -> "$n ${mapOf("done" to "in", "skip" to "skipped", "fail" to "sheared").getValue(k)}" },
+                Text(ms.groupingBy { it.s }.eachCount().entries.joinToString(" · ") { (k, n) -> "$n ${mapOf(Outcome.Done to "in", Outcome.Skip to "skipped", Outcome.Fail to "sheared").getValue(k)}" },
                     style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
         }
@@ -344,27 +345,27 @@ private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = C
 // What the habit as set up pays: each Done (or resist), each fail, the most a period can bring, its nuts, and how
 // far the attribute it trains is from its next level.
 @Composable
-private fun Reward(s: Data, kind: String, per: String, target: Int, weight: String, stat: String) {
-    val w = WEIGHTS.getValue(weight)
-    val st = STATS.getValue(stat)
-    val good = kind == "good"
+private fun Reward(s: Data, kind: Kind, per: Per, target: Int, weight: Heft, stat: Attr) {
+    val w = weight
+    val st = stat
+    val good = kind == Kind.Build
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), itemVerticalAlignment = Alignment.CenterVertically) {
         Coin("bolts", w.bolts)
-        Text("+${w.pts} ${st.name}", style = Numeral, color = W.text)
+        Text("+${w.pts} ${st.title}", style = Numeral, color = W.text)
         Text(if (good) "each Done" else "each time you resist", style = MaterialTheme.typography.bodyMedium, color = W.dim)
     }
-    Text("${if (good) "A fail" else "Giving in"} takes ${plural(w.bolts, "bolt")} and ${w.pts} ${st.name} back.", Modifier.padding(top = 8.dp),
+    Text("${if (good) "A fail" else "Giving in"} takes ${plural(w.bolts, "bolt")} and ${w.pts} ${st.title} back.", Modifier.padding(top = 8.dp),
         style = MaterialTheme.typography.bodyMedium, color = W.dim)
-    Text("Up to ${plural(w.bolts * target, "bolt")} and ${w.pts * target} ${st.name} a $per.", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+    Text("Up to ${plural(w.bolts * target, "bolt")} and ${w.pts * target} ${st.title} a ${per.id}.", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
     Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(ICONS.getValue("nuts"), null, Modifier.size(16.dp), tint = W.gold)
-        Text(if (per == "week") " A nut for every week completed." else " A nut for every third day in a row.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        Text(if (per == Per.Week) " A nut for every week completed." else " A nut for every third day in a row.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
     }
     val p = s.stats.getValue(stat)
     val l = level(p)
     if (l < LEVEL_AT.size) {
         val n = (LEVEL_AT[l] - p + w.pts - 1) / w.pts
-        Text("${st.name} is at ${st.stages[l - 1]}: $n more ${if (n == 1) "Done reaches" else "Dones reach"} ${st.stages[l]}.", Modifier.padding(top = 12.dp),
+        Text("${st.title} is at ${st.stages[l - 1]}: $n more ${if (n == 1) "Done reaches" else "Dones reach"} ${st.stages[l]}.", Modifier.padding(top = 12.dp),
             style = MaterialTheme.typography.bodyMedium, color = W.text)
     }
 }
@@ -378,11 +379,11 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     val s = store.s
     // every field survives the system ending the app in the background (dates and day sets are serializable)
     var name by rememberSaveable { mutableStateOf(h?.name ?: "") }
-    var kind by rememberSaveable { mutableStateOf(h?.kind ?: "good") }
+    var kind by rememberSaveable { mutableStateOf(h?.kind ?: Kind.Build) }
     var target by rememberSaveable { mutableStateOf(h?.target ?: 1) }
-    var per by rememberSaveable { mutableStateOf(h?.per ?: "day") }
-    var weight by rememberSaveable { mutableStateOf(h?.weight ?: "medium") }
-    var stat by rememberSaveable { mutableStateOf(h?.stat ?: "battery") }
+    var per by rememberSaveable { mutableStateOf(h?.per ?: Per.Day) }
+    var weight by rememberSaveable { mutableStateOf(h?.weight ?: Heft.Medium) }
+    var stat by rememberSaveable { mutableStateOf(h?.stat ?: Attr.Battery) }
     // an undated habit has run since its first mark
     var start by rememberSaveable { mutableStateOf(h?.start ?: h?.let { x -> s.marks.keys.filter { s.marks[it]!!.containsKey(x.id) }.minOrNull() } ?: ui.date) }
     var end by rememberSaveable { mutableStateOf(h?.end) }
@@ -433,10 +434,10 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     val left = @Composable {
         group("Name") { Field(name, { name = it.take(40) }, "Read 20 minutes") }
         group("Type") {
-            seg(listOf("good" to "Build it", "bad" to "Break it"), kind) { kind = it }
+            seg(listOf(Kind.Build.id to "Build it", Kind.Break.id to "Break it"), kind.id) { kind = byId(it) }
             hint("Build it: you earn each time you do it. Break it: you earn each time you resist it.")
         }
-        group("Attribute it trains") { seg(STATS.map { (k, v) -> k to "${v.name}\n${v.gloss}" }, stat) { stat = it } }
+        group("Attribute it trains") { seg(Attr.entries.map { it.id to "${it.title}\n${it.gloss}" }, stat.id) { stat = byId(it) } }
         group("Schedule") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton({ target = (target - 1).coerceAtLeast(1) }) { Icon(ICONS.getValue("minus"), "Fewer", tint = W.text) }
@@ -445,7 +446,7 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                     Icon(ICONS.getValue("plus"), "More", tint = if (target < maxTarget(per)) W.text else W.edge)
                 }
                 Text("times a", Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.bodyLarge)
-                Box(Modifier.widthIn(max = 240.dp)) { seg(listOf("day" to "Day", "week" to "Week"), per) { per = it; target = target.coerceAtMost(maxTarget(it)) } }
+                Box(Modifier.widthIn(max = 240.dp)) { seg(listOf(Per.Day.id to "Day", Per.Week.id to "Week"), per.id) { per = byId(it); target = target.coerceAtMost(maxTarget(per)) } }
             }
             FlowRow(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("From", style = MaterialTheme.typography.bodyLarge)
@@ -476,7 +477,7 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     }
     val right = @Composable { pinned: Boolean ->
         group("Weight") {
-            seg(WEIGHTS.map { (k, w) -> k to "${w.name}\n${plural(w.bolts, "bolt")}, ${plural(w.pts, "point")}" }, weight) { weight = it }
+            seg(Heft.entries.map { w -> w.id to "${w.title}\n${plural(w.bolts, "bolt")}, ${plural(w.pts, "point")}" }, weight.id) { weight = byId(it) }
             hint("Done pays this much. Failed takes the same amount back.")
         }
         group("Reward") { Reward(s, kind, per, target, weight, stat) }

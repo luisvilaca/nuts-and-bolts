@@ -108,6 +108,9 @@ import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.LayoutDirection
 
 // The owner's StarNote palette. Matte Black is also the first paper, so it is the ink for light paper.
 val PEN_COLORS = listOf("Ice Blue" to "#E0F7FA", "Matrix Green" to "#00FF88", "Electric Cyan" to "#00E5FF", "Neon Fuchsia" to "#FF007F", "Matte Black" to "#393939")
@@ -210,18 +213,18 @@ private class Pad(val page: Page) {
     }
     fun DrawScope.whole(s: InkStroke) { val c = s.p.size / 3; for (i in 0 until c) seg(s, s.p, i); tail(s, s.p, c) }
 
-    fun onBitmap(density: androidx.compose.ui.unit.Density, block: DrawScope.() -> Unit) {
+    fun onBitmap(density: Density, block: DrawScope.() -> Unit) {
         val b = bmp ?: return
-        CanvasDrawScope().draw(density, androidx.compose.ui.unit.LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(b), Size(b.width.toFloat(), b.height.toFloat())) {
+        CanvasDrawScope().draw(density, LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(b), Size(b.width.toFloat(), b.height.toFloat())) {
             scale(k, k, Offset.Zero) { block() }
         }
     }
-    fun redraw(density: androidx.compose.ui.unit.Density) {
-        bmp?.let { b -> CanvasDrawScope().draw(density, androidx.compose.ui.unit.LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(b), Size(b.width.toFloat(), b.height.toFloat())) { drawRect(Color.Black, blendMode = BlendMode.Clear) } }
+    fun redraw(density: Density) {
+        bmp?.let { b -> CanvasDrawScope().draw(density, LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(b), Size(b.width.toFloat(), b.height.toFloat())) { drawRect(Color.Black, blendMode = BlendMode.Clear) } }
         onBitmap(density) { page.strokes.forEach { whole(it) } }
         ver++
     }
-    fun resize(w: Int, h: Int, density: androidx.compose.ui.unit.Density) {
+    fun resize(w: Int, h: Int, density: Density) {
         if (w == 0) return
         // stay inside what tablet GPUs take as one texture and about 12 megapixels
         val d = min(1f, min(4096f / h, kotlin.math.sqrt(12e6f / (w.toFloat() * h))))
@@ -511,7 +514,7 @@ private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, touchO
 
 @Composable
 private fun Menu(open: Boolean, close: () -> Unit, content: @Composable () -> Unit) =
-    DropdownMenu(open, close, offset = androidx.compose.ui.unit.DpOffset((-344).dp, (-40).dp), containerColor = W.raised, shape = RoundedCornerShape(16.dp)) { Column(Modifier.padding(16.dp).width(300.dp)) { content() } }
+    DropdownMenu(open, close, offset = DpOffset((-344).dp, (-40).dp), containerColor = W.raised, shape = RoundedCornerShape(16.dp)) { Column(Modifier.padding(16.dp).width(300.dp)) { content() } }
 
 // A labelled slider with its value at the right. It moves freely under the finger and saves once, on release.
 @Composable
@@ -568,7 +571,7 @@ private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
         ver
         withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) {
             // a bolt: the page's emblem; the gauge is five hex holes to fill in
-            fun shape(p: androidx.compose.ui.graphics.Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
+            fun shape(p: Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
                 withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
             fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(EMBLEM, cx, cy + r * 0.6f, r / 14f, c, w)
             fun cell(at: Offset, r: Float, c: Color) = shape(CELL, at.x, at.y + r, r / 9f, c, 2f)

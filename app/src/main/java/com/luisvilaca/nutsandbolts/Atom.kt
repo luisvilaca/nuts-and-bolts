@@ -32,13 +32,14 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import androidx.compose.ui.graphics.PathMeasure
 
-// One slot of a habit's period: its state ("" open, done, skip, fail) and whether it was logged on another day of the week.
-class Slot(val s: String, val other: Boolean)
+// One slot of a habit's period: how it went (null while open) and whether it was logged on another day of the week.
+class Slot(val s: Outcome?, val other: Boolean)
 
 fun slots(s: Data, h: Habit, d: LocalDate): List<Slot> {
     val ms = periodMarks(s, h, d)
-    return List(h.target) { i -> ms.getOrNull(i)?.let { Slot(it.second.s, it.first != d) } ?: Slot("", false) }
+    return List(h.target) { i -> ms.getOrNull(i)?.let { Slot(it.second.s, it.first != d) } ?: Slot(null, false) }
 }
 
 private fun shape(d: String) = PathParser().parsePathString(d).toPath()
@@ -62,7 +63,7 @@ fun DrawScope.bolt(c: Offset, r: Float, slot: Slot, drive: Float = 1f) {
     val a = if (slot.other) 0.45f else 1f
     val w = r * 0.16f
     when (slot.s) {
-        "done" -> {
+        Outcome.Done -> {
             val h = r * (0.6f + 0.4f * drive)
             drawCircle(W.steel, h, c, alpha = a)
             drawCircle(W.joint, h - w / 2, c, alpha = a, style = Stroke(w))
@@ -71,15 +72,15 @@ fun DrawScope.bolt(c: Offset, r: Float, slot: Slot, drive: Float = 1f) {
                 drawLine(W.ground, c - Offset(0f, h * 0.5f), c + Offset(0f, h * 0.5f), w * 1.3f, alpha = a)
             }
         }
-        "skip" -> {
+        Outcome.Skip -> {
             drawCircle(W.dim, r - w / 2, c, alpha = a, style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(r * 0.45f, r * 0.35f))))
             drawLine(W.dim, c - Offset(r * 0.4f, 0f), c + Offset(r * 0.4f, 0f), w, alpha = a)
         }
-        "fail" -> for ((start, d) in listOf(-45f to 1f, 135f to -1f)) {
+        Outcome.Fail -> for ((start, d) in listOf(-45f to 1f, 135f to -1f)) {
             val o = Offset(r * 0.16f * d, r * 0.16f * d)
             drawArc(W.coral, start, 180f, true, c - Offset(r, r) * 0.9f + o, Size(r * 1.8f, r * 1.8f), alpha = a)
         }
-        else -> {
+        null -> {
             drawCircle(W.rail, r, c, alpha = a)
             drawCircle(W.dim, r - w / 2, c, alpha = a, style = Stroke(w))
             drawCircle(W.dim, r * 0.4f, c, alpha = a * 0.6f, style = Stroke(w * 0.7f))
@@ -108,7 +109,7 @@ fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier, today: 
     val share = min(1f, p.done.toFloat() / p.slots)
     val n = when { share >= 1f -> 3; share >= 0.5f -> 2; p.done > 0 -> 1; else -> 0 }
     for (i in 0 until 3) {
-        val st = when { i < n -> "done"; i == 2 && p.fail > 0 -> "fail"; else -> "" }
+        val st = when { i < n -> Outcome.Done; i == 2 && p.fail > 0 -> Outcome.Fail; else -> null }
         bolt(Offset(center.x + (i - 1) * pw * 0.3f, center.y), size.width * 0.085f, Slot(st, false))
     }
 }
@@ -143,7 +144,7 @@ fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fres
 // feeds and the gauge on its side follow the Core attribute. A habit just done screws its newest bolt in.
 // With no habits yet the bench holds one dashed frame.
 private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, tier: Int, r: Room) {
-    val core = level(s.stats.getValue("core")) / 10f // the reactor burns brighter as Core levels up
+    val core = level(s.stats.getValue(Attr.Core)) / 10f // the reactor burns brighter as Core levels up
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val bench = 596f
     drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
@@ -157,7 +158,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
         translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
     }
     benchBase()
-    reactor(level(s.stats.getValue("core")), core, pulse, t)
+    reactor(level(s.stats.getValue(Attr.Core)), core, pulse, t)
     benchTop()
 
     if (s.habits.isEmpty()) drawRoundRect(W.dim, Offset(750f, bench - 90f), Size(30f, 90f), CornerRadius(6f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
@@ -174,7 +175,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
         val top = bench - 38f - pitch * (o.slots.size - 1) - (br + 23f) // the top bolt sits as far below the frame head as before
         // a habit with every slot done goes critical: its frame glows uranium green, breathing, specks of light rising off
         // it; the glow ignites as the last bolt seats
-        val hot = o.slots.all { it.s == "done" }
+        val hot = o.slots.all { it.s == Outcome.Done }
         if (hot) {
             val ignite = if (fresh?.first == o.h.id) ((since(t, fresh.second) - 500f) / 700f).coerceIn(0f, 1f) else 1f
             val beat = if (t == 0L) 1f else 0.8f + 0.2f * sin(t / 450.0 + k).toFloat()
@@ -186,9 +187,9 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
             for (i in 0 until 3) positron(Offset(x, top), w, ((t / 3000.0 + i / 3.0 + k * 0.21) % 1.0).toFloat(), i, ignite)
         }
         drawRoundRect(if (hot) Color(0xFF173A22) else W.raised, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f))
-        drawRoundRect(when { hot -> RADIANT; o.slots.any { it.s == "fail" } -> W.joint; else -> W.steel }, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f), alpha = if (hot) 0.95f else 0.7f, style = Stroke(2.5f))
+        drawRoundRect(when { hot -> RADIANT; o.slots.any { it.s == Outcome.Fail } -> W.joint; else -> W.steel }, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f), alpha = if (hot) 0.95f else 0.7f, style = Stroke(2.5f))
         drawRect(W.joint, Offset(x - w / 2 - 8f, bench - 12f), Size(w + 16f, 12f)) // the clamp
-        val newest = o.slots.indexOfLast { it.s == "done" && !it.other }
+        val newest = o.slots.indexOfLast { it.s == Outcome.Done && !it.other }
         o.slots.forEachIndexed { j, sl ->
             var drive = 1f
             if (fresh != null && fresh.first == o.h.id && j == newest) drive = min(1f, since(t, fresh.second) / 700f).let { 1 - (1 - it).pow(3) }
@@ -267,7 +268,7 @@ private fun DrawScope.reactor(lv: Int, core: Float, pulse: Float, t: Long) {
     val cable = Path().apply { moveTo(830f, 742f); cubicTo(860f, 742f, 872f, 760f, 884f, 740f); lineTo(884f, 612f) }
     drawPath(cable, W.rail, style = Stroke(9f, cap = StrokeCap.Round))
     drawPath(cable, glow.copy(alpha = 0.18f + 0.3f * core), style = Stroke(3f, cap = StrokeCap.Round))
-    val m = androidx.compose.ui.graphics.PathMeasure().apply { setPath(cable, false) }
+    val m = PathMeasure().apply { setPath(cable, false) }
     for (i in 0 until 3) {
         val p = m.getPosition(m.length * ((t / 1400.0 + i / 3.0) % 1.0).toFloat())
         drawCircle(glow, 9f, p, alpha = 0.22f * core + 0.08f)
@@ -326,7 +327,7 @@ private fun DrawScope.chargingBay(s: Data) {
     drawRoundRect(W.raised, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f))
     drawRoundRect(W.joint, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f), style = Stroke(3f))
     drawRoundRect(W.rail, Offset(84f, 468f), Size(68f, 44f), CornerRadius(8f))
-    val cells = (level(s.stats.getValue("battery")) + 1) / 2 // a cell for every two Battery levels
+    val cells = (level(s.stats.getValue(Attr.Battery)) + 1) / 2 // a cell for every two Battery levels
     for (i in 0 until 5) drawRoundRect(if (i < cells) W.glow else W.line, Offset(92f + i * 11f, 478f), Size(8f, 24f), CornerRadius(2f))
     drawCircle(W.rail, 14f, Offset(118f, 556f))
     for (dx in listOf(-5f, 5f)) drawCircle(W.joint, 3f, Offset(118f + dx, 556f))

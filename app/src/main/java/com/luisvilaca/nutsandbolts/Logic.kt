@@ -6,44 +6,49 @@ import kotlin.math.min
 
 // Habit rules. No Android in here so the unit tests run on the JVM.
 
-// stages: the name of each of the attribute's ten levels, in the robot's own terms
-class Stat(val name: String, val gloss: String, val stages: List<String>)
-class Weight(val name: String, val bolts: Int, val pts: Int)
+// Codes are typed: each enum keeps the string it is saved under (id), so state files and backups read the same as
+// before; Store.kt maps between the two at the JSON boundary and nowhere else.
+interface Coded { val id: String }
+inline fun <reified E> byId(id: String): E where E : Enum<E>, E : Coded = enumValues<E>().first { it.id == id }
 
-val STATS = linkedMapOf(
-    "battery" to Stat("Battery", "energy", listOf("AA Cell", "Nickel Pack", "Lithium Cell", "Li-ion Bank", "Solid-State", "Supercapacitor", "Graphene Cell", "Fusion Cell", "Zero-Point Cell", "Antimatter Cell")),
-    "processor" to Stat("Processor", "mind", listOf("4-bit", "8-bit", "16-bit", "32-bit", "64-bit", "Multicore", "Neural Engine", "Quantum Core", "Photonic Mind", "Singularity")),
-    "chassis" to Stat("Chassis", "body", listOf("Tin Can", "Aluminium", "Steel", "Titanium", "Carbon Fibre", "Tungsten", "Graphene", "Nanoweave", "Diamond Lattice", "Neutronium")),
-    "core" to Stat("Core", "heart", listOf("Spark", "Dynamo", "Turbine", "Fission Pile", "Breeder", "Tokamak", "Fusion Heart", "Stellarator", "Star Core", "Supernova")),
-)
+enum class Kind(override val id: String) : Coded { Build("good"), Break("bad") }
+enum class Per(override val id: String) : Coded { Day("day"), Week("week") }
+enum class Outcome(override val id: String) : Coded { Done("done"), Skip("skip"), Fail("fail") }
+
+// The four attributes. stages: the name of each of its ten levels, in the robot's own terms.
+enum class Attr(override val id: String, val title: String, val gloss: String, val stages: List<String>) : Coded {
+    Battery("battery", "Battery", "energy", listOf("AA Cell", "Nickel Pack", "Lithium Cell", "Li-ion Bank", "Solid-State", "Supercapacitor", "Graphene Cell", "Fusion Cell", "Zero-Point Cell", "Antimatter Cell")),
+    Processor("processor", "Processor", "mind", listOf("4-bit", "8-bit", "16-bit", "32-bit", "64-bit", "Multicore", "Neural Engine", "Quantum Core", "Photonic Mind", "Singularity")),
+    Chassis("chassis", "Chassis", "body", listOf("Tin Can", "Aluminium", "Steel", "Titanium", "Carbon Fibre", "Tungsten", "Graphene", "Nanoweave", "Diamond Lattice", "Neutronium")),
+    Core("core", "Core", "heart", listOf("Spark", "Dynamo", "Turbine", "Fission Pile", "Breeder", "Tokamak", "Fusion Heart", "Stellarator", "Star Core", "Supernova")),
+}
+
+// What a Done pays (and a fail takes back): bolts and attribute points.
+enum class Heft(override val id: String, val title: String, val bolts: Int, val pts: Int) : Coded {
+    Light("light", "Light", 5, 1), Medium("medium", "Medium", 10, 2), Heavy("heavy", "Heavy", 20, 4),
+}
 
 // Ten levels per attribute: level n starts at 10 n (n - 1) points (0, 20, 60, 120 ... 900); points count on past the top.
 val LEVEL_AT = List(10) { 10 * it * (it + 1) }
 fun level(p: Int) = LEVEL_AT.indexOfLast { p >= it } + 1
 fun levelShare(p: Int): Float = level(p).let { l -> if (l == LEVEL_AT.size) 1f else (p - LEVEL_AT[l - 1]).toFloat() / (LEVEL_AT[l] - LEVEL_AT[l - 1]) }
-const val LEVEL_NUTS = 2
- // for each level an attribute reaches for the first time
-val WEIGHTS = linkedMapOf(
-    "light" to Weight("Light", 5, 1),
-    "medium" to Weight("Medium", 10, 2),
-    "heavy" to Weight("Heavy", 20, 4),
-)
+const val LEVEL_NUTS = 2 // for each level an attribute reaches for the first time
 
 class Habit(
     var id: String,
     var name: String,
-    var kind: String = "good", // good: build it; bad: break it
-    var per: String = "day", // day or week
+    var kind: Kind = Kind.Build,
+    var per: Per = Per.Day,
     var target: Int = 1,
-    var stat: String = "battery",
-    var weight: String = "medium",
+    var stat: Attr = Attr.Battery,
+    var weight: Heft = Heft.Medium,
     var start: LocalDate? = null,
     var end: LocalDate? = null,
     var days: Set<Int>? = null, // 0 is Monday; null is every day
 )
 
 // Each mark stores exactly what it changed (bolts, points, nuts, and l: new levels it reached), so undo is exact.
-class Mark(val s: String, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0)
+class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0)
 
 // nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
 // palm: palm rejection; once a pen has written, only the pen writes and a finger scrolls the page.
@@ -56,8 +61,8 @@ class Data {
     var name = "Rivet"
     var bolts = 0
     var nuts = 0
-    val stats = linkedMapOf("battery" to 30, "processor" to 30, "chassis" to 30, "core" to 30)
-    val peak = STATS.keys.associateWith { level(30) }.toMutableMap() // the highest level each attribute has reached
+    val stats = Attr.entries.associateWith { 30 }.toMutableMap()
+    val peak = Attr.entries.associateWith { level(30) }.toMutableMap() // the highest level each attribute has reached
     val owned = mutableListOf("head-box", "body-crate", "arms-clamp", "legs-stub", "base-bay")
     val equip = mutableMapOf<String, String?>("head" to "head-box", "body" to "body-crate", "arms" to "arms-clamp", "legs" to "legs-stub", "acc" to null, "base" to "base-bay")
     val habits = mutableListOf<Habit>()
@@ -76,16 +81,16 @@ fun addSuggested(s: Data, h: Habit, id: String, t: LocalDate) { s.habits += Habi
 fun restoreHabit(s: Data, h: Habit, at: Int) { if (h !in s.habits) s.habits.add(at.coerceIn(0, s.habits.size), h) }
 
 fun weekStart(d: LocalDate): LocalDate = d.minusDays((d.dayOfWeek.value - 1).toLong())
-fun periodDates(h: Habit, d: LocalDate) = if (h.per == "week") (0..6L).map { weekStart(d).plusDays(it) } else listOf(d)
+fun periodDates(h: Habit, d: LocalDate) = if (h.per == Per.Week) (0..6L).map { weekStart(d).plusDays(it) } else listOf(d)
 fun periodMarks(s: Data, h: Habit, d: LocalDate) = periodDates(h, d).flatMap { x -> s.marks[x]?.get(h.id).orEmpty().map { x to it } }
 // The most slots a period can hold: a dozen in a day, one a day in a week.
-fun maxTarget(per: String) = if (per == "week") 7 else 12
+fun maxTarget(per: Per) = if (per == Per.Week) 7 else 12
 
 fun active(h: Habit, d: LocalDate) = (h.start == null || h.start!! <= d) && (h.end == null || d <= h.end!!) && (h.days == null || (d.dayOfWeek.value - 1) in h.days!!)
-fun locked(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).count { it.second.s == "done" } >= h.target
+fun locked(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).count { it.second.s == Outcome.Done } >= h.target
 
 fun streak(s: Data, h: Habit, d: LocalDate): Int {
-    val step = if (h.per == "week") 7L else 1L
+    val step = if (h.per == Per.Week) 7L else 1L
     var n = 0
     var x = d
     repeat(2000) {
@@ -107,15 +112,15 @@ data class Record(val slots: Int, val done: Int, val fail: Int, val best: Int, v
 fun record(s: Data, h: Habit, t: LocalDate): Record {
     val first = h.start ?: s.marks.keys.filter { s.marks[it]!!.containsKey(h.id) }.minOrNull() ?: t
     val last = if (h.end != null && h.end!! < t) h.end!! else t
-    val step = if (h.per == "week") 7L else 1L
+    val step = if (h.per == Per.Week) 7L else 1L
     var slots = 0; var done = 0; var fail = 0; var best = 0; var run = 0; var periods = 0
-    var d = if (h.per == "week") weekStart(first) else first
+    var d = if (h.per == Per.Week) weekStart(first) else first
     while (d <= last) {
         if (periodDates(h, d).any { active(h, it) }) {
             val ms = periodMarks(s, h, d)
             slots += h.target; periods++
-            done += ms.count { it.second.s == "done" }
-            fail += ms.count { it.second.s == "fail" }
+            done += ms.count { it.second.s == Outcome.Done }
+            fail += ms.count { it.second.s == Outcome.Fail }
             if (locked(s, h, d)) best = max(best, ++run)
             else if (t !in periodDates(h, d)) run = 0
         }
@@ -125,15 +130,15 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
 }
 
 // Fills the next slot of the habit's period.
-fun mark(s: Data, h: Habit, d: LocalDate, kind: String): Mark? {
+fun mark(s: Data, h: Habit, d: LocalDate, kind: Outcome): Mark? {
     if (periodMarks(s, h, d).size >= h.target) return null
-    val w = WEIGHTS.getValue(h.weight)
+    val w = h.weight
     val m = Mark(kind)
-    if (kind == "done") { m.b = w.bolts; m.p = w.pts }
-    if (kind == "fail") { m.b = -min(w.bolts, s.bolts); m.p = -min(w.pts, s.stats.getValue(h.stat)) }
+    if (kind == Outcome.Done) { m.b = w.bolts; m.p = w.pts }
+    if (kind == Outcome.Fail) { m.b = -min(w.bolts, s.bolts); m.p = -min(w.pts, s.stats.getValue(h.stat)) }
     s.marks.getOrPut(d) { mutableMapOf() }.getOrPut(h.id) { mutableListOf() }.add(m)
     // a nut for every finished week, or every third finished day in a row
-    if (kind == "done" && locked(s, h, d) && (h.per == "week" || streak(s, h, d) % 3 == 0)) m.n = 1
+    if (kind == Outcome.Done && locked(s, h, d) && (h.per == Per.Week || streak(s, h, d) % 3 == 0)) m.n = 1
     s.bolts += m.b; s.nuts += m.n; s.stats[h.stat] = s.stats.getValue(h.stat) + m.p
     // a level reached for the first time pays nuts; falling back and climbing again does not pay twice
     val l = level(s.stats.getValue(h.stat))
@@ -156,17 +161,6 @@ fun undo(s: Data, h: Habit, d: LocalDate): Mark? {
 }
 
 data class Progress(val done: Int, val fail: Int, val slots: Int)
-
-fun dayProgress(s: Data, d: LocalDate): Progress {
-    var done = 0; var fail = 0; var slots = 0
-    for (h in s.habits) {
-        val ms = s.marks[d]?.get(h.id).orEmpty()
-        done += ms.count { it.s == "done" }
-        fail += ms.count { it.s == "fail" }
-        slots += if (h.per == "day" && active(h, d)) h.target else ms.size
-    }
-    return Progress(done, fail, slots)
-}
 
 // Buying never goes below zero and never buys twice.
 fun buy(s: Data, p: Part): Boolean {

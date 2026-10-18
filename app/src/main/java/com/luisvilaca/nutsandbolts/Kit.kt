@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.text.input.VisualTransformation
 
 private val CARD = RoundedCornerShape(12.dp)
 
@@ -78,12 +79,12 @@ fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier =
 @Composable
 fun Field(value: String, set: (String) -> Unit, placeholder: String, modifier: Modifier = Modifier) {
     val src = remember { MutableInteractionSource() }
-    val colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f),
-        unfocusedContainerColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f), focusedBorderColor = W.act, unfocusedBorderColor = W.border,
+    val colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White.copy(alpha = 0.05f),
+        unfocusedContainerColor = Color.White.copy(alpha = 0.05f), focusedBorderColor = W.act, unfocusedBorderColor = W.border,
         cursorColor = W.act, focusedTextColor = W.text, unfocusedTextColor = W.text, focusedPlaceholderColor = W.dim, unfocusedPlaceholderColor = W.dim)
     BasicTextField(value, set, modifier.fillMaxWidth(), singleLine = true, interactionSource = src, cursorBrush = SolidColor(W.act),
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = W.text)) { inner ->
-        OutlinedTextFieldDefaults.DecorationBox(value, inner, enabled = true, singleLine = true, visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
+        OutlinedTextFieldDefaults.DecorationBox(value, inner, enabled = true, singleLine = true, visualTransformation = VisualTransformation.None,
             interactionSource = src, placeholder = { Text(placeholder) }, colors = colors, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = src, colors = colors, shape = RoundedCornerShape(10.dp)) })
     }
@@ -98,16 +99,16 @@ fun Tracker(slots: List<Slot>, modifier: Modifier) = Canvas(modifier) {
     val w = (size.width - gap * (slots.size - 1)) / slots.size
     val h = size.height
     val r = CornerRadius(h / 2)
-    if (slots.isNotEmpty() && slots.all { it.s == "done" }) for ((k, a) in listOf(2.4f to 0.08f, 1.6f to 0.16f))
+    if (slots.isNotEmpty() && slots.all { it.s == Outcome.Done }) for ((k, a) in listOf(2.4f to 0.08f, 1.6f to 0.16f))
         drawRoundRect(W.glow, Offset(0f, -h * (k - 1) / 2), Size(size.width, h * k), CornerRadius(h * k / 2), alpha = a)
     slots.forEachIndexed { i, sl ->
         val o = Offset(i * (w + gap), 0f)
         val a = if (sl.other) 0.5f else 1f
         when (sl.s) {
-            "done" -> drawRoundRect(W.steel, o, Size(w, h), r, alpha = a)
-            "fail" -> drawRoundRect(W.coral, o, Size(w, h), r, alpha = a)
-            "skip" -> drawRoundRect(W.dim, o, Size(w, h), r, alpha = a, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
-            else -> drawRoundRect(W.edge, o, Size(w, h), r)
+            Outcome.Done -> drawRoundRect(W.steel, o, Size(w, h), r, alpha = a)
+            Outcome.Fail -> drawRoundRect(W.coral, o, Size(w, h), r, alpha = a)
+            Outcome.Skip -> drawRoundRect(W.dim, o, Size(w, h), r, alpha = a, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
+            null -> drawRoundRect(W.edge, o, Size(w, h), r)
         }
     }
 }

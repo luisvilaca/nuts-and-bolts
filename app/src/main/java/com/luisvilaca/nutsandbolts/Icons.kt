@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 
 // Icons share one robot grammar: angular strokes, and a pivot joint (a small circle) wherever a part would hinge.
 // Drawn as 24dp line art at 1.8 stroke with square caps; Icon() tints them.
@@ -42,7 +43,7 @@ private val PATHS = mapOf(
 
 val ICONS: Map<String, ImageVector> = PATHS.mapValues { (k, d) ->
     ImageVector.Builder(k, 24.dp, 24.dp, 24f, 24f)
-        .addPath(PathParser().parsePathString(d).toNodes(), stroke = SolidColor(androidx.compose.ui.graphics.Color.White), strokeLineWidth = 1.8f,
+        .addPath(PathParser().parsePathString(d).toNodes(), stroke = SolidColor(Color.White), strokeLineWidth = 1.8f,
             strokeLineCap = StrokeCap.Square, strokeLineJoin = StrokeJoin.Miter)
         .build()
 }
