@@ -1,5 +1,9 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
@@ -68,8 +72,8 @@ fun slotProgress(s: Data, d: LocalDate) = orbitsFor(s, d).flatMap { it.slots }.l
 
 private val MOOD = listOf("Low power", "Running steady", "Fully charged")
 
-// The Lab: Rivet in its bay; beside it the habits running today and, right after them, the four attributes. When the
-// list is too long for the room, it scrolls on its own and the attributes stay in view at the foot.
+// The Lab: Rivet in its bay; beside it the habits running today, scrolling on their own, and the four attributes pinned
+// at the bottom right, always in view.
 @Composable
 fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
@@ -85,23 +89,23 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
-        Header("Lab", t.format(dayFmt), store, ui, lay, Modifier.padding(horizontal = 28.dp))
+        Header("Lab", store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
             BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 28.dp, top = 12.dp, bottom = 12.dp)) {
-                // the list takes what it needs and scrolls only past the room there is; the attributes follow it
-                Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
+                // the list takes the room there is and scrolls; the attributes stay at the bottom right (owner, 2026-10-18)
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
                 Attributes(s, Modifier.padding(top = 12.dp))
             }
         }
     } else if (!lay.phone) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
         // a tablet held upright has the height to keep the attributes pinned too
-        Header("Lab", null, store, ui, lay)
+        Header("Lab", store, ui, lay)
         BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
-        Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
         Attributes(s, Modifier.padding(top = 12.dp))
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Lab", null, store, ui, lay)
+        Header("Lab", store, ui, lay)
         BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
         Attributes(s, Modifier.padding(vertical = 8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
@@ -127,41 +131,80 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     }
 }
 
-// The four attributes as cards: icon and name over a gauge to the next level with the level beside it. A name is never cut:
-// four across a card shows it in full (13sp) where there is room, else only the icon and level; two by two under
-// 400dp. What each means for you (energy, mind, body, heart) is in the screen reader and a long-press tooltip.
-@OptIn(ExperimentalMaterial3Api::class)
+// The four attributes as one instrument panel, pinned at the bottom right of the Lab. Where the side is 560dp or
+// wider (scaled with the text size), a single row of four dials, each a small pressure gauge like the reactor's: ten
+// level ticks round a 270° arc, the way to the next level filled in uranium glow, the level in the middle and the
+// attribute's icon in the arc's open foot, with the name and what it means for you (energy, mind, body, heart) beside it. Narrower, one compact line per attribute: icon, name and meaning, a slim gauge
+// and the level. A long press repeats the name and meaning in a tooltip.
 @Composable
 fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modifier.fillMaxWidth()) {
-    val cols = if (maxWidth >= 400.dp) 4 else 2
-    val named = cols == 2 || maxWidth >= 600.dp
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Attr.entries.chunked(cols).forEach { r ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                r.forEach { st ->
-                    val p = s.stats.getValue(st)
-                    val l = level(p)
-                    Box(Modifier.weight(1f)) { TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), tooltip = { PlainTooltip { Text("${st.title}: ${st.gloss}") } },
-                        state = rememberTooltipState()) {
-                        Card(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                            contentDescription = "${st.title}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
-                        }) {
-                            // the name has the card's whole width to itself; the level sits beside the gauge, so large text
-                            // never pushes one into the other
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(ICONS.getValue(st.id), null, Modifier.size(16.dp), tint = W.steel)
-                                if (named) Text(st.title, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelMedium, color = W.text, maxLines = 1, softWrap = false)
-                            }
-                            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Gauge(levelShare(p), Modifier.weight(1f), 6.dp)
-                                Text("LV $l", Modifier.padding(start = 8.dp), style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text, maxLines = 1, softWrap = false)
-                            }
-                        }
-                    } }
-                }
+    val row = maxWidth >= 560.dp * LocalDensity.current.fontScale // large text gets the lines instead of cut names
+    Card(Modifier.fillMaxWidth(), pad = 12.dp) {
+        if (row) Row(Modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+            Attr.entries.forEachIndexed { i, st ->
+                if (i > 0) Box(Modifier.padding(horizontal = 8.dp).fillMaxHeight(0.7f).width(1.dp).background(W.line))
+                AttrTip(st, Modifier.weight(1f)) { Dial(s, st) }
             }
+        } else Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Attr.entries.forEach { st -> AttrTip(st, Modifier.fillMaxWidth()) { AttrLine(s, st) } }
         }
     }
+}
+
+private fun say(s: Data, st: Attr): String {
+    val p = s.stats.getValue(st); val l = level(p)
+    return "${st.title}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AttrTip(st: Attr, modifier: Modifier, content: @Composable () -> Unit) = Box(modifier) {
+    TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), tooltip = { PlainTooltip { Text("${st.title}: ${st.gloss}") } },
+        state = rememberTooltipState()) { content() }
+}
+
+@Composable
+private fun Dial(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = say(s, st) },
+    verticalAlignment = Alignment.CenterVertically) {
+    val p = s.stats.getValue(st); val l = level(p)
+    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = 3.5.dp.toPx(); val r = size.minDimension / 2 - w
+            val tl = center - Offset(r, r); val box = Size(r * 2, r * 2)
+            // the dial's face, its ten level ticks (steel up to the level reached), the track and the glowing way on
+            drawCircle(W.rail, r + w, center)
+            for (k in 0 until 10) {
+                val ang = Math.toRadians(135.0 + 270.0 * k / 9).toFloat()
+                val dir = Offset(kotlin.math.cos(ang), kotlin.math.sin(ang))
+                drawLine(if (k < l) W.steel else W.edge, center + dir * (r - w * 1.6f), center + dir * (r - w * 2.6f), 1.5.dp.toPx(), StrokeCap.Round)
+            }
+            drawArc(W.edge, 135f, 270f, false, tl, box, style = Stroke(w, cap = StrokeCap.Round))
+            val sweep = 270f * levelShare(p)
+            if (sweep > 0f) {
+                drawArc(W.glow, 135f, sweep, false, tl, box, alpha = 0.18f, style = Stroke(w * 2.6f, cap = StrokeCap.Round))
+                drawArc(W.glow, 135f, sweep, false, tl, box, style = Stroke(w, cap = StrokeCap.Round))
+            }
+        }
+        Text("$l", style = Numeral, color = W.text)
+        // the attribute's icon sits in the open quarter at the foot of the arc
+        Icon(ICONS.getValue(st.id), null, Modifier.align(Alignment.BottomCenter).size(12.dp), tint = W.steel)
+    }
+    Column(Modifier.padding(start = 8.dp)) {
+        Text(st.title, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp), color = W.text, maxLines = 1, softWrap = false)
+        Text(st.gloss.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelMedium, color = W.dim, maxLines = 1, softWrap = false)
+    }
+}
+
+@Composable
+private fun AttrLine(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().heightIn(min = 28.dp).semantics(mergeDescendants = true) { contentDescription = say(s, st) },
+    verticalAlignment = Alignment.CenterVertically) {
+    val p = s.stats.getValue(st); val l = level(p)
+    val k = LocalDensity.current.fontScale // the name and meaning columns grow with the text, so they line up and never cut
+    Icon(ICONS.getValue(st.id), null, Modifier.size(16.dp), tint = W.steel)
+    Text(st.title, Modifier.padding(start = 8.dp).width(86.dp * k), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp), color = W.text, maxLines = 1, softWrap = false)
+    Text(st.gloss.replaceFirstChar { it.uppercase() }, Modifier.width(56.dp * k), style = MaterialTheme.typography.labelMedium, color = W.dim, maxLines = 1, softWrap = false)
+    Gauge(levelShare(p), Modifier.weight(1f).padding(horizontal = 8.dp), 5.dp)
+    Text("LV $l", style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text, maxLines = 1, softWrap = false)
 }
 
 // A bar charged with the reactor's light: a green-to-steel fill on an edge track, a soft halo round the fill and a

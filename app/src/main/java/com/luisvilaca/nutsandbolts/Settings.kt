@@ -93,7 +93,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header("Settings", null, store, ui, lay)
+        Header("Settings", store, ui, lay)
         Column(Modifier.widthIn(max = 720.dp)) {
             SectionLabel("Robot")
             Field(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, "Rivet")

@@ -3,9 +3,6 @@ package com.luisvilaca.nutsandbolts
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.translate
 import android.view.MotionEvent
-import androidx.compose.foundation.Image
-import androidx.compose.runtime.produceState
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.draw.alpha
 import android.view.MotionPredictor
@@ -139,40 +136,18 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
         return
     }
     val s = store.s
-    val t = LocalDate.now()
     var month by remember { mutableStateOf(YearMonth.now()) }
-    val n = s.diary.count { YearMonth.from(it) == month }
-    val sum = "${if (n == 0) "No pages" else plural(n, "page")} written in ${month.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))}"
-    // like Habits: the calendar fills the screen below the header without scrolling, at any size; today's page is a
-    // quiet action beside the month it belongs to
+    // like Habits: the calendar fills the screen below the header without scrolling, at any size; any day, today
+    // included, opens its page from its cell
     Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
-        Header("Diary", sum.takeIf { lay.wide }, store, ui, lay)
-        if (!lay.wide) Text(sum, Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        Header("Diary", store, ui, lay)
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
-            Spacer(Modifier.weight(1f))
-            // an unwritten today is the one thing to do here, so it is a filled pill; a written one opens quietly
-            if (t in s.diary) TextButton({ ui.page = t }) { Text("Open today", color = W.act) }
-            else Button({ ui.page = t }, Modifier.height(44.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
-                Icon(ICONS.getValue("diary"), null, Modifier.size(18.dp)); Text("Write today", Modifier.padding(start = 8.dp))
-            }
         }
         Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) {
-            Month(month, { it, room -> if (it in s.diary) { if (room > 0) PageThumb(store, it) else Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) } }, ahead = false, Modifier.weight(1f)) { ui.page = it }
+            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
         }
     }
-}
-
-// A written day in the calendar: a little picture of its page (paper and ink), loaded off the main thread and drawn
-// again whenever the page changes; the pen icon stands in until it is ready.
-@Composable
-private fun PageThumb(store: Store, d: LocalDate) {
-    val stamp = store.pageStamp(d)
-    val img by produceState<ImageBitmap?>(null, d, stamp) { value = withContext(Dispatchers.IO) { store.thumb(d)?.asImageBitmap() } }
-    val b = img
-    if (b == null) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel)
-    else Image(b, "the page for ${d.format(dayFmt)}", Modifier.fillMaxHeight(0.92f).aspectRatio(PAGE_W / PAGE_H).clip(RoundedCornerShape(3.dp))
-        .border(1.dp, W.border, RoundedCornerShape(3.dp)))
 }
 
 // How far apart an ink and a paper are in lightness, as a contrast ratio (1 is none, 21 is black on white).

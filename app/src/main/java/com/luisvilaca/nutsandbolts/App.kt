@@ -184,12 +184,10 @@ val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Local
 fun plural(n: Int, w: String) = "$n $w${if (n == 1) "" else "s"}"
 
 @Composable
-fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier) {
+// A screen's title alone (no subtitle, owner 2026-10-18), the wallet and Settings.
+fun Header(title: String, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Wallet(store.s)
         IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = if (ui.settings) W.act else W.dim) }
     }

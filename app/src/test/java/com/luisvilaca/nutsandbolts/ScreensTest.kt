@@ -18,7 +18,6 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -68,7 +67,7 @@ class ScreensTest {
             stats[Attr.Battery] = 62; stats[Attr.Processor] = 48; stats[Attr.Chassis] = 35; stats[Attr.Core] = 22
             diary += listOf(t.minusDays(1), t.minusDays(3), t.minusDays(4))
         }
-        // a written page, so the diary calendar has a picture to show
+        // a written page, so the diary has one on disk
         if (!empty) st.writePage(t.minusDays(1), Page("#393939", mutableListOf(
             InkStroke("#00FF88", 3f, false, floatArrayOf(160f, 300f, .6f, 700f, 300f, .6f)),
             InkStroke("#E0F7FA", 2f, false, FloatArray(60) { i -> when (i % 3) { 0 -> 160f + i * 20f; 1 -> 420f + (if (i % 2 == 0) 30f else 0f) + (i / 15) * 120f; else -> .6f } }),
@@ -80,6 +79,9 @@ class ScreensTest {
         rule.waitForIdle()
         File(out, "$name.png").outputStream().use { rule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
+
+    // today's cell in the diary calendar opens today's page
+    private fun openToday() { rule.onNodeWithContentDescription(LocalDate.now().format(dayFmt), substring = true).performClick(); rule.waitForIdle() }
 
     private fun tap(text: String) { rule.onAllNodesWithText(text, useUnmergedTree = true)[0].performClick(); rule.waitForIdle() }
 
@@ -93,10 +95,8 @@ class ScreensTest {
         tap("Calendar"); shot("$prefix-habits-cal"); tap("History"); shot("$prefix-habits-hist"); tap("Day")
         tap("Add habit"); shot("$prefix-form")
         tap("Cancel"); tap("Diary")
-        // the page pictures load in the background; give them a moment where the cells have room for them
-        runCatching { rule.waitUntil(3000) { rule.onAllNodesWithContentDescription("the page for", substring = true).fetchSemanticsNodes().isNotEmpty() } }
         shot("$prefix-diary")
-        tap("Open today".takeIf { LocalDate.now() in st.s.diary } ?: "Write today"); shot("$prefix-page")
+        openToday(); shot("$prefix-page")
     }
 
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tabletLandscape() = tour("tablet")
@@ -180,7 +180,7 @@ class ScreensTest {
         val st = seed()
         st.change { pen.color = PEN_COLORS[0].second; pen.b2 = "ink" }
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); tap("Write today".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today")
+        tap("Diary"); openToday()
         rule.runOnUiThread { PenKeys.on!!(2) }; rule.waitForIdle()
         rule.onNodeWithContentDescription(PEN_COLORS[1].first).assertIsSelected()
     }
@@ -240,7 +240,7 @@ class ScreensTest {
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
         val st = seed()
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); tap("Write today".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today")
+        tap("Diary"); openToday()
         rule.onNodeWithContentDescription("Pen. Tap again for nib and stabilizer").performClick(); rule.waitForIdle()
         rule.onNodeWithText("NIB").assertExists(); rule.onNodeWithText("0.6 mm").assertExists(); rule.onNodeWithText("50%").assertExists()
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
