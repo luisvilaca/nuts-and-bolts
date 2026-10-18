@@ -81,7 +81,6 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val d = ui.date
     val t = LocalDate.now()
-    val p = slotProgress(s, d)
 
     val controls = @Composable {
         val views = @Composable { m: Modifier ->
@@ -108,14 +107,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     Box(Modifier.fillMaxSize()) {
         // only what overflows scrolls: the calendar always fits the screen, the day and the history scroll if they must
         Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
-            val sum = when {
-                s.habits.isEmpty() -> "No habits yet"
-                view == "cal" -> monthSummary(month, monthP)
-                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> records.getValue(h).best to h.per.id }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
-                else -> boltsIn(p, d > t)
-            }
-            Header("Habits", sum.takeIf { lay.wide }, store, ui, lay)
-            if (!lay.wide) Text(sum, Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Header("Habits", store, ui, lay)
             controls()
             if (view == "cal") Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
                 Card(Modifier.weight(1f), pad = 12.dp) {
@@ -147,15 +139,6 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
         ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.openForm("") },
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp, if (view == "cal") 48.dp else 20.dp).height(48.dp), containerColor = W.act, contentColor = W.onAct)
     }
-}
-
-// A month's bolts up to today: "41 of 60 bolts in October". days: each day's progress, worked out once.
-private fun monthSummary(m: YearMonth, days: Map<LocalDate, Progress>): String {
-    val t = LocalDate.now()
-    val ps = days.filterKeys { it <= t }.values
-    val name = m.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))
-    if (ps.isEmpty()) return "${plural(days.values.sumOf { it.slots }, "bolt")} planned in $name"
-    return "${ps.sumOf { it.done }} of ${plural(ps.sumOf { it.slots }, "bolt")} in $name" + ps.sumOf { it.fail }.let { if (it > 0) ", $it sheared" else "" }
 }
 
 // The one way a count of slots is said: in bolts, driven in or sheared, or planned for a day ahead.

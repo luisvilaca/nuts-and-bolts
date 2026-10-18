@@ -103,7 +103,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
-        Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
+        Header("Shop", store, ui, lay, Modifier.padding(horizontal = 28.dp))
         // the same bay as the Lab, so trying a part on shows it exactly where it will live
         Row(Modifier.fillMaxSize()) {
             BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits, wear)
@@ -114,7 +114,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
             }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Shop", null, store, ui, lay)
+        Header("Shop", store, ui, lay)
         BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits, wear)
         detail(Modifier.padding(vertical = 12.dp))
         tabs()

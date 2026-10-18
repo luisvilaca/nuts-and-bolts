@@ -26,7 +26,7 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 
 - Landscape tablet first, touch plus pen; tablet portrait and phone (portrait and landscape) also supported. Handwriting diary entries with the pen; on a phone the diary still works with a finger or a phone stylus.
 - Four sections: Lab, Shop, Habits, Diary, on a compact bottom bar at every size (hidden under an open diary page).
-- Lab (home, called Today until 2026-10-18): the robot on its platform with an evolving background; beside it today's habits, logged right there, in a list that scrolls on its own when long; under them the four attributes, compact (name, what it means, level, a slim gauge; no stage names), always in view; currency balances. No week strip, tally or next-level line (owner, 2026-10-18).
+- Lab (home, called Today until 2026-10-18): the robot on its platform with an evolving background; beside it today's habits, logged right there, in a list that scrolls on its own when long; the four attributes pinned at the bottom right (name, what it means, level, a slim gauge; no stage names), always in view; currency balances. No week strip, tally or next-level line (owner, 2026-10-18).
 - Shop: item shop to evolve the character; categories Head, Body, Arms, Legs, Accessories, Base.
 - Habits: planning and managing: calendar and history (each habit's share of slots done, fails, best and current run); add and edit habits. Every date, past and future, opens to show the habits that run on it and can be logged there.
 - Settings, from the top bar: backup and restore, the daily reminder, the robot's name.
