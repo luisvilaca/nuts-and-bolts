@@ -22,13 +22,7 @@ val LEVEL_AT = List(10) { 10 * it * (it + 1) }
 fun level(p: Int) = LEVEL_AT.indexOfLast { p >= it } + 1
 fun levelShare(p: Int): Float = level(p).let { l -> if (l == LEVEL_AT.size) 1f else (p - LEVEL_AT[l - 1]).toFloat() / (LEVEL_AT[l] - LEVEL_AT[l - 1]) }
 const val LEVEL_NUTS = 2
-
-// The level-up closest in Dones: the attribute, the habit that gets it there fastest, and how many Dones that takes.
-class NextUp(val stat: String, val habit: Habit, val dones: Int)
-fun nextUp(s: Data, t: LocalDate): NextUp? = s.habits.filter { it.kind == "good" && (it.end == null || it.end!! >= t) && level(s.stats.getValue(it.stat)) < LEVEL_AT.size }
-    .map { h -> val p = s.stats.getValue(h.stat); val pts = WEIGHTS.getValue(h.weight).pts
-        NextUp(h.stat, h, (LEVEL_AT[level(p)] - p + pts - 1) / pts) }
-    .minByOrNull { it.dones } // for each level an attribute reaches for the first time
+ // for each level an attribute reaches for the first time
 val WEIGHTS = linkedMapOf(
     "light" to Weight("Light", 5, 1),
     "medium" to Weight("Medium", 10, 2),
@@ -53,7 +47,9 @@ class Mark(val s: String, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l:
 
 // nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
 // palm: palm rejection; once a pen has written, only the pen writes and a finger scrolls the page.
-class Pen(var color: String = PEN_COLORS[0].second, var nib: Float = 0.6f, var stab: Int = 50, var rub: Float = 4f, var paper: Int = 0, var seen: Boolean = false, var palm: Boolean = true)
+// b1, b2: what the pen's two side buttons do: "eraser" (pen and eraser in turn), "ink" (the next ink), "undo" or "none".
+class Pen(var color: String = PEN_COLORS[0].second, var nib: Float = 0.6f, var stab: Int = 50, var rub: Float = 4f, var paper: Int = 0, var seen: Boolean = false, var palm: Boolean = true,
+          var b1: String = "eraser", var b2: String = "ink")
 class Remind(var on: Boolean = false, var time: String = "21:00")
 
 class Data {

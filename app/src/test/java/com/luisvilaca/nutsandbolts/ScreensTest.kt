@@ -18,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.assertIsSelected
 import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.time.LocalDate
@@ -122,6 +124,29 @@ class ScreensTest {
         org.junit.Assert.assertEquals(listOf(1f, 0, 7f), listOf(old.nib, old.stab, old.rub))
         val new = load("""{"nib":0.8,"stabPct":37,"rub":40}""")
         org.junit.Assert.assertEquals(listOf(0.8f, 30, 15f), listOf(new.nib, new.stab, new.rub)) // stab snaps to tens, rub clamps
+    }
+
+    // Each pen button takes its action from Settings, and the choice shows as selected.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penButtonChoices() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        rule.onNodeWithContentDescription("Settings").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("Undo")[0].performScrollTo().performClick(); rule.waitForIdle()
+        org.junit.Assert.assertEquals("undo", st.s.pen.b1)
+        rule.onAllNodesWithText("Undo")[0].assertIsSelected()
+        rule.onAllNodesWithText("Nothing")[1].performScrollTo().performClick(); rule.waitForIdle()
+        org.junit.Assert.assertEquals("none", st.s.pen.b2)
+        rule.onAllNodesWithText("Nothing")[1].assertIsSelected()
+    }
+
+    // A pen button that picks the next ink moves the selection in the ink swatches with it.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penButtonInkShows() {
+        val st = seed()
+        st.change { pen.color = PEN_COLORS[0].second; pen.b2 = "ink" }
+        rule.setContent { NbTheme { App(st) } }
+        tap("Diary"); tap("Write today".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today")
+        rule.runOnUiThread { PenKeys.on!!(2) }; rule.waitForIdle()
+        rule.onNodeWithContentDescription(PEN_COLORS[1].first).assertIsSelected()
     }
 
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).

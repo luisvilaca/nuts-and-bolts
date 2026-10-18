@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 // Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep greenhouse teal (the Grow Room's
-// tint), Cherenkov cyan only as the reactor's light, ready green only where something can be pressed or is done,
-// coral only for failed.
+// tint), uranium green as every glow (the reactor, its light, the gauges, a completed habit), ready green only where
+// something can be pressed or is done, coral only for failed.
 object W {
     val ground = Color(0xFF0D1615)
     val rail = Color(0xFF081313)
@@ -36,7 +36,7 @@ object W {
     val card = Color(0xFF152220) // the surface of a card
     val border = Color.White.copy(alpha = 0.08f) // a card's edge
     val focus = Color(0xFF4AE3A1) // a focused field's outline
-    val glow = Color(0xFF45E3F5) // the reactor's Cherenkov light
+    val glow = Color(0xFFA6FF4D) // every glow: the reactor, its light, the gauges, a habit gone critical
 }
 
 private fun lexend(vararg w: Int) = FontFamily(w.map { Font(R.font.lexend, FontWeight(it), variationSettings = FontVariation.Settings(FontVariation.weight(it))) })

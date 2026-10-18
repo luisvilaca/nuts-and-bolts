@@ -12,13 +12,14 @@ import org.json.JSONObject
 
 // The saved state lives in one JSON file; each diary page in its own file, since handwriting outgrows the rest within weeks.
 class Store private constructor(private val dir: File) {
-    var s: Data = load()
-        private set
-    // bumped on every change; screens read it so they recompose
+    // bumped on every change. Reading s reads it too, so anything drawn from the data redraws when the data changes,
+    // even a part of a screen the rest of the screen would let Compose skip.
     var tick by mutableIntStateOf(0)
         private set
+    private var data: Data = load()
+    val s: Data get() { tick; return data }
 
-    fun change(block: Data.() -> Unit) { s.block(); tick++; save() }
+    fun change(block: Data.() -> Unit) { data.block(); tick++; save() }
 
     // the robot's current reaction; not saved
     var react by mutableStateOf<Reaction?>(null)
@@ -69,7 +70,7 @@ class Store private constructor(private val dir: File) {
         check(pagesDir.renameTo(old))
         if (!fresh.renameTo(pagesDir)) { old.renameTo(pagesDir); error("pages could not be swapped") }
         old.deleteRecursively()
-        s = b.first
+        data = b.first
         tick++
         save()
     }
@@ -114,7 +115,7 @@ internal fun json(s: Data): JSONObject = JSONObject()
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
-    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm))
+    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("sound", s.sound)
     .put("backedUp", s.backedUp?.toString())
@@ -150,7 +151,7 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
         val stab = if (j.has("stabPct")) j.optInt("stabPct") else listOf(0, 60, 90)[j.optInt("stab", 1).coerceIn(0, 2)]
         val rub = if (j.has("rub")) j.optDouble("rub").toFloat() else listOf(2f, 4f, 7f)[j.optInt("eraser", 1).coerceIn(0, 2)]
         pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
-            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true))
+            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true), j.optString("b1", "eraser"), j.optString("b2", "ink"))
     }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     sound = o.optBoolean("sound", true)
