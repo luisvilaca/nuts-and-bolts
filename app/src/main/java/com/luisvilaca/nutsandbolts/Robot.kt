@@ -67,6 +67,13 @@ fun clock(run: Boolean = true): State<Long> {
     return t
 }
 
+// Whether the system's animations are off; motion then lands at once.
+@Composable
+fun animationsOff(): Boolean {
+    val ctx = LocalContext.current
+    return remember { Settings.Global.getFloat(ctx.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
+}
+
 // Milliseconds on the shared clock since `at`. A frozen clock (animations off) reads as long settled, so anything
 // keyed to a fresh mark shows its end state at once instead of its first frame.
 fun since(t: Long, at: Long) = if (t == 0L) Long.MAX_VALUE / 2 else (t - at).coerceAtLeast(0)

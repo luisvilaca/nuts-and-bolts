@@ -439,14 +439,15 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         }
         group("Attribute it trains") { seg(Attr.entries.map { it.id to "${it.title}\n${it.gloss}" }, stat.id) { stat = byId(it) } }
         group("Schedule") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // wraps rather than squeezes, so at large text Day / Week drops to its own line instead of breaking a word
+            FlowRow(itemVerticalAlignment = Alignment.CenterVertically, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton({ target = (target - 1).coerceAtLeast(1) }) { Icon(ICONS.getValue("minus"), "Fewer", tint = W.text) }
                 Text("$target", Modifier.widthIn(min = 28.dp), style = Numeral, color = W.text)
                 IconButton({ target = (target + 1).coerceAtMost(maxTarget(per)) }, enabled = target < maxTarget(per)) {
                     Icon(ICONS.getValue("plus"), "More", tint = if (target < maxTarget(per)) W.text else W.edge)
                 }
                 Text("times a", Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.bodyLarge)
-                Box(Modifier.widthIn(max = 240.dp)) { seg(listOf(Per.Day.id to "Day", Per.Week.id to "Week"), per.id) { per = byId(it); target = target.coerceAtMost(maxTarget(per)) } }
+                Box(Modifier.width(220.dp)) { seg(listOf(Per.Day.id to "Day", Per.Week.id to "Week"), per.id) { per = byId(it); target = target.coerceAtMost(maxTarget(per)) } }
             }
             FlowRow(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("From", style = MaterialTheme.typography.bodyLarge)

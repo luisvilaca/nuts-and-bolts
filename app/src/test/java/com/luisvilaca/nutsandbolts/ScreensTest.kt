@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.captureToImage
@@ -80,9 +83,10 @@ class ScreensTest {
 
     private fun tap(text: String) { rule.onAllNodesWithText(text, useUnmergedTree = true)[0].performClick(); rule.waitForIdle() }
 
-    private fun tour(prefix: String) {
+    // font: the system font scale to render at; 1.3 checks large text clips nothing
+    private fun tour(prefix: String, font: Float = 1f) {
         val st = seed()
-        rule.setContent { NbTheme { App(st) } }
+        rule.setContent { NbTheme { CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, font)) { App(st) } } }
         shot("$prefix-today")
         tap("Shop"); shot("$prefix-shop")
         tap("Habits"); shot("$prefix-habits")
@@ -99,6 +103,8 @@ class ScreensTest {
     @Test @Config(qualifiers = "w854dp-h1280dp-port-hdpi") fun tabletPortrait() = tour("tablet-portrait")
     @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun phone() = tour("phone")
     @Test @Config(qualifiers = "w891dp-h411dp-land-hdpi") fun phoneLandscape() = tour("phone-landscape")
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tabletLargeText() = tour("large-tablet", 1.3f)
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun phoneLargeText() = tour("large-phone", 1.3f)
 
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun emptyAndSettings() {
         val st = seed(empty = true)

@@ -127,7 +127,7 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     }
 }
 
-// The four attributes as cards: icon, name and level on one line over a gauge to the next level. A name is never cut:
+// The four attributes as cards: icon and name over a gauge to the next level with the level beside it. A name is never cut:
 // four across a card shows it in full (13sp) where there is room, else only the icon and level; two by two under
 // 400dp. What each means for you (energy, mind, body, heart) is in the screen reader and a long-press tooltip.
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,13 +146,16 @@ fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modi
                         Card(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
                             contentDescription = "${st.title}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
                         }) {
+                            // the name has the card's whole width to itself; the level sits beside the gauge, so large text
+                            // never pushes one into the other
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(ICONS.getValue(st.id), null, Modifier.size(16.dp), tint = W.steel)
-                                if (named) Text(st.title, Modifier.padding(start = 6.dp).weight(1f), style = MaterialTheme.typography.labelMedium, color = W.text, maxLines = 1, softWrap = false)
-                                else Spacer(Modifier.weight(1f))
-                                Text("LV $l", style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text)
+                                if (named) Text(st.title, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelMedium, color = W.text, maxLines = 1, softWrap = false)
                             }
-                            Gauge(levelShare(p), Modifier.fillMaxWidth().padding(top = 10.dp), 6.dp)
+                            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Gauge(levelShare(p), Modifier.weight(1f), 6.dp)
+                                Text("LV $l", Modifier.padding(start = 8.dp), style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text, maxLines = 1, softWrap = false)
+                            }
                         }
                     } }
                 }
