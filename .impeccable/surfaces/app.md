@@ -6,16 +6,16 @@ related_targets: []
 ---
 
 # Android app (Jetpack Compose)
-Scope: the whole native app: Today, Shop, Habits, Diary, Settings, and the diary page editor. Visitor mode: Operate.
-Audience and job: the owner, on a Xiaomi Pad 7 mostly in landscape, evenings, lights low, pen in hand; also tablet portrait and a phone in both orientations. Log today's habits in one tap each beside the robot, spend earnings in the shop, plan habits, handwrite a diary page.
-Constraints: Material 3 structure (nav rail on expanded width, bottom bar on compact and medium, system Back, edge-to-edge insets, snackbars with Undo, Material date and time pickers); 48dp targets; sp type; works offline. Brief pins: clean and futuristic, robot theme, animated WALL-E/EVE-style robot from the owner's sketch, robot-themed icons, space or nuclear backgrounds, a true diary template on the owner's papers and inks, no grid paper.
+Scope: the whole native app: Lab, Shop, Habits, Diary, Settings, and the diary page editor. Visitor mode: Operate.
+Audience and job: the owner, on a Xiaomi Pad 7 mostly in landscape, evenings, lights low, Xiaomi Focus Pen in hand; also tablet portrait and a phone in both orientations. Log today's habits in one tap each beside the robot, spend earnings in the shop, plan habits, handwrite a diary page.
+Constraints: Material 3 structure with a bottom bar at every size (never a side rail; hidden under an open diary page), system Back, edge-to-edge insets, snackbars with Undo, Material date and time pickers; 44dp controls (52dp lead Done); sp type; works offline. Brief pins: clean and futuristic, robot theme, animated WALL-E/EVE-style robot from the owner's sketch, robot-themed icons, space or nuclear backgrounds, a true diary template on the owner's papers and inks with the atom emblem, no grid paper, no plants.
 Build path: code-led (Operate surface, no image generation).
 Unresolved: robot name "Rivet" is a renamable placeholder.
 ## Direction contract
-THESIS: Rivet tends a seedling for every habit: each Done unfurls a leaf, and the grow tray is the record of the day. Refuses the category default of a dark dashboard of glowing cards and progress rings.
-OWN-WORLD: A hydroponic grow room after dark. Deep greenhouse teal #0B1A1A, a magenta grow light #E05AD0 whose glow washes the bay, leaf green #6EE787 only for pressable-primary and grown; coral #FF6B4A only for failed (a wilted leaf). Lexend throughout, rounded and open. Slots are leaves: unfurled solid, skipped dashed, wilted coral, open bud.
-STORY: The owner opens the app to Rivet beside its tray under the grow light, taps Done and watches a leaf unfurl on that habit's sprout.
-FIRST VIEWPORT (Today, tablet landscape 1280x854dp): dark teal rail with a sprout mark. Header: Today, the date, wallet. Left 46%: Rivet on its platform; to its right, under the hanging grow light, a glass tray with one sprout per habit running today and a leaf per slot. Right: TODAY · 3 OF 9 LEAVES OPEN; rows with leaf slots, green Done, Skip, Fail; steel gauges; the week as seven sprouts sized by how the day went.
-SIGNATURE: Done unfurls the newest leaf on that habit's sprout over 700ms while Rivet cheers; instant under reduced motion. The leaf is the slot, the sprout is the day.
-FORM: hydroponic grow room, Impeccable's pick in round two, candidate 1 of 7; seed:fc741dc7c2f05c81.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+THESIS: Rivet bolts together a frame for every habit at a reactor-powered bench: each Done drives a bolt home, and a habit with every bolt in goes critical. Refuses the category default of a dark dashboard of glowing stat cards and progress rings.
+OWN-WORLD: A robot's lab after dark. Greenhouse-teal ground #0D1615 with cards #152220; uranium glow #A6FF4D as the only light (the reactor, its rail, gauges, completed work); ready green #6EE787 only for pressable and here; cool steel #CFE3DE for metal, driven bolts and selection; coral #FF6B4A only for failed (a sheared bolt); gold #F2C14E only for nuts. Lexend throughout, rounded and open. Slots are bolts: driven, dashed, sheared, open hole.
+STORY: The owner opens the app to Rivet beside its bench and reactor, taps Done on a habit card beside it and watches the bolt screw into that habit's frame; when the last bolt seats, the frame glows and positrons rise.
+FIRST VIEWPORT (Lab, tablet landscape 1280x854dp): header: Lab, the date, wallet, settings. Left 46%: Rivet on its platform, the charging station, the bench with one frame per habit under the light rail, the fusion capsule beneath. Right: today's habit cards (counter over a tracker, Done, a menu), scrolling on their own; the four attribute cards pinned at the foot. Bottom bar: Lab, Shop, Habits, Diary.
+SIGNATURE: Done screws the newest bolt into that habit's frame over 700ms while Rivet cheers and a ratchet sounds; the frame goes critical when complete. Instant under reduced motion.
+FORM: Reactor Workshop, the owner's choice after the Grow Room (its teal tint kept, its plants removed), 2026-10-18.
+FINISH: unreviewed and undocumented is unfinished; each change ends with the ScreensTest renders checked at all four window classes and DESIGN.md describing what they show.
