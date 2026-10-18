@@ -7,6 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.io.File
 import java.time.LocalDate
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -29,6 +34,7 @@ class Store private constructor(private val dir: File) {
 
     private val stateFile = File(dir, "state.json")
     private val pagesDir = File(dir, "pages").apply { mkdirs() }
+    private val thumbsDir = File(dir, "thumbs").apply { mkdirs() }
 
     private fun load(): Data {
         val f = File(dir, "state.json")
@@ -46,6 +52,22 @@ class Store private constructor(private val dir: File) {
     fun writePage(d: LocalDate, p: Page) {
         val f = File(pagesDir, "$d.json")
         if (p.strokes.isEmpty()) f.delete() else writeAtomic(f, pageJson(p).toString())
+        File(thumbsDir, "$d.png").delete()
+    }
+
+    // When a page last changed (0 when there is none), so a picture of it can tell it is out of date.
+    fun pageStamp(d: LocalDate) = File(pagesDir, "$d.json").lastModified()
+
+    // A page as a small picture for the diary calendar: its paper and ink, no template. Kept as a PNG beside the pages
+    // and drawn again when the page is newer. Runs off the main thread.
+    fun thumb(d: LocalDate): Bitmap? {
+        val f = File(pagesDir, "$d.json")
+        if (!f.exists()) return null
+        val t = File(thumbsDir, "$d.png")
+        if (t.exists() && t.lastModified() >= f.lastModified()) BitmapFactory.decodeFile(t.path)?.let { return it }
+        val b = drawThumb(page(d) ?: return null)
+        runCatching { t.outputStream().use { b.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+        return b
     }
 
     fun backup(): String = JSONObject()
@@ -167,3 +189,26 @@ private fun pageFrom(o: JSONObject) = Page(o.getString("paper"), o.getJSONArray(
         a.getJSONObject(i).let { j -> j.getJSONArray("p").let { p -> InkStroke(j.getString("c"), j.getDouble("w").toFloat(), j.getBoolean("e"), FloatArray(p.length()) { p.getDouble(it).toFloat() }) } }
     }.toMutableList()
 })
+
+// Ink on its own layer (so the eraser's strokes clear ink, not paper), laid on the paper at a tenth of page size. The
+// nib's width is taken at a middling pressure; at this size the difference does not show.
+private fun drawThumb(p: Page): Bitmap {
+    val k = 0.1f
+    val w = (PAGE_W * k).toInt(); val h = (PAGE_H * k).toInt()
+    val ink = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    val c = android.graphics.Canvas(ink)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND }
+    for (st in p.strokes) {
+        paint.color = android.graphics.Color.parseColor(st.c)
+        paint.xfermode = if (st.e) PorterDuffXfermode(PorterDuff.Mode.CLEAR) else null
+        paint.strokeWidth = maxOf(0.8f, st.w * (if (st.e) 5f else 1.1f) * k)
+        val path = android.graphics.Path()
+        for (i in 0 until st.p.size / 3) if (i == 0) path.moveTo(st.p[0] * k, st.p[1] * k) else path.lineTo(st.p[i * 3] * k, st.p[i * 3 + 1] * k)
+        if (st.p.size == 3) path.lineTo(st.p[0] * k + 0.01f, st.p[1] * k)
+        c.drawPath(path, paint)
+    }
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    android.graphics.Canvas(out).apply { drawColor(android.graphics.Color.parseColor(p.paper)); drawBitmap(ink, 0f, 0f, null) }
+    ink.recycle()
+    return out
+}

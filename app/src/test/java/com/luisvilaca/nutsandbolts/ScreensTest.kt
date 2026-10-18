@@ -15,6 +15,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -64,6 +65,11 @@ class ScreensTest {
             stats["battery"] = 62; stats["processor"] = 48; stats["chassis"] = 35; stats["core"] = 22
             diary += listOf(t.minusDays(1), t.minusDays(3), t.minusDays(4))
         }
+        // a written page, so the diary calendar has a picture to show
+        if (!empty) st.writePage(t.minusDays(1), Page("#393939", mutableListOf(
+            InkStroke("#00FF88", 3f, false, floatArrayOf(160f, 300f, .6f, 700f, 300f, .6f)),
+            InkStroke("#E0F7FA", 2f, false, FloatArray(60) { i -> when (i % 3) { 0 -> 160f + i * 20f; 1 -> 420f + (if (i % 2 == 0) 30f else 0f) + (i / 15) * 120f; else -> .6f } }),
+        )))
         return st
     }
 
@@ -82,7 +88,10 @@ class ScreensTest {
         tap("Habits"); shot("$prefix-habits")
         tap("Calendar"); shot("$prefix-habits-cal"); tap("History"); shot("$prefix-habits-hist"); tap("Day")
         tap("Add habit"); shot("$prefix-form")
-        tap("Cancel"); tap("Diary"); shot("$prefix-diary")
+        tap("Cancel"); tap("Diary")
+        // the page pictures load in the background; give them a moment where the cells have room for them
+        runCatching { rule.waitUntil(3000) { rule.onAllNodesWithContentDescription("the page for", substring = true).fetchSemanticsNodes().isNotEmpty() } }
+        shot("$prefix-diary")
         tap("Open today".takeIf { LocalDate.now() in st.s.diary } ?: "Write today"); shot("$prefix-page")
     }
 
@@ -193,6 +202,13 @@ class ScreensTest {
         st.change { habits += Habit("x", "Twelve", per = "day", target = 12, stat = "core", start = LocalDate.now().minusDays(1)) }
         rule.setContent { NbTheme { BayPanel(st, Modifier.size(600.dp, 600.dp), orbitsFor(st.s, LocalDate.now())) } }
         shot("bench-twelve")
+    }
+
+    // An ink that would vanish on the paper is flagged: ice blue on cream, matte black on matte black.
+    @Test fun faintInks() {
+        org.junit.Assert.assertTrue(contrast("#E0F7FA", "#F4ECD8") < 1.5f)
+        org.junit.Assert.assertTrue(contrast("#393939", "#393939") < 1.5f)
+        org.junit.Assert.assertTrue(contrast("#E0F7FA", "#393939") >= 1.5f)
     }
 
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).
