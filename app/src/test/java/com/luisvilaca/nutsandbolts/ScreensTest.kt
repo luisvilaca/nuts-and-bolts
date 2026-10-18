@@ -175,6 +175,18 @@ class ScreensTest {
         org.junit.Assert.assertEquals(2, rule.onAllNodesWithText("Lab").fetchSemanticsNodes().size) // the title and the tab
     }
 
+    // Trying parts on across categories builds one outfit for the visit; leaving the Shop clears it.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tryOnOutfit() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        tap("Shop"); tap("Dome"); tap("Arms"); tap("Wrenches")
+        rule.onNodeWithText("Trying on: Dome, Wrenches").assertExists()
+        shot("tablet-shop-tryon")
+        tap("Lab"); tap("Shop")
+        rule.onNodeWithText("Trying on: Dome, Wrenches").assertDoesNotExist()
+        org.junit.Assert.assertEquals("head-box", st.s.equip["head"]) // trying on buys nothing
+    }
+
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
         val st = seed()

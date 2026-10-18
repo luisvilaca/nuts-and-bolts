@@ -316,6 +316,9 @@ The picked habit: its name in Headline with Edit, its metadata, four stats in Nu
 ### Reward card (form)
 What the habit as set up pays: the bolts and points of each Done (or each resist), what a fail takes back, the most a period can bring, how its nuts are earned, and how many Dones take its attribute to the next stage.
 
+### Shop
+The bay wears whatever is being tried on. Tapping parts in different categories builds one outfit for the visit; a dim line under the picked part reads "Trying on: Dome, Wrenches" with a Reset text action, and leaving the Shop clears it (trying on buys nothing). On a wide window the category tabs stay pinned above the grid and only the grid scrolls. Within a category parts sort worn first, then owned, then cheapest. Tiles are radio choices in a group; a part owned but not worn carries a small steel check badge in its corner. Buy reads "Buy · (bolt) 120" when the balance covers it and plain disabled "Buy" when it does not, the shortfall then shown under the price. A base tile renders its room once and reuses the picture until the base, the robot or today's bolts change.
+
 ### Shop prices
 A price shows the bolt and nut icons with their counts in steel and gold. When the balance falls short the counts turn dim and a dim line beneath says what is missing ("45 more bolts · 2 more nuts"), so the reason is in words, not opacity. Disabled menu items read dim at 60%, never edge.
 
