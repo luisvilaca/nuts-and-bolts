@@ -297,7 +297,7 @@ Material filter chips, 1dp edge border, frost label; selected takes the selectio
 ### Navigation
 - **Bar:** Lab, Shop, Habits, Diary on rail at the bottom of every window; Settings is an icon in the header that turns ready green while open.
 - **States:** the selected tab gets a raised 52x28dp indicator, a ready-green icon and a frost label; unselected are dim.
-- **Header:** at least 60dp; display title, the date or summary beside it on wide windows, the wallet at right (bolt icon and count in cool steel, nut in gold, 22dp icons, Numeral), then Settings.
+- **Header:** at least 60dp; display title, the date or summary beside it on wide windows, the wallet at right (the side-on bolt and its count in cool steel, the nut in gold, 22dp icons, Numeral), then Settings.
 - **Snackbar:** raised with frost text and a ready-green Undo, for every log and purchase; an Undo plays its own sound.
 
 ### Attribute cards (Lab)
@@ -329,6 +329,10 @@ Each slot state has its own form, seen face on; colour only confirms it.
 
 ### Icons
 One robot grammar: 24dp line art at 1.8 stroke, square caps, mitred joins, angular strokes and a small pivot-joint circle wherever a part would hinge. Tinted by context (cool steel, dim, ready green, gold, coral).
+- **Bolts** (the currency): a bolt seen side on, a hex head over a threaded shank, so a balance never reads as an add button. A slot's bolt is the face-on head with a cross (see Bolt slots); the two are different things.
+- **Nuts:** a hex nut with its hole.
+- **Settings:** a gear with a centre hole.
+- **Tabs:** the Lab is the robot's head, the Shop a parts crate with a nut stencilled on its front, Habits a frame on the bench with its top bolt driven, the Diary a pen. Tab icons draw at 24dp.
 
 ### Diary page
 A true diary template on the owner's paper: the weekday large in Lexend with the date beneath, a header rule, evenly ruled lines (no grid), a BOLTS field of five hex holes to fill in by hand and a DAY count at the top right beside the atom emblem, a large faint atom near the foot, and the log's owner and catalogue number in tracked caps at the bottom. The tools stand in a 56dp rail down the right edge, away from the writing hand: the calendar at the top; pen, eraser, a hairline and the five inks in the middle; undo, redo, paper and bin at the foot; on a short window the inks fold into the current ink's swatch. Tool tiles are 44x40dp with 10dp corners, the tool in hand raised with a 2x14dp ready-green bar on its inner side; ink swatches are 40x36dp targets with 22dp dots (26dp and a 2dp frost ring when chosen). Menus open to the rail's left. Pen and eraser settings are labelled sliders with their value in Numeral and a true-size preview; the stabilizer shows its ten steps as ticks. The eraser's outline on the page is a white ring inside a dark one over a faint fill.

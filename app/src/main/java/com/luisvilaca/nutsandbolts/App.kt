@@ -130,7 +130,7 @@ private fun BottomBar(ui: Ui) {
             Column(Modifier.weight(1f).fillMaxHeight().selectable(on, role = Role.Tab) { go(ui, k) },
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Box(Modifier.size(52.dp, 28.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
-                    Icon(ICONS.getValue(TAB_ICON.getValue(k)), null, Modifier.size(20.dp), tint = if (on) W.act else W.dim)
+                    Icon(ICONS.getValue(TAB_ICON.getValue(k)), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
                 }
                 Text(v, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
             }
