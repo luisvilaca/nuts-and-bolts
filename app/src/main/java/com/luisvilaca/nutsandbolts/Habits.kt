@@ -72,11 +72,6 @@ private val shortFmt = DateTimeFormatter.ofPattern("EEE d MMM", Locale.UK)
 fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     var view by remember { mutableStateOf("day") }
     var month by remember { mutableStateOf(YearMonth.from(ui.date)) }
-    if (ui.edit != null) {
-        BackHandler { ui.edit = null }
-        Form(store, ui, lay, store.s.habits.find { it.id == ui.edit })
-        return
-    }
     val s = store.s
     val d = ui.date
     val t = LocalDate.now()
@@ -129,7 +124,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                 }
             }
         }
-        if (view != "cal") ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.edit = "" },
+        if (view != "cal") ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.openForm("") },
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp).height(48.dp), containerColor = W.act, contentColor = W.onAct)
     }
 }
@@ -224,7 +219,7 @@ private fun Detail(s: Data, ui: Ui, h: Habit, modifier: Modifier) = Column(modif
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(ICONS.getValue(h.stat), null, Modifier.size(22.dp), tint = W.steel)
             Text(h.name, Modifier.padding(start = 10.dp).weight(1f), style = MaterialTheme.typography.headlineSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            TextButton({ ui.edit = h.id }) { Text("Edit", color = W.act) }
+            TextButton({ ui.openForm(h.id) }) { Text("Edit", color = W.act) }
         }
         Text(meta(s, h, t), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
@@ -290,7 +285,7 @@ private fun Long.date() = java.time.Instant.ofEpochMilli(this).atZone(ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
+fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     val s = store.s
     var name by remember { mutableStateOf(h?.name ?: "") }
     var kind by remember { mutableStateOf(h?.kind ?: "good") }
