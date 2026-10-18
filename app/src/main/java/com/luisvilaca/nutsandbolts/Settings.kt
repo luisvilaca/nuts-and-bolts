@@ -51,6 +51,9 @@ import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,9 +169,9 @@ private fun PenButtons(store: Store) {
     var lit by remember { mutableIntStateOf(0) }
     // a pen whose buttons arrive as keys lights the pad too, for a moment
     var tick by remember { mutableIntStateOf(0) }
-    androidx.compose.runtime.DisposableEffect(Unit) { PenKeys.on = { b -> lit = b; tick++ }; onDispose { PenKeys.on = null } }
-    androidx.compose.runtime.LaunchedEffect(tick) { if (tick > 0) { kotlinx.coroutines.delay(900); lit = 0 } }
-    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(12.dp)).background(W.card)
+    DisposableEffect(Unit) { PenKeys.on = { b -> lit = b; tick++ }; onDispose { PenKeys.on = null } }
+    LaunchedEffect(tick) { if (tick > 0) { kotlinx.coroutines.delay(900); lit = 0 } }
+    Box(Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(12.dp)).background(W.card)
         .background(if (lit > 0) W.selFill else Color.Transparent).border(1.dp, if (lit > 0) W.sel else W.border, RoundedCornerShape(12.dp))
         .pointerInput(Unit) {
             awaitPointerEventScope {

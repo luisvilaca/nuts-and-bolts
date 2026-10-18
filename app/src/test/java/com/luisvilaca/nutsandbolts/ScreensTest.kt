@@ -51,18 +51,18 @@ class ScreensTest {
             habits.clear(); marks.clear(); diary.clear()
             bolts = 0; nuts = 0; stats.keys.forEach { stats[it] = 30 }
             if (empty) return@change
-            val water = Habit("w", "Drink water", per = "day", target = 3, stat = "battery", weight = "light", start = t.minusDays(30))
-            val read = Habit("r", "Read 20 minutes", per = "day", target = 1, stat = "processor", weight = "medium", start = t.minusDays(30))
-            val gym = Habit("g", "Workout", per = "week", target = 3, stat = "chassis", weight = "heavy", start = t.minusDays(30))
-            val call = Habit("c", "Call a friend", per = "week", target = 1, stat = "core", weight = "medium", start = t.minusDays(30))
-            val phone = Habit("p", "No phone in bed", kind = "bad", per = "day", target = 1, stat = "battery", weight = "medium", start = t.minusDays(30))
+            val water = Habit("w", "Drink water", per = Per.Day, target = 3, stat = Attr.Battery, weight = Heft.Light, start = t.minusDays(30))
+            val read = Habit("r", "Read 20 minutes", per = Per.Day, target = 1, stat = Attr.Processor, weight = Heft.Medium, start = t.minusDays(30))
+            val gym = Habit("g", "Workout", per = Per.Week, target = 3, stat = Attr.Chassis, weight = Heft.Heavy, start = t.minusDays(30))
+            val call = Habit("c", "Call a friend", per = Per.Week, target = 1, stat = Attr.Core, weight = Heft.Medium, start = t.minusDays(30))
+            val phone = Habit("p", "No phone in bed", kind = Kind.Break, per = Per.Day, target = 1, stat = Attr.Battery, weight = Heft.Medium, start = t.minusDays(30))
             habits += listOf(water, read, gym, call, phone)
-            for (i in 1..9L) { mark(this, read, t.minusDays(i), "done"); mark(this, water, t.minusDays(i), "done"); if (i % 3 != 0L) mark(this, water, t.minusDays(i), "done") }
-            for (i in listOf(2L, 5L)) mark(this, phone, t.minusDays(i), "fail")
-            mark(this, gym, weekStart(t), "done")
-            mark(this, water, t, "done"); mark(this, water, t, "done"); mark(this, read, t, "done"); mark(this, phone, t, "fail")
+            for (i in 1..9L) { mark(this, read, t.minusDays(i), Outcome.Done); mark(this, water, t.minusDays(i), Outcome.Done); if (i % 3 != 0L) mark(this, water, t.minusDays(i), Outcome.Done) }
+            for (i in listOf(2L, 5L)) mark(this, phone, t.minusDays(i), Outcome.Fail)
+            mark(this, gym, weekStart(t), Outcome.Done)
+            mark(this, water, t, Outcome.Done); mark(this, water, t, Outcome.Done); mark(this, read, t, Outcome.Done); mark(this, phone, t, Outcome.Fail)
             bolts = 185; nuts = 5
-            stats["battery"] = 62; stats["processor"] = 48; stats["chassis"] = 35; stats["core"] = 22
+            stats[Attr.Battery] = 62; stats[Attr.Processor] = 48; stats[Attr.Chassis] = 35; stats[Attr.Core] = 22
             diary += listOf(t.minusDays(1), t.minusDays(3), t.minusDays(4))
         }
         // a written page, so the diary calendar has a picture to show
@@ -126,6 +126,25 @@ class ScreensTest {
             Row { PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(252.dp, 230.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id)) } }
         } } }
         shot("catalogue")
+    }
+
+    // A state file from before versions loads (no "v", no peak, the old pen), the codes come back typed, and saving
+    // writes the very same strings, so older backups and newer builds read each other.
+    @Test fun oldStateLoads() {
+        val old = org.json.JSONObject("""{"name":"Rivet","bolts":40,"nuts":1,"stats":{"battery":65,"processor":30,"chassis":30,"core":30},
+            "owned":["head-box"],"equip":{"head":"head-box"},"habits":[{"id":"a","name":"Walk","kind":"bad","per":"week","target":3,"stat":"core","weight":"heavy"}],
+            "marks":{"2026-10-12":{"a":[["done",20,4,0]]}},"pen":{"size":2}}""")
+        val d = dataFrom(old)
+        val h = d.habits.single()
+        org.junit.Assert.assertEquals(listOf(Kind.Break, Per.Week, Attr.Core, Heft.Heavy), listOf(h.kind, h.per, h.stat, h.weight))
+        org.junit.Assert.assertEquals(Outcome.Done, d.marks.values.single().values.single().single().s)
+        org.junit.Assert.assertEquals(level(65), d.peak[Attr.Battery]) // peak made up from the level reached
+        org.junit.Assert.assertEquals(1f, d.pen.nib)
+        val back = json(d)
+        org.junit.Assert.assertEquals(listOf(SCHEMA, "bad", "week", "core", "heavy", "done"), listOf(back.getInt("v"),
+            back.getJSONArray("habits").getJSONObject(0).getString("kind"), back.getJSONArray("habits").getJSONObject(0).getString("per"),
+            back.getJSONArray("habits").getJSONObject(0).getString("stat"), back.getJSONArray("habits").getJSONObject(0).getString("weight"),
+            back.getJSONObject("marks").getJSONObject("2026-10-12").getJSONArray("a").getJSONArray(0).getString(0)))
     }
 
     // Settings saved before the sliders (three-step choices) map onto the new mm and percent values.
@@ -199,7 +218,7 @@ class ScreensTest {
     // A dozen bolts on one frame still stand below the light rail.
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun crowdedBench() {
         val st = seed()
-        st.change { habits += Habit("x", "Twelve", per = "day", target = 12, stat = "core", start = LocalDate.now().minusDays(1)) }
+        st.change { habits += Habit("x", "Twelve", per = Per.Day, target = 12, stat = Attr.Core, start = LocalDate.now().minusDays(1)) }
         rule.setContent { NbTheme { BayPanel(st, Modifier.size(600.dp, 600.dp), orbitsFor(st.s, LocalDate.now())) } }
         shot("bench-twelve")
     }

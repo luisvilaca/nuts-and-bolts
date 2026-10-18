@@ -31,6 +31,9 @@ import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.SolidColor
 
 class Shape(val roles: List<String>, val d: String, val m: FloatArray? = null, val layer: String = "", val pulse: Boolean = false) {
     val path: Path by lazy {
@@ -128,13 +131,13 @@ fun DrawScope.robot(equip: Map<String, String?>, t: Long, mood: Int = 1, react: 
     }
     fun accAt(k: String) { if (acc?.at == k) part(acc) }
 
-    drawOval(Color.Black, Offset(108f, 462f), androidx.compose.ui.geometry.Size(184f, 24f), alpha = 0.3f)
+    drawOval(Color.Black, Offset(108f, 462f), Size(184f, 24f), alpha = 0.3f)
     translate(0f, hop) {
         part(p("legs"))
         translate(0f, bob) {
             accAt("body-back")
             // the neck takes the body's joint colour
-            drawRoundRect(p("body")?.pal?.get("zn")?.fill ?: androidx.compose.ui.graphics.SolidColor(W.joint), Offset(187f, 198f), androidx.compose.ui.geometry.Size(26f, 42f), androidx.compose.ui.geometry.CornerRadius(6f))
+            drawRoundRect(p("body")?.pal?.get("zn")?.fill ?: SolidColor(W.joint), Offset(187f, 198f), Size(26f, 42f), CornerRadius(6f))
             part(p("body"))
             rotate(head, Offset(200f, 212f)) { accAt("head-back"); part(p("head")); accAt("head-front") }
             part(p("arms"))

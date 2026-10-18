@@ -25,7 +25,7 @@ class Reminder : BroadcastReceiver() {
     private fun notify(c: Context, name: String) {
         val nm = c.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel("reminder", "Daily reminder", NotificationManager.IMPORTANCE_DEFAULT))
-        val open = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java).putExtra(TAB, "habits")
+        val open = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java).putExtra(TAB, Tab.Habits.name)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         nm.notify(1, Notification.Builder(c, "reminder").setSmallIcon(R.drawable.ic_stat)
             .setContentTitle("$name is waiting").setContentText("Nothing logged today yet.")

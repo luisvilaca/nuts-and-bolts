@@ -56,10 +56,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.withTransform
 import kotlin.math.min
 import java.time.LocalDate
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.Dp
 
 // A day's progress over the slots its rows draw (a weekly habit's slots included), so Today, Habits, the week and
 // the calendar all count the same thing.
-fun slotProgress(s: Data, d: LocalDate) = orbitsFor(s, d).flatMap { it.slots }.let { a -> Progress(a.count { it.s == "done" }, a.count { it.s == "fail" }, a.size) }
+fun slotProgress(s: Data, d: LocalDate) = orbitsFor(s, d).flatMap { it.slots }.let { a -> Progress(a.count { it.s == Outcome.Done }, a.count { it.s == Outcome.Fail }, a.size) }
 
 private val MOOD = listOf("Low power", "Running steady", "Fully charged")
 
@@ -131,19 +136,19 @@ fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modi
     val cols = if (maxWidth >= 400.dp) 4 else 2
     val named = cols == 2 || maxWidth >= 600.dp
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        STATS.entries.chunked(cols).forEach { r ->
+        Attr.entries.chunked(cols).forEach { r ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                r.forEach { (k, st) ->
-                    val p = s.stats.getValue(k)
+                r.forEach { st ->
+                    val p = s.stats.getValue(st)
                     val l = level(p)
-                    Box(Modifier.weight(1f)) { TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), tooltip = { PlainTooltip { Text("${st.name}: ${st.gloss}") } },
+                    Box(Modifier.weight(1f)) { TooltipBox(TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above), tooltip = { PlainTooltip { Text("${st.title}: ${st.gloss}") } },
                         state = rememberTooltipState()) {
                         Card(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                            contentDescription = "${st.name}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
+                            contentDescription = "${st.title}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
                         }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(ICONS.getValue(k), null, Modifier.size(16.dp), tint = W.steel)
-                                if (named) Text(st.name, Modifier.padding(start = 6.dp).weight(1f), style = MaterialTheme.typography.labelMedium, color = W.text, maxLines = 1, softWrap = false)
+                                Icon(ICONS.getValue(st.id), null, Modifier.size(16.dp), tint = W.steel)
+                                if (named) Text(st.title, Modifier.padding(start = 6.dp).weight(1f), style = MaterialTheme.typography.labelMedium, color = W.text, maxLines = 1, softWrap = false)
                                 else Spacer(Modifier.weight(1f))
                                 Text("LV $l", style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text)
                             }
@@ -159,23 +164,23 @@ fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modi
 // A bar charged with the reactor's light: a green-to-steel fill on an edge track, a soft halo round the fill and a
 // bright spark at its leading edge. The halo spills past the bar's bounds on purpose.
 @Composable
-fun Gauge(v: Float, modifier: Modifier, h: androidx.compose.ui.unit.Dp = 8.dp) = Canvas(modifier.height(h)) {
+fun Gauge(v: Float, modifier: Modifier, h: Dp = 8.dp) = Canvas(modifier.height(h)) {
     val y = size.height / 2
     val w = size.height
-    drawLine(W.edge, Offset(w / 2, y), Offset(size.width - w / 2, y), w, androidx.compose.ui.graphics.StrokeCap.Round)
+    drawLine(W.edge, Offset(w / 2, y), Offset(size.width - w / 2, y), w, StrokeCap.Round)
     val x = w / 2 + (size.width - w) * v.coerceIn(0f, 1f)
     if (v <= 0f) return@Canvas
-    for ((k, a) in listOf(2.6f to 0.06f, 1.8f to 0.12f)) drawLine(W.glow, Offset(w / 2, y), Offset(x, y), w * k, androidx.compose.ui.graphics.StrokeCap.Round, alpha = a)
-    drawLine(Brush.horizontalGradient(listOf(W.glow, W.steel), 0f, x), Offset(w / 2, y), Offset(x, y), w, androidx.compose.ui.graphics.StrokeCap.Round)
+    for ((k, a) in listOf(2.6f to 0.06f, 1.8f to 0.12f)) drawLine(W.glow, Offset(w / 2, y), Offset(x, y), w * k, StrokeCap.Round, alpha = a)
+    drawLine(Brush.horizontalGradient(listOf(W.glow, W.steel), 0f, x), Offset(w / 2, y), Offset(x, y), w, StrokeCap.Round)
     drawCircle(Brush.radialGradient(listOf(Color.White, W.glow.copy(alpha = 0f)), Offset(x, y), w * 1.2f), w * 1.2f, Offset(x, y))
 }
 
 private val SUGGEST = listOf(
-    Habit("", "Drink water", per = "day", target = 3, stat = "battery", weight = "light"),
-    Habit("", "Read 20 minutes", per = "day", target = 1, stat = "processor", weight = "medium"),
-    Habit("", "Workout", per = "week", target = 3, stat = "chassis", weight = "heavy"),
-    Habit("", "Call a friend", per = "week", target = 1, stat = "core", weight = "medium"),
-    Habit("", "No phone in bed", kind = "bad", per = "day", target = 1, stat = "battery", weight = "medium"),
+    Habit("", "Drink water", per = Per.Day, target = 3, stat = Attr.Battery, weight = Heft.Light),
+    Habit("", "Read 20 minutes", per = Per.Day, target = 1, stat = Attr.Processor, weight = Heft.Medium),
+    Habit("", "Workout", per = Per.Week, target = 3, stat = Attr.Chassis, weight = Heft.Heavy),
+    Habit("", "Call a friend", per = Per.Week, target = 1, stat = Attr.Core, weight = Heft.Medium),
+    Habit("", "No phone in bed", kind = Kind.Break, per = Per.Day, target = 1, stat = Attr.Battery, weight = Heft.Medium),
 )
 
 fun newId() = "h" + System.currentTimeMillis().toString(36) + (0..999).random()
@@ -188,16 +193,16 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
     Button(onClick = { ui.openForm("") }, Modifier.height(44.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
         Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))
     }
-    androidx.compose.foundation.layout.FlowRow(Modifier.padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(Modifier.padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SUGGEST.forEach { h ->
-            androidx.compose.material3.SuggestionChip(onClick = {
+            SuggestionChip(onClick = {
                 val id = newId()
                 store.change { addSuggested(this, h, id, LocalDate.now()) }
                 ui.tell("${h.name} added") { store.change { removeHabit(this, habits.first { it.id == id }) } }
-            }, label = { Text("${h.name} · ${h.target} a ${h.per}") }, Modifier.height(40.dp),
-                icon = { Icon(ICONS.getValue(h.stat), null, Modifier.size(18.dp), tint = W.steel) },
-                border = androidx.compose.material3.SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
-                colors = androidx.compose.material3.SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))
+            }, label = { Text("${h.name} · ${h.target} a ${h.per.id}") }, Modifier.height(40.dp),
+                icon = { Icon(ICONS.getValue(h.stat.id), null, Modifier.size(18.dp), tint = W.steel) },
+                border = SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
+                colors = SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))
         }
     }
 }

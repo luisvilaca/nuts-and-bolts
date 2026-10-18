@@ -145,7 +145,7 @@ internal fun migrate(o: JSONObject): JSONObject {
     // before levels there was no peak: an attribute has at least reached the level it is at
     val stats = o.optJSONObject("stats")
     val peak = o.optJSONObject("peak") ?: JSONObject()
-    STATS.keys.forEach { k -> peak.put(k, maxOf(level(stats?.optInt(k, 30) ?: 30), peak.optInt(k))) }
+    Attr.entries.forEach { a -> peak.put(a.id, maxOf(level(stats?.optInt(a.id, 30) ?: 30), peak.optInt(a.id))) }
     o.put("peak", peak)
     // before the sliders the pen kept three-step choices (size, stab, eraser); each maps to its nearest new value
     o.optJSONObject("pen")?.let { j ->
@@ -159,17 +159,17 @@ internal fun migrate(o: JSONObject): JSONObject {
 internal fun json(s: Data): JSONObject = JSONObject()
     .put("v", SCHEMA)
     .put("name", s.name).put("bolts", s.bolts).put("nuts", s.nuts)
-    .put("stats", JSONObject(s.stats as Map<*, *>))
-    .put("peak", JSONObject(s.peak as Map<*, *>))
+    .put("stats", JSONObject().apply { s.stats.forEach { (a, v) -> put(a.id, v) } })
+    .put("peak", JSONObject().apply { s.peak.forEach { (a, v) -> put(a.id, v) } })
     .put("owned", JSONArray(s.owned))
     .put("equip", JSONObject().apply { s.equip.forEach { (k, v) -> put(k, v ?: JSONObject.NULL) } })
     .put("habits", JSONArray(s.habits.map { h ->
-        JSONObject().put("id", h.id).put("name", h.name).put("kind", h.kind).put("per", h.per).put("target", h.target)
-            .put("stat", h.stat).put("weight", h.weight).put("start", h.start?.toString()).put("end", h.end?.toString())
+        JSONObject().put("id", h.id).put("name", h.name).put("kind", h.kind.id).put("per", h.per.id).put("target", h.target)
+            .put("stat", h.stat.id).put("weight", h.weight.id).put("start", h.start?.toString()).put("end", h.end?.toString())
             .put("days", h.days?.let { JSONArray(it.sorted()) })
     }))
     .put("marks", JSONObject().apply {
-        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s, it.b, it.p, it.n, it.l)) })) } }) }
+        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s.id, it.b, it.p, it.n, it.l)) })) } }) }
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
@@ -183,21 +183,23 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
     name = o.optString("name", name)
     bolts = o.optInt("bolts").coerceAtLeast(0)
     nuts = o.optInt("nuts").coerceAtLeast(0)
-    o.optJSONObject("stats")?.let { j -> stats.keys.forEach { stats[it] = j.optInt(it, 30).coerceAtLeast(0) } }
-    stats.keys.forEach { peak[it] = o.getJSONObject("peak").optInt(it, level(stats.getValue(it))) }
+    o.optJSONObject("stats")?.let { j -> Attr.entries.forEach { stats[it] = j.optInt(it.id, 30).coerceAtLeast(0) } }
+    Attr.entries.forEach { peak[it] = o.getJSONObject("peak").optInt(it.id, level(stats.getValue(it))) }
     o.optJSONArray("owned")?.let { a -> owned.clear(); for (i in 0 until a.length()) owned += a.getString(i) }
     o.optJSONObject("equip")?.let { j -> equip.keys.toList().forEach { k -> equip[k] = j.str(k)?.takeIf { it in owned } ?: equip[k] } }
     o.getJSONArray("habits").let { a ->
         for (i in 0 until a.length()) a.getJSONObject(i).let { j ->
-            habits += Habit(j.getString("id"), j.getString("name"), j.getString("kind"), j.getString("per"), j.getInt("target").coerceIn(1, maxTarget(j.getString("per"))),
-                j.getString("stat").also { require(it in STATS) }, j.getString("weight").also { require(it in WEIGHTS) },
+            // an unknown code fails the load (byId throws) rather than inventing a value
+            val per = byId<Per>(j.getString("per"))
+            habits += Habit(j.getString("id"), j.getString("name"), byId<Kind>(j.getString("kind")), per, j.getInt("target").coerceIn(1, maxTarget(per)),
+                byId<Attr>(j.getString("stat")), byId<Heft>(j.getString("weight")),
                 j.date("start"), j.date("end"), j.optJSONArray("days")?.let { d -> (0 until d.length()).map(d::getInt).toSet() })
         }
     }
     o.optJSONObject("marks")?.let { m ->
         for (d in m.keys()) m.getJSONObject(d).let { hs ->
             marks[LocalDate.parse(d)] = hs.keys().asSequence().associateWith { id ->
-                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(x.getString(0), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4)) } }.toMutableList() }
+                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(byId<Outcome>(x.getString(0)), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4)) } }.toMutableList() }
             }.toMutableMap()
         }
     }
