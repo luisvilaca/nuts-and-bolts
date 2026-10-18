@@ -71,6 +71,8 @@ class LogicTest {
         assertEquals(true, buy(s, p))
         assertEquals(listOf(50, 0, "head-hex"), listOf(s.bolts, s.nuts, s.equip["head"]))
         assertFalse(buy(s, p))
+        unbuy(s, p, "head-box") // undo is exact: price back, part gone, the old head on again
+        assertEquals(listOf(200, 3, "head-box", false), listOf(s.bolts, s.nuts, s.equip["head"], p.id in s.owned))
     }
 
     @Test fun levelsPayNutsOnceAndUndoIsExact() {

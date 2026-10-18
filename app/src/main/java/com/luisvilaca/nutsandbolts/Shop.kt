@@ -34,6 +34,14 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,27 +57,43 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
+// The Shop: the bay on the left wears whatever is being tried on; at right the picked part, the outfit being tried, the
+// category tabs (pinned on a wide window) and the parts grid. A try-on lasts the visit: leaving the Shop clears it.
 @Composable
 fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     var cat by remember { mutableStateOf("head") }
-    var pick by remember { mutableStateOf<String?>(null) }
-    val items = PARTS.filter { it.slot == cat }
-    val sel = PART[pick]?.takeIf { it.slot == cat } ?: PART[s.equip[cat]] ?: items.first()
-    val tryOn = s.equip + (cat to sel.id)
+    val trying = remember { mutableStateMapOf<String, String>() } // slot to part id, for this visit only
+    // within a category: what is worn first, then what is owned, then the cheapest
+    val items = PARTS.filter { it.slot == cat }.sortedWith(compareBy({ s.equip[it.slot] != it.id }, { it.id !in s.owned }, { it.bolts }, { it.nuts }))
+    val sel = PART[trying[cat]] ?: PART[s.equip[cat]] ?: items.first()
+    val wear = s.equip + trying
+    val tried = trying.filter { (k, v) -> s.equip[k] != v }.mapNotNull { PART[it.value]?.name }
 
-    val detail = @Composable { m: Modifier -> Detail(store, ui, sel, m) }
-    val catalog = @Composable {
+    val detail = @Composable { m: Modifier ->
+        Column(m) {
+            Detail(store, ui, sel, Modifier)
+            if (tried.isNotEmpty()) Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Trying on: ${tried.joinToString()}", Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                TextButton({ trying.clear() }) { Text("Reset", color = W.text) }
+            }
+        }
+    }
+    val tabs = @Composable {
         SecondaryScrollableTabRow(SLOTS.keys.indexOf(cat), containerColor = W.ground, contentColor = W.text, edgePadding = 0.dp, divider = {},
             indicator = { TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(SLOTS.keys.indexOf(cat)), color = W.act) }) {
-            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k; pick = null }, text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
+            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k }, text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
         }
+    }
+    val grid = @Composable {
         BoxWithConstraints(Modifier.padding(top = 16.dp)) {
             val cols = (maxWidth / 156.dp).toInt().coerceAtLeast(2)
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items.chunked(cols).forEach { r ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        r.forEach { Tile(store, it, it.id == sel.id, Modifier.weight(1f)) { pick = it.id } }
+                        r.forEach { p ->
+                            Tile(store, p, p.id == sel.id, Modifier.weight(1f)) { if (s.equip[p.slot] == p.id) trying.remove(p.slot) else trying[p.slot] = p.id }
+                        }
                         repeat(cols - r.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
@@ -79,19 +103,21 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
         Header("Shop", null, store, ui, lay, Modifier.padding(horizontal = 28.dp))
-        // the same bay as Today, so trying a part on shows it exactly where it will live
+        // the same bay as the Lab, so trying a part on shows it exactly where it will live
         Row(Modifier.fillMaxSize()) {
-            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbitsFor(store.s, LocalDate.now()), tryOn)
+            BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbitsFor(store.s, LocalDate.now()), wear)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 32.dp)) {
                 detail(Modifier.padding(bottom = 12.dp))
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) { catalog() }
+                tabs() // pinned: only the grid scrolls
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) { grid() }
             }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", null, store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(store.s, LocalDate.now()), tryOn)
+        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbitsFor(store.s, LocalDate.now()), wear)
         detail(Modifier.padding(vertical = 12.dp))
-        catalog()
+        tabs()
+        grid()
     }
 }
 
@@ -118,9 +144,16 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                 if (ok) {
                     store.react("cheer")
                     Sfx.play("buy")
-                    ui.tell("${p.name} is yours") { store.change { owned -= p.id; bolts += p.bolts; nuts += p.nuts; equip[p.slot] = before } }
+                    ui.tell("${p.name} is yours") { store.change { unbuy(this, p, before) } }
                 }
-            }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
+            }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) {
+                Text("Buy")
+                if (need.isEmpty()) {
+                    Text(" · ", color = W.onAct)
+                    if (p.bolts > 0) { Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp)); Text("${p.bolts}", Modifier.padding(start = 2.dp)) }
+                    if (p.nuts > 0) { Icon(ICONS.getValue("nuts"), null, Modifier.padding(start = 6.dp).size(16.dp)); Text("${p.nuts}", Modifier.padding(start = 2.dp)) }
+                }
+            }
             !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
             p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
             else -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -157,11 +190,31 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
     val s = store.s
     val eq = s.equip[p.slot] == p.id
     // one panel per part; the selection ring sits on the panel itself
-    Column(modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab, onClick = onClick).semantics { selected = sel }.padding(bottom = 6.dp)) {
-        Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
-            .background(if (sel) W.selFill else Color.Transparent).border(if (sel) 1.5.dp else 0.dp, if (sel) W.sel else Color.Transparent, RoundedCornerShape(12.dp))) {
-            // a base shows its whole room with Rivet in it, as it would look on Today
-            if (p.slot == "base") room(s, 0L, null, orbitsFor(s, LocalDate.now()), null, s.equip + ("base" to p.id)) else thumb(p)
+    Column(modifier.clip(RoundedCornerShape(12.dp)).selectable(sel, role = Role.RadioButton, onClick = onClick).padding(bottom = 6.dp)) {
+        val owned = p.id in s.owned && !eq
+        // a base tile draws its whole room once and reuses the picture until the base, the robot or today's bolts change
+        val key = if (p.slot == "base") listOf(p.id, s.equip.toMap(), orbitsFor(s, LocalDate.now()).map { o -> o.h.id to o.slots.map { it.s } }).hashCode() else 0
+        val cache = remember { arrayOfNulls<Any>(2) }
+        Box {
+            Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
+                .background(if (sel) W.selFill else Color.Transparent).border(if (sel) 1.5.dp else 0.dp, if (sel) W.sel else Color.Transparent, RoundedCornerShape(12.dp))) {
+                if (p.slot != "base") thumb(p)
+                else {
+                    val k = key to size
+                    if (cache[0] != k) {
+                        val b = ImageBitmap(size.width.toInt().coerceAtLeast(1), size.height.toInt().coerceAtLeast(1))
+                        CanvasDrawScope().draw(this, layoutDirection, androidx.compose.ui.graphics.Canvas(b), size) {
+                            room(s, 0L, null, orbitsFor(s, LocalDate.now()), null, s.equip + ("base" to p.id))
+                        }
+                        cache[0] = k; cache[1] = b
+                    }
+                    drawImage(cache[1] as ImageBitmap)
+                }
+            }
+            if (owned) Box(Modifier.align(Alignment.TopEnd).padding(8.dp).size(24.dp).clip(CircleShape).background(W.card).border(1.dp, W.sel, CircleShape)
+                .semantics { contentDescription = "Owned" }, contentAlignment = Alignment.Center) {
+                Icon(ICONS.getValue("check"), null, Modifier.size(14.dp), tint = W.steel)
+            }
         }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.padding(top = 4.dp).heightIn(min = 22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

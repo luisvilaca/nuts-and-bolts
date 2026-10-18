@@ -173,6 +173,12 @@ fun buy(s: Data, p: Part): Boolean {
     return true
 }
 
+// A purchase taken back: the part leaves, the price comes back, and the slot wears what it wore before.
+fun unbuy(s: Data, p: Part, before: String?) {
+    if (p.id !in s.owned) return
+    s.owned -= p.id; s.bolts += p.bolts; s.nuts += p.nuts; s.equip[p.slot] = before
+}
+
 fun mood(s: Data): Int { // 2 fully charged, 1 running steady, 0 low power
     val a = s.stats.values.sumOf { level(it) } / 4.0
     return if (a >= 4) 2 else if (a >= 2) 1 else 0
