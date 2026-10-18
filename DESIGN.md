@@ -5,7 +5,7 @@ colors:
   ground: "#0D1615"
   rail: "#081313"
   card: "#152220"
-  raised: "#15302B"
+  raised: "#1C3A34"
   border: "rgba(255,255,255,0.08)"
   hairline: "#1B3632"
   edge: "#24443E"
@@ -17,10 +17,11 @@ colors:
   joint: "#6C8F87"
   ready-green: "#6EE787"
   on-ready: "#06281A"
-  focus: "#4AE3A1"
+  selection: "rgba(207,227,222,0.55)"
+  selection-fill: "rgba(207,227,222,0.06)"
   uranium-glow: "#A6FF4D"
   nut-gold: "#F2C14E"
-  shear-coral: "#FF6B4A"
+  shear-coral: "#FF7457"
   paper-matte-black: "#393939"
   paper-cream: "#F4ECD8"
   paper-night: "#0B1020"
@@ -183,14 +184,14 @@ A dark lab lit by one small reactor, where ready green means pressable or here a
 
 ### Primary
 - **Ready Green** (ready-green): the Done pill, primary buttons and the FAB, switches, confirm text actions, the snackbar's Undo, and the place markers (selected tab icon, the shop tab indicator, today's ring on the calendars, the active diary tool's bar, the diary calendar's page mark). In the starter robot it lights the eyes, the smile and the dashed platform ring. Text on it is **On-Ready** (on-ready), a near-black green.
-- **Focus** (focus): a mint outline and cursor on the field being typed in.
+- Ready green also outlines and carets the field being typed in; there is one interface green.
 
 ### Secondary
-- **Cool Steel** (cool-steel): driven bolt heads and their counts, the frames' 70% rim and the bench's top edge, attribute icons, gauge fills (with the glow), and every selected state that is not a place: the active segment's border, selected chips, the selected habit card's edge, the selection ring on a shop part, the robot's nameplate.
+- **Cool Steel** (cool-steel): driven bolt heads and their counts, the frames' 70% rim and the bench's top edge, attribute icons, gauge fills (with the glow), and the shop's Equipped and Living here (with a check icon). Every selected state that is not a place uses **Selection** (selection): steel at 55% as a 1.5dp edge over a steel-6% **Selection Fill** (selection-fill): the active segment, selected chips, the picked habit card, the picked shop part, a lit pen-button pad. Never solid steel, which reads as white on the device.
 - **Joint** (joint): the robot's joints and claws, a bolt head's rim, the light rail's wires, the frames' clamps, the reactor's coil packs, and the rim of a frame whose habit failed today.
 
 ### Light
-- **Uranium Glow** (uranium-glow): every glow in the app and nothing else. The reactor's plasma core, orbits, electrons, level lamps and the pulses climbing its cable; the light rail over the bench and its cone; the radial wash over the bay; the attribute gauges (a glow-to-steel fill with a soft halo and a bright leading spark); the done segments of a habit's tracker; a critical frame and its positrons. Other base rooms keep their own lamp colour on the rail (amber, violet, teal station light); the reactor glows green in every room.
+- **Uranium Glow** (uranium-glow): every glow in the app and nothing else. The reactor's plasma core, orbits, electrons, level lamps and the pulses climbing its cable; the light rail over the bench and its cone; the radial wash over the bay; the attribute gauges (a glow-to-steel fill with a soft halo and a bright leading spark); a habit's tracker once its period is complete (a soft halo round the whole track); the current run in a history bar; the Charging Bay's battery cells; a critical frame and its positrons. Other base rooms keep their own lamp colour on the rail (amber, violet, teal station light); the reactor glows green in every room.
 
 ### Tertiary
 - **Nut Gold** (nut-gold): nuts, their counts, gold parts of the robot's world. Never a general highlight.
@@ -200,7 +201,7 @@ A dark lab lit by one small reactor, where ready green means pressable or here a
 - **Ground** (ground): every screen.
 - **Rail** (rail): the bottom bar, the diary tool rail, the robot's face glass, an open bolt hole; a step below the ground.
 - **Card** (card): every card, with a 1dp white-8% **Border** (border).
-- **Raised** (raised): controls at rest, the selected tab indicator, the active segment, selected chips, disabled Done, shop part tiles, menus, the snackbar, the frames and the day plates.
+- **Raised** (raised): one visible step above a card: controls at rest, the selected tab indicator, the active segment, selected chips, disabled Done, shop part tiles, menus, the snackbar, the frames and the day plates.
 - **Bay Sky** (bay-sky) to **Bay Floor** (bay-floor): the bay's vertical gradient and its floor band, with the room's light as a skirting line where they meet.
 - **Hairline** (hairline): calendar week rules, dividers in menus.
 - **Edge** (edge): outlines at rest (outlined buttons, chips, segments, the menu button), gauge and tracker tracks, future-day plates, the bench top and legs.
@@ -259,7 +260,7 @@ A window is **wide** when it is landscape and at least 600dp wide; otherwise it 
 
 ## Elevation & Depth
 
-Flat. Depth is tonal: rail < ground < card < raised, each one step. The one atmospheric effect is light: inside the bay a vertical sky gradient, the floor band graded into the rail, and the reactor's uranium radial wash; outside it, the gauges' and trackers' glow. The robot's shell carries the only gradient on a figure. Material's FAB and snackbar keep their default elevation; nothing else casts a shadow.
+Flat. Depth is tonal: rail < ground < card < raised, each one visible step (a unit test keeps the ladder in order and every text colour at 4.5:1 or better on each surface). The one atmospheric effect is light: inside the bay a vertical sky gradient, the floor band graded into the rail, and the reactor's uranium radial wash; outside it, the gauges' and trackers' glow. The robot's shell carries the only gradient on a figure. Material's FAB and snackbar keep their default elevation; nothing else casts a shadow.
 
 ## Shapes
 
@@ -270,7 +271,7 @@ Soft and machined. Every pressable action is a pill or a circle; the bay is fram
 ### Buttons
 - **Shape:** full pill, 44dp tall (52dp for a lead Done).
 - **Done / primary:** ready green with on-ready text in Label Large. When it cannot log it falls to raised with dim text and says why: "All in" (a break habit: "Held") when every bolt of the period is in, "Closed" when the period is full with a skip or a sheared bolt in it, "Not yet" on a future day. Break habits read Resisted / Skip / Gave in.
-- **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu: Skip, Fail (coral), Take back the last bolt, then Edit habit and Delete habit (coral). Delete asks first.
+- **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu (raised): Skip, Fail (coral), Take back the last bolt, then Edit habit and Delete habit (coral); items that cannot act read dim at 60%. Delete asks first.
 - **Outlined:** 1dp edge border, frost text (Cancel, date pickers, backup).
 - **Text actions:** ready green for confirm, coral for destructive, frost for dismiss.
 - **FAB:** extended, ready green, bottom-end with a 20dp inset (Add habit).
@@ -279,19 +280,19 @@ Soft and machined. Every pressable action is a pill or a circle; the bay is fram
 A card per habit: the name in Title (a dim chevron after it where the name opens the form), the metadata in dim Body, a counter (the bolt icon and "2 / 3" in Numeral 14sp, frost when full) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. On the split Habits view a card is picked by tapping it and shows a cool-steel edge.
 
 ### Tracker
-A habit's period as an 8dp pill split into one segment per slot: done in a glow-to-steel gradient with a faint halo, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength.
+A habit's period as an 8dp pill split into one segment per slot: done in solid cool steel, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength. When every slot is done the whole tracker takes a soft uranium halo, as its frame goes critical on the bench.
 
 ### Segments
-A pill outlined in edge whose selection, a raised pill with a 1.5dp steel border, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
+A pill outlined in edge whose selection, a selection-fill pill with a 1.5dp selection edge, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
 
 ### Words
 One word for a slot on screen: the bolt. "Slot" and "mark" are code names only. A count reads "4 of 9 bolts in", with ", 1 sheared" for fails, or "9 bolts planned" for a day ahead; Done says "+5 bolts · +1 Battery", Fail "Sheared · −5 bolts · −1 Battery", the menu "Take back the last bolt". A break habit's metadata leads with "Break it".
 
 ### Fields
-A white-5% fill, 10dp corners, 12 by 16dp inside, a white-8% border at rest and a mint outline and cursor when focused. Errors are coral body text under the form; a missing name shows first as a dim hint.
+A white-5% fill, 10dp corners, 12 by 16dp inside, a white-8% border at rest and a ready-green outline and cursor when focused. Errors are coral body text under the form; a missing name shows first as a dim hint.
 
 ### Chips
-Material filter chips, 1dp edge border, frost label; selected fills raised with a 1.5dp steel border. Starter-habit suggestion chips are 40dp tall.
+Material filter chips, 1dp edge border, frost label; selected takes the selection fill and a 1.5dp selection edge. Starter-habit suggestion chips are 40dp tall.
 
 ### Navigation
 - **Bar:** Lab, Shop, Habits, Diary on rail at the bottom of every window; Settings is an icon in the header that turns ready green while open.
@@ -307,6 +308,9 @@ The picked habit: its name in Headline with Edit, its metadata, four stats in Nu
 
 ### Reward card (form)
 What the habit as set up pays: the bolts and points of each Done (or each resist), what a fail takes back, the most a period can bring, how its nuts are earned, and how many Dones take its attribute to the next stage.
+
+### Shop prices
+A price shows the bolt and nut icons with their counts in steel and gold. When the balance falls short the counts turn dim and a dim line beneath says what is missing ("45 more bolts · 2 more nuts"), so the reason is in words, not opacity. Disabled menu items read dim at 60%, never edge.
 
 ### Bolt slots (signature)
 Each slot state has its own form, seen face on; colour only confirms it.

@@ -208,7 +208,7 @@ private fun History(s: Data) {
                 val step = minOf(14f * density, size.width / maxOf(r.best, 1))
                 drawRoundRect(W.line, Offset.Zero, Size(size.width, size.height), CornerRadius(size.height / 2))
                 drawRoundRect(W.steel, Offset.Zero, Size(step * r.best, size.height), CornerRadius(size.height / 2), alpha = 0.55f)
-                drawRoundRect(W.act, Offset.Zero, Size(step * r.now, size.height), CornerRadius(size.height / 2))
+                drawRoundRect(W.glow, Offset.Zero, Size(step * r.now, size.height), CornerRadius(size.height / 2))
             }
         }
     }
@@ -320,8 +320,8 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         r.forEach { (k, v) ->
                             FilterChip(cur == k, { set(k) }, { Text(v, Modifier.padding(vertical = 8.dp)) }, Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
-                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.edge, selectedBorderColor = W.steel, selectedBorderWidth = 1.5.dp))
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.selFill, selectedLabelColor = W.text, labelColor = W.text),
+                                border = FilterChipDefaults.filterChipBorder(true, cur == k, borderColor = W.edge, selectedBorderColor = W.sel, selectedBorderWidth = 1.5.dp))
                         }
                         if (r.size == 1) Spacer(Modifier.weight(1f))
                     }
@@ -362,8 +362,8 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DOW.forEachIndexed { i, n ->
                     FilterChip(i in days, { days = if (i in days) days - i else days + i }, { Text(n) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.raised, selectedLabelColor = W.text, labelColor = W.text),
-                        border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge, selectedBorderColor = W.steel, selectedBorderWidth = 1.5.dp))
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.selFill, selectedLabelColor = W.text, labelColor = W.text),
+                        border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge, selectedBorderColor = W.sel, selectedBorderWidth = 1.5.dp))
                 }
             }
         }

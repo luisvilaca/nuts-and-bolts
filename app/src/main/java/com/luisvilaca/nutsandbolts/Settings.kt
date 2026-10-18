@@ -1,5 +1,6 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.ui.graphics.Color
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -161,7 +162,7 @@ private fun PenButtons(store: Store) {
     androidx.compose.runtime.DisposableEffect(Unit) { PenKeys.on = { b -> lit = b; tick++ }; onDispose { PenKeys.on = null } }
     androidx.compose.runtime.LaunchedEffect(tick) { if (tick > 0) { kotlinx.coroutines.delay(900); lit = 0 } }
     androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(12.dp)).background(W.card)
-        .border(1.dp, if (lit > 0) W.act else W.border, RoundedCornerShape(12.dp))
+        .background(if (lit > 0) W.selFill else Color.Transparent).border(1.dp, if (lit > 0) W.sel else W.border, RoundedCornerShape(12.dp))
         .pointerInput(Unit) {
             awaitPointerEventScope {
                 while (true) {
@@ -171,10 +172,10 @@ private fun PenButtons(store: Store) {
             }
         }, contentAlignment = Alignment.Center) {
         Text(if (lit > 0) "Button ${lit}" else "Press a pen button (hovering over this pad, or anywhere) to see which is which",
-            Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyMedium, color = if (lit > 0) W.act else W.dim)
+            Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyMedium, color = if (lit > 0) W.text else W.dim)
     }
     listOf(1 to s.pen.b1, 2 to s.pen.b2).forEach { (b, cur) ->
-        Text("BUTTON $b", Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label.copy(color = if (lit == b) W.act else W.dim))
+        Text("BUTTON $b", Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label.copy(color = if (lit == b) W.text else W.dim))
         Segments(PEN_ACTS, cur) { v -> store.change { if (b == 1) pen.b1 = v else pen.b2 = v } }
     }
     Text("A press works while the pen hovers over the page or writes on it. If a button does nothing here, the tablet may keep it for its own shortcut: turn that off in the tablet's pen settings.",

@@ -1,5 +1,8 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import java.time.LocalDate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.BorderStroke
@@ -104,7 +107,7 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.titleLarge)
             // owned parts say what they are through the button alone
-            if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false, short = p.bolts > s.bolts || p.nuts > s.nuts) }
+            if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false, short = lack(s, p)) }
         }
         val btn = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)
         when {
@@ -120,22 +123,34 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
             }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
             !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
             p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
-            else -> Text(words.second, style = MaterialTheme.typography.labelLarge, color = W.act)
+            else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
+                Text(words.second, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge, color = W.steel)
+            }
         }
     }
 }
 
 @Composable
-// short: the balance does not cover it yet, so the price is dimmed
-private fun Price(p: Part, owned: Boolean, short: Boolean = false) {
+// short: what the balance lacks, in bolts and nuts; the price then reads in dim and says what is needed, so the
+// reason is in words, not only in a fainter colour
+private fun Price(p: Part, owned: Boolean, short: Pair<Int, Int> = 0 to 0) {
     when {
         owned -> Text("Owned", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         p.bolts == 0 && p.nuts == 0 -> Text("Free", style = MaterialTheme.typography.bodyMedium, color = W.dim)
-        else -> Row(Modifier.alpha(if (short) 0.45f else 1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (p.bolts > 0) Coin("bolts", p.bolts, small = true); if (p.nuts > 0) Coin("nuts", p.nuts, small = true)
+        else -> Column {
+            val lack = short.first > 0 || short.second > 0
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (p.bolts > 0) Coin("bolts", p.bolts, small = true, short = lack); if (p.nuts > 0) Coin("nuts", p.nuts, small = true, short = lack)
+            }
+            if (lack) Text(listOfNotNull(short.first.takeIf { it > 0 }?.let { "$it more ${if (it == 1) "bolt" else "bolts"}" },
+                short.second.takeIf { it > 0 }?.let { "$it more ${if (it == 1) "nut" else "nuts"}" }).joinToString(" · "),
+                Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
+
+private fun lack(s: Data, p: Part) = (p.bolts - s.bolts).coerceAtLeast(0) to (p.nuts - s.nuts).coerceAtLeast(0)
 
 @Composable
 private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClick: () -> Unit) {
@@ -144,13 +159,16 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
     // one panel per part; the selection ring sits on the panel itself
     Column(modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab, onClick = onClick).semantics { selected = sel }.padding(bottom = 6.dp)) {
         Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
-            .border(if (sel) 2.dp else 0.dp, if (sel) W.steel else Color.Transparent, RoundedCornerShape(12.dp))) {
+            .background(if (sel) W.selFill else Color.Transparent).border(if (sel) 1.5.dp else 0.dp, if (sel) W.sel else Color.Transparent, RoundedCornerShape(12.dp))) {
             // a base shows its whole room with Rivet in it, as it would look on Today
             if (p.slot == "base") room(s, 0L, null, orbitsFor(s, LocalDate.now()), null, s.equip + ("base" to p.id)) else thumb(p)
         }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned, short = p.bolts > s.bolts || p.nuts > s.nuts)
+        Row(Modifier.padding(top = 4.dp).heightIn(min = 22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (eq) {
+                Icon(ICONS.getValue("check"), null, Modifier.size(16.dp), tint = W.steel)
+                Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.steel)
+            } else Price(p, p.id in s.owned, short = lack(s, p))
         }
     }
 }

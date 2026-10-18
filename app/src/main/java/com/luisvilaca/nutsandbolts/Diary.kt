@@ -149,7 +149,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
             }
         }
         Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) {
-            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.act) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
+            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
         }
     }
 }

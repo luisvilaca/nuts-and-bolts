@@ -323,7 +323,7 @@ private fun DrawScope.chargingBay(s: Data) {
     drawRoundRect(W.joint, Offset(70f, 452f), Size(96f, 150f), CornerRadius(16f), style = Stroke(3f))
     drawRoundRect(W.rail, Offset(84f, 468f), Size(68f, 44f), CornerRadius(8f))
     val cells = (level(s.stats.getValue("battery")) + 1) / 2 // a cell for every two Battery levels
-    for (i in 0 until 5) drawRoundRect(if (i < cells) W.act else W.line, Offset(92f + i * 11f, 478f), Size(8f, 24f), CornerRadius(2f))
+    for (i in 0 until 5) drawRoundRect(if (i < cells) W.glow else W.line, Offset(92f + i * 11f, 478f), Size(8f, 24f), CornerRadius(2f))
     drawCircle(W.rail, 14f, Offset(118f, 556f))
     for (dx in listOf(-5f, 5f)) drawCircle(W.joint, 3f, Offset(118f + dx, 556f))
     drawPath(Path().apply { moveTo(118f, 570f); cubicTo(118f, 680f, 150f, 740f, 220f, 770f) }, W.rail, style = Stroke(9f, cap = StrokeCap.Round))

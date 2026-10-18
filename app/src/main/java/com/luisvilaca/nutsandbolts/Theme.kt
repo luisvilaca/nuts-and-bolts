@@ -19,9 +19,10 @@ import androidx.compose.ui.unit.sp
 // tint), uranium green as every glow (the reactor, its light, the gauges, a completed habit), ready green only where
 // something can be pressed or is done, coral only for failed.
 object W {
-    val ground = Color(0xFF0D1615)
+    // the surface ladder, each one visible step up: rail < ground < card < raised
     val rail = Color(0xFF081313)
-    val raised = Color(0xFF15302B)
+    val ground = Color(0xFF0D1615)
+    val raised = Color(0xFF1C3A34) // a control on a card
     val line = Color(0xFF1B3632)
     val edge = Color(0xFF24443E)
     val text = Color(0xFFE6F2EE)
@@ -30,12 +31,13 @@ object W {
     val act = Color(0xFF6EE787) // a ready lamp
     val onAct = Color(0xFF06281A)
     val gold = Color(0xFFF2C14E)
-    val coral = Color(0xFFFF6B4A)
+    val coral = Color(0xFFFF7457)
     val joint = Color(0xFF6C8F87)
     val glass = Color(0xFF081313)
     val card = Color(0xFF152220) // the surface of a card
     val border = Color.White.copy(alpha = 0.08f) // a card's edge
-    val focus = Color(0xFF4AE3A1) // a focused field's outline
+    val sel = Color(0xFFCFE3DE).copy(alpha = 0.55f) // a selection's edge: steel, quietened
+    val selFill = Color(0xFFCFE3DE).copy(alpha = 0.06f) // and its faint fill
     val glow = Color(0xFFA6FF4D) // every glow: the reactor, its light, the gauges, a habit gone critical
 }
 

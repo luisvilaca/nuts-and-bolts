@@ -1,5 +1,6 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -47,7 +48,8 @@ private val CARD = RoundedCornerShape(12.dp)
 // A surface card: the one container for form groups, habit rows and calendars. Selected cards take a steel edge.
 @Composable
 fun Card(modifier: Modifier = Modifier, selected: Boolean = false, pad: Dp = 16.dp, content: @Composable ColumnScope.() -> Unit) =
-    Column(modifier.clip(CARD).background(W.card).border(if (selected) 1.5.dp else 1.dp, if (selected) W.steel else W.border, CARD).padding(pad), content = content)
+    Column(modifier.clip(CARD).background(W.card).background(if (selected) W.selFill else Color.Transparent)
+        .border(if (selected) 1.5.dp else 1.dp, if (selected) W.sel else W.border, CARD).padding(pad), content = content)
 
 // A segmented choice whose selection slides between options on a spring; labels may run to two lines.
 @Composable
@@ -57,8 +59,8 @@ fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier =
     Row(modifier.fillMaxWidth().heightIn(min = 44.dp).clip(RoundedCornerShape(22.dp)).border(1.dp, W.edge, RoundedCornerShape(22.dp))
         .drawBehind {
             val w = size.width / opts.size
-            drawRoundRect(W.raised, Offset(w * at + 3.dp.toPx(), 3.dp.toPx()), Size(w - 6.dp.toPx(), size.height - 6.dp.toPx()), CornerRadius(size.height / 2))
-            drawRoundRect(W.steel, Offset(w * at + 3.dp.toPx(), 3.dp.toPx()), Size(w - 6.dp.toPx(), size.height - 6.dp.toPx()), CornerRadius(size.height / 2), style = Stroke(1.5.dp.toPx()))
+            drawRoundRect(W.selFill, Offset(w * at + 3.dp.toPx(), 3.dp.toPx()), Size(w - 6.dp.toPx(), size.height - 6.dp.toPx()), CornerRadius(size.height / 2))
+            drawRoundRect(W.sel, Offset(w * at + 3.dp.toPx(), 3.dp.toPx()), Size(w - 6.dp.toPx(), size.height - 6.dp.toPx()), CornerRadius(size.height / 2), style = Stroke(1.5.dp.toPx()))
         }.selectableGroup(), verticalAlignment = Alignment.CenterVertically) {
         opts.forEach { (k, v) ->
             val c by animateColorAsState(if (k == cur) W.text else W.dim, label = "segment label")
@@ -68,15 +70,15 @@ fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier =
     }
 }
 
-// A text field on a faint fill with a mint outline when focused, 12 by 16dp inside.
+// A text field on a faint fill with a ready-green outline when focused, 12 by 16dp inside.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Field(value: String, set: (String) -> Unit, placeholder: String, modifier: Modifier = Modifier) {
     val src = remember { MutableInteractionSource() }
     val colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f),
-        unfocusedContainerColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f), focusedBorderColor = W.focus, unfocusedBorderColor = W.border,
-        cursorColor = W.focus, focusedTextColor = W.text, unfocusedTextColor = W.text, focusedPlaceholderColor = W.dim, unfocusedPlaceholderColor = W.dim)
-    BasicTextField(value, set, modifier.fillMaxWidth(), singleLine = true, interactionSource = src, cursorBrush = SolidColor(W.focus),
+        unfocusedContainerColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f), focusedBorderColor = W.act, unfocusedBorderColor = W.border,
+        cursorColor = W.act, focusedTextColor = W.text, unfocusedTextColor = W.text, focusedPlaceholderColor = W.dim, unfocusedPlaceholderColor = W.dim)
+    BasicTextField(value, set, modifier.fillMaxWidth(), singleLine = true, interactionSource = src, cursorBrush = SolidColor(W.act),
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = W.text)) { inner ->
         OutlinedTextFieldDefaults.DecorationBox(value, inner, enabled = true, singleLine = true, visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
             interactionSource = src, placeholder = { Text(placeholder) }, colors = colors, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -84,22 +86,22 @@ fun Field(value: String, set: (String) -> Unit, placeholder: String, modifier: M
     }
 }
 
-// A habit's period as segments, one per slot: done charged with the reactor's light, failed in coral, skipped as a
-// dashed outline, open as an empty track. Slots logged on another day of the week are fainter.
+// A habit's period as segments, one per slot: done in solid steel, failed in coral, skipped as a dashed outline, open
+// as an empty track. Slots logged on another day of the week are fainter. Light is kept for the moment the period is
+// complete: then the whole tracker glows, as its frame does on the bench.
 @Composable
 fun Tracker(slots: List<Slot>, modifier: Modifier) = Canvas(modifier) {
     val gap = 4.dp.toPx()
     val w = (size.width - gap * (slots.size - 1)) / slots.size
     val h = size.height
     val r = CornerRadius(h / 2)
+    if (slots.isNotEmpty() && slots.all { it.s == "done" }) for ((k, a) in listOf(2.4f to 0.08f, 1.6f to 0.16f))
+        drawRoundRect(W.glow, Offset(0f, -h * (k - 1) / 2), Size(size.width, h * k), CornerRadius(h * k / 2), alpha = a)
     slots.forEachIndexed { i, sl ->
         val o = Offset(i * (w + gap), 0f)
         val a = if (sl.other) 0.5f else 1f
         when (sl.s) {
-            "done" -> {
-                drawRoundRect(W.glow, o - Offset(0f, h * 0.5f), Size(w, h * 2), CornerRadius(h), alpha = 0.12f * a)
-                drawRoundRect(Brush.horizontalGradient(listOf(W.glow, W.steel), o.x, o.x + w), o, Size(w, h), r, alpha = a)
-            }
+            "done" -> drawRoundRect(W.steel, o, Size(w, h), r, alpha = a)
             "fail" -> drawRoundRect(W.coral, o, Size(w, h), r, alpha = a)
             "skip" -> drawRoundRect(W.dim, o, Size(w, h), r, alpha = a, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
             else -> drawRoundRect(W.edge, o, Size(w, h), r)
