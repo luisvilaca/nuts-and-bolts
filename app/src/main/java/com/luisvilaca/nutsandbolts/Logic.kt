@@ -78,6 +78,9 @@ fun restoreHabit(s: Data, h: Habit, at: Int) { if (h !in s.habits) s.habits.add(
 fun weekStart(d: LocalDate): LocalDate = d.minusDays((d.dayOfWeek.value - 1).toLong())
 fun periodDates(h: Habit, d: LocalDate) = if (h.per == "week") (0..6L).map { weekStart(d).plusDays(it) } else listOf(d)
 fun periodMarks(s: Data, h: Habit, d: LocalDate) = periodDates(h, d).flatMap { x -> s.marks[x]?.get(h.id).orEmpty().map { x to it } }
+// The most slots a period can hold: a dozen in a day, one a day in a week.
+fun maxTarget(per: String) = if (per == "week") 7 else 12
+
 fun active(h: Habit, d: LocalDate) = (h.start == null || h.start!! <= d) && (h.end == null || d <= h.end!!) && (h.days == null || (d.dayOfWeek.value - 1) in h.days!!)
 fun locked(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).count { it.second.s == "done" } >= h.target
 
@@ -96,7 +99,8 @@ fun streak(s: Data, h: Habit, d: LocalDate): Int {
     return n
 }
 
-data class Record(val slots: Int, val done: Int, val fail: Int, val best: Int, val now: Int)
+// periods: how many periods the habit has run, the length of its lifetime in days or weeks
+data class Record(val slots: Int, val done: Int, val fail: Int, val best: Int, val now: Int, val periods: Int = 0)
 
 // A habit's lifetime up to day t: slots it asked for, how they went, and its longest run of full periods.
 // The period holding t is still open, so missing it does not end the run.
@@ -104,12 +108,12 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
     val first = h.start ?: s.marks.keys.filter { s.marks[it]!!.containsKey(h.id) }.minOrNull() ?: t
     val last = if (h.end != null && h.end!! < t) h.end!! else t
     val step = if (h.per == "week") 7L else 1L
-    var slots = 0; var done = 0; var fail = 0; var best = 0; var run = 0
+    var slots = 0; var done = 0; var fail = 0; var best = 0; var run = 0; var periods = 0
     var d = if (h.per == "week") weekStart(first) else first
     while (d <= last) {
         if (periodDates(h, d).any { active(h, it) }) {
             val ms = periodMarks(s, h, d)
-            slots += h.target
+            slots += h.target; periods++
             done += ms.count { it.second.s == "done" }
             fail += ms.count { it.second.s == "fail" }
             if (locked(s, h, d)) best = max(best, ++run)
@@ -117,7 +121,7 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
         }
         d = d.plusDays(step)
     }
-    return Record(slots, done, fail, best, streak(s, h, t))
+    return Record(slots, done, fail, best, streak(s, h, t), periods)
 }
 
 // Fills the next slot of the habit's period.
