@@ -26,12 +26,12 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 
 - Landscape tablet first, touch plus pen; tablet portrait and phone (portrait and landscape) also supported. Handwriting diary entries with the pen; on a phone the diary still works with a finger or a phone stylus.
 - Four sections: Today, Shop, Habits, Diary, on a compact bottom bar at every size (hidden under an open diary page).
-- Today (home): the robot on its platform with an evolving background, today's habits logged right there, the four attribute levels always in view on the bay, the week, currency balances.
+- Today (home): the robot on its platform with an evolving background, today's tally (a link to log on Habits), the next level-up and the habit that reaches it fastest, the four attributes by name (Battery, Processor, Chassis, Core) with level and stage, the week, currency balances. Habits are logged on Habits only, not on Today (owner, 2026-10-18).
 - Shop: item shop to evolve the character; categories Head, Body, Arms, Legs, Accessories, Base.
 - Habits: planning and managing: calendar and history (each habit's share of slots done, fails, best and current run); add and edit habits. Every date, past and future, opens to show the habits that run on it and can be logged there.
 - Settings, from the top bar: backup and restore, the daily reminder, the robot's name.
 - The robot is big where it matters: on tablet landscape a bay on Today and Shop, and no robot on Habits, Diary or the habit form, so the planner and calendar get the full screen (2026-10-17 streamlining); on a phone the full robot on Today and Shop only, a small robot badge elsewhere.
-- Each habit row has one clear Done; Skip and Fail are smaller, still one tap. Logging a habit or buying a part shows a message with Undo; tapping a filled nut also undoes.
+- Each habit is a card with a progress counter (slots logged of the target, a segment per slot) and one clear Done; Skip, Fail, taking the last mark back, Edit and Delete sit in its menu (owner, 2026-10-18; Skip and Fail were one tap before). Logging a habit or buying a part shows a message with Undo; tapping a filled nut also undoes.
 - Diary: calendar view; pen entry on a printed diary page (dated header, ruled lines).
 
 ## Capabilities and Constraints
@@ -48,7 +48,7 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Diary toolbar (rearranged 2026-10-17): one thin line in three parts. The calendar (back) on the left; pen, eraser and the inks centred; undo, redo, paper and bin on the right. Papers live in the paper menu. Tapping the pen in hand opens the nib width (a slider in mm, 0.2 to 2.0 by 0.1) and the stabilizer (a slider in percent, 0 to 100 by 10); tapping the eraser in hand, or holding it, opens its width (a slider in mm, 1 to 15). Millimetres are true on this screen. The eraser shows its outline under the pen while it rubs and while the pen hovers; the bin asks first. The tab bar hides while a page is open so the page gets the height.
 - Settings has a Palm rejection switch (on by default): once the pen has written, only the pen writes and a finger or palm scrolls the page; off, fingers write too.
 - Settings holds this device's tools: a backup file (all state and every diary page) to save and restore, and a daily reminder at a set time. A restore replaces everything after confirming; a file that does not check out changes nothing.
-- The reminder is a native Android notification at the set time, skipped when the day already has a logged habit or a diary page.
+- The reminder is a native Android notification at the set time, skipped when the day already has a logged habit or a diary page. Tapping it opens Habits on today.
 - Interface language: English.
 
 ## Brand Commitments

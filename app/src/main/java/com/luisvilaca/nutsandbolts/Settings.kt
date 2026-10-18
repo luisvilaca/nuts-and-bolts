@@ -22,8 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -83,8 +81,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         Header("Settings", null, store, ui, lay)
         Column(Modifier.widthIn(max = 720.dp)) {
             SectionLabel("Robot")
-            OutlinedTextField(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, Modifier.fillMaxWidth(), label = { Text("Name") }, singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act, focusedLabelColor = W.act))
+            Field(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, "Rivet")
 
             SectionLabel("Backup")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
@@ -101,6 +98,14 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 OutlinedButton({ clock = true }, enabled = s.remind.on, border = BorderStroke(1.dp, W.edge)) { Text(s.remind.time, style = Numeral, color = if (s.remind.on) W.text else W.dim) }
             }
             Text("A notification at this time, only on days with nothing logged yet.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+
+            SectionLabel("Sounds")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(s.sound, { v -> store.change { sound = v } }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
+                Text("Sound effects", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+            }
+            Text("A bolt driven home, a skip, a sheared bolt, a level up, a purchase and an undo each make a short sound.",
+                Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Diary")
             Row(verticalAlignment = Alignment.CenterVertically) {
