@@ -18,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assertIsSelected
 import androidx.test.core.app.ApplicationProvider
@@ -147,6 +149,20 @@ class ScreensTest {
         tap("Diary"); tap("Write today".takeIf { LocalDate.now() !in st.s.diary } ?: "Open today")
         rule.runOnUiThread { PenKeys.on!!(2) }; rule.waitForIdle()
         rule.onNodeWithContentDescription(PEN_COLORS[1].first).assertIsSelected()
+    }
+
+    // A long press on Done opens the card's menu without logging; Delete there comes off with an Undo that restores it.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun cardMenuAndDelete() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        tap("Habits")
+        val before = st.s.bolts
+        rule.onAllNodesWithText("Done")[0].performTouchInput { longClick() }; rule.waitForIdle()
+        org.junit.Assert.assertEquals(before, st.s.bolts)
+        tap("Delete habit"); tap("Delete"); rule.waitForIdle()
+        org.junit.Assert.assertEquals(4, st.s.habits.size)
+        rule.onNodeWithText("Undo").performClick(); rule.waitForIdle()
+        org.junit.Assert.assertEquals("w", st.s.habits[0].id)
     }
 
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).

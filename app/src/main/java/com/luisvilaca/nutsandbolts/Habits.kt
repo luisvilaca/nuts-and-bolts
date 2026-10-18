@@ -410,8 +410,5 @@ private fun Form(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             TextButton({ st.selectedDateMillis?.date()?.let { if (which == "start") start = it else end = it }; picking = null }) { Text("OK", color = W.act) }
         }, dismissButton = { TextButton({ picking = null }) { Text("Cancel", color = W.text) } }) { DatePicker(st) }
     }
-    if (confirm && h != null) AlertDialog(onDismissRequest = { confirm = false },
-        title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
-        confirmButton = { TextButton({ store.change { habits.remove(h) }; confirm = false; ui.edit = null }) { Text("Delete", color = W.coral) } },
-        dismissButton = { TextButton({ confirm = false }) { Text("Keep it", color = W.text) } })
+    if (confirm && h != null) ConfirmDeleteHabit(store, ui, h) { gone -> confirm = false; if (gone) ui.edit = null }
 }

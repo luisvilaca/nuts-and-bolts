@@ -12,6 +12,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,6 +79,7 @@ class Ui(val scope: CoroutineScope) {
     var tab by mutableStateOf("today")
     var settings by mutableStateOf(false)
     var edit by mutableStateOf<String?>(null) // habit id in the form; "" is a new habit
+    fun openForm(id: String) { edit = id; tab = "habits"; settings = false }
     var page by mutableStateOf<LocalDate?>(null) // the open diary page
     var date by mutableStateOf(LocalDate.now()) // the day Habits shows
     val snack = SnackbarHostState()
@@ -204,80 +212,87 @@ fun meta(s: Data, h: Habit, d: LocalDate): String {
 }
 val DOW = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-// One habit as a card: name and meta, a progress counter (slots logged of the target over a segment per slot), one
-// clear primary button that logs the next slot, and a menu for the rest: Skip, Fail, taking the last mark back, Edit
-// and Delete. select: the card picks the habit for the side panel (split Habits); otherwise the name opens the form.
+// One habit as a card, read left to right: name and meta, the counter over its tracker, one clear Done, and a menu for
+// the rest (Skip, Fail, take back, Edit, Delete), which a long press on Done also opens. A period with every bolt in
+// shows a finished chip instead of a button and a glowing edge. select: the card picks the habit for the side panel
+// (split Habits); otherwise the name opens the form. cue: a chevron after the name, where the name opens the form.
 @Composable
-fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false, selected: Boolean = false, select: (() -> Unit)? = null) = BoxWithConstraints {
+fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false, selected: Boolean = false, cue: Boolean = true, select: (() -> Unit)? = null) = BoxWithConstraints {
     val stacked = big || maxWidth < 480.dp
     val s = store.s
     val sl = slots(s, h, d)
     val logged = sl.count { it.s != "" }
     val ahead = d > LocalDate.now()
     val full = logged >= h.target || ahead
+    val complete = !ahead && sl.all { it.s == "done" }
     val label = BTN.getValue(h.kind)
     val mine = !s.marks[d]?.get(h.id).isNullOrEmpty() // a mark made on this day, which can be taken back here
-    var menu by remember { mutableStateOf(false) }
+    var menu by remember { mutableStateOf<String?>(null) } // which anchor the menu opened from: "more" or "done"
     var deleting by remember { mutableStateOf(false) }
+    val items = @Composable {
+        val item = @Composable { text: String, icon: String, tint: androidx.compose.ui.graphics.Color, on: Boolean, go: () -> Unit ->
+            DropdownMenuItem({ Text(text, color = if (on) tint else W.dim.copy(alpha = 0.6f)) }, { menu = null; go() }, enabled = on,
+                leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.dim.copy(alpha = 0.6f)) })
+        }
+        item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
+        item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }
+        item("Take back the last bolt", "undo", W.text, mine) {
+            var m: Mark? = null
+            store.change { m = undo(this, h, d) }
+            m?.let { Sfx.play("undo"); ui.tell("Bolt taken back") }
+        }
+        HorizontalDivider(color = W.line)
+        item("Edit habit", "diary", W.text, true) { ui.openForm(h.id) }
+        item("Delete habit", "trash", W.coral, true) { deleting = true }
+    }
     val counter = @Composable { m: Modifier ->
         Column(m.semantics(mergeDescendants = true) {
             contentDescription = boltsIn(Progress(sl.count { it.s == "done" }, sl.count { it.s == "fail" }, h.target), false) + ", $logged of ${h.target} logged"
         }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(ICONS.getValue("bolts"), null, Modifier.size(14.dp), tint = W.steel)
-                Text("$logged / ${h.target}", Modifier.padding(start = 6.dp), style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = if (logged >= h.target) W.text else W.dim)
+                Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp), tint = W.steel)
+                Text("$logged / ${h.target}", Modifier.padding(start = 6.dp), style = Numeral, color = W.text)
             }
             Tracker(sl, Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp))
         }
     }
     val actions = @Composable { m: Modifier ->
         Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier.widthIn(min = 112.dp)).height(if (big) 52.dp else 44.dp),
-                shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
-                // a greyed button says why it is greyed
-                Text(when {
-                    ahead -> "Not yet"
-                    !full -> label[0]
-                    sl.all { it.s == "done" } -> if (h.kind == "bad") "Held" else "All in"
-                    else -> "Closed" // full, but with a skip or a sheared bolt in it
-                })
+            val size = (if (stacked) Modifier.weight(1f) else Modifier.widthIn(min = 112.dp)).height(if (big) 52.dp else 44.dp)
+            Box(size) {
+                if (complete || (full && !ahead)) {
+                    // finished: a quiet chip, not a dead button; a period closed by a skip or a sheared bolt reads in dim
+                    Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.steel else W.edge, CircleShape).longPress { menu = "done" }
+                        .semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        if (complete) Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
+                        Text(if (!complete) "Closed" else if (h.kind == "bad") "Held" else "All in", Modifier.padding(start = if (complete) 6.dp else 0.dp),
+                            style = MaterialTheme.typography.labelLarge, color = if (complete) W.steel else W.dim)
+                    }
+                } else Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = Modifier.matchParentSize().longPress { menu = "done" },
+                    shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
+                    Text(if (ahead) "Not yet" else label[0])
+                }
+                DropdownMenu(menu == "done", { menu = null }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) { items() }
             }
             Box {
-                OutlinedIconButton(onClick = { menu = true }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
+                OutlinedIconButton(onClick = { menu = "more" }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
                     colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), "More for ${h.name}") }
-                DropdownMenu(menu, { menu = false }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) {
-                    val item = @Composable { text: String, icon: String, tint: androidx.compose.ui.graphics.Color, on: Boolean, go: () -> Unit ->
-                        DropdownMenuItem({ Text(text, color = if (on) tint else W.dim.copy(alpha = 0.6f)) }, { menu = false; go() }, enabled = on,
-                            leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.dim.copy(alpha = 0.6f)) })
-                    }
-                    item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
-                    item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }
-                    item("Take back the last bolt", "undo", W.text, mine) {
-                        var m: Mark? = null
-                        store.change { m = undo(this, h, d) }
-                        m?.let { Sfx.play("undo"); ui.tell("Bolt taken back") }
-                    }
-                    androidx.compose.material3.HorizontalDivider(color = W.line)
-                    item("Edit habit", "diary", W.text, true) { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }
-                    item("Delete habit", "trash", W.coral, true) { deleting = true }
-                }
+                DropdownMenu(menu == "more", { menu = null }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) { items() }
             }
         }
     }
-    val pick = Modifier.clickable(onClickLabel = if (select != null) "show details" else "edit") {
-        if (select != null) select() else { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }
-    }
-    Card(Modifier.fillMaxWidth(), selected = selected) {
+    val pick = Modifier.clickable(onClickLabel = if (select != null) "show details" else "edit") { if (select != null) select() else ui.openForm(h.id) }
+    Card(Modifier.fillMaxWidth(), selected = selected, accent = if (complete) W.glow else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).then(pick)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(h.name, Modifier.weight(1f, fill = false), style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    if (select == null) Icon(ICONS.getValue("next"), null, Modifier.padding(start = 4.dp).size(16.dp), tint = W.dim) // the name opens the form
+                    if (select == null && cue) Icon(ICONS.getValue("next"), null, Modifier.padding(start = 4.dp).size(16.dp), tint = W.dim)
                 }
-                Text(meta(s, h, d), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 2)
+                Text(meta(s, h, d), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = if (stacked) 2 else 1, overflow = TextOverflow.Ellipsis)
             }
             if (!stacked) {
-                counter(Modifier.padding(horizontal = 16.dp).width(120.dp))
+                counter(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).width(120.dp))
                 actions(Modifier)
             }
         }
@@ -286,10 +301,39 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
             actions(Modifier.fillMaxWidth().padding(top = 12.dp))
         }
     }
-    if (deleting) androidx.compose.material3.AlertDialog(onDismissRequest = { deleting = false },
-        title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
-        confirmButton = { TextButton({ store.change { habits.remove(h) }; deleting = false }) { Text("Delete", color = W.coral) } },
-        dismissButton = { TextButton({ deleting = false }) { Text("Keep it", color = W.text) } })
+    if (deleting) ConfirmDeleteHabit(store, ui, h) { deleting = false }
+}
+
+// Deleting a habit, wherever it is asked for: a confirmation, then the habit comes off with an Undo that puts it back
+// where it was. Marks are kept by date and habit id, so they come back with it untouched.
+@Composable
+fun ConfirmDeleteHabit(store: Store, ui: Ui, h: Habit, done: (Boolean) -> Unit) = AlertDialog(onDismissRequest = { done(false) },
+    title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
+    confirmButton = {
+        TextButton({
+            var at = -1
+            store.change { at = removeHabit(this, h) }
+            ui.tell("“${h.name}” deleted") { store.change { restoreHabit(this, h, at) } }
+            done(true)
+        }) { Text("Delete", color = W.coral) }
+    },
+    dismissButton = { TextButton({ done(false) }) { Text("Keep it", color = W.text) } })
+
+// A long press, seen before the control's own click, so it opens a menu without also pressing the button.
+fun Modifier.longPress(go: () -> Unit) = pointerInput(go) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        // the press either lets go in time (an ordinary tap) or outlasts the long-press timeout
+        val released = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+            do { val e = awaitPointerEvent(PointerEventPass.Initial) } while (e.changes.any { it.pressed })
+            true
+        }
+        if (released == null) {
+            go()
+            // swallow the rest of this press so the button under it does not fire on release
+            do { val e = awaitPointerEvent(PointerEventPass.Initial); e.changes.forEach { it.consume() } } while (e.changes.any { it.pressed })
+        }
+    }
 }
 
 @Composable

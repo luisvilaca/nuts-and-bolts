@@ -70,6 +70,10 @@ class Data {
     var backedUp: LocalDate? = null
 }
 
+// A habit comes off the list at its place, which comes back so undo puts it where it was. Its marks stay.
+fun removeHabit(s: Data, h: Habit): Int = s.habits.indexOf(h).also { if (it >= 0) s.habits.removeAt(it) }
+fun restoreHabit(s: Data, h: Habit, at: Int) { if (h !in s.habits) s.habits.add(at.coerceIn(0, s.habits.size), h) }
+
 fun weekStart(d: LocalDate): LocalDate = d.minusDays((d.dayOfWeek.value - 1).toLong())
 fun periodDates(h: Habit, d: LocalDate) = if (h.per == "week") (0..6L).map { weekStart(d).plusDays(it) } else listOf(d)
 fun periodMarks(s: Data, h: Habit, d: LocalDate) = periodDates(h, d).flatMap { x -> s.marks[x]?.get(h.id).orEmpty().map { x to it } }

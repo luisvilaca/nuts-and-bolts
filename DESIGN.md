@@ -270,14 +270,18 @@ Soft and machined. Every pressable action is a pill or a circle; the bay is fram
 
 ### Buttons
 - **Shape:** full pill, 44dp tall (52dp for a lead Done).
-- **Done / primary:** ready green with on-ready text in Label Large. When it cannot log it falls to raised with dim text and says why: "All in" (a break habit: "Held") when every bolt of the period is in, "Closed" when the period is full with a skip or a sheared bolt in it, "Not yet" on a future day. Break habits read Resisted / Skip / Gave in.
+- **Done / primary:** ready green with on-ready text in Label Large. A finished period swaps it for the finished chip (see Habit card); a future day disables it to raised with dim "Not yet". Break habits read Resisted / Skip / Gave in.
 - **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu (raised): Skip, Fail (coral), Take back the last bolt, then Edit habit and Delete habit (coral); items that cannot act read dim at 60%. Delete asks first.
 - **Outlined:** 1dp edge border, frost text (Cancel, date pickers, backup).
 - **Text actions:** ready green for confirm, coral for destructive, frost for dismiss.
 - **FAB:** extended, ready green, bottom-end with a 20dp inset (Add habit).
 
 ### Habit card
-A card per habit: the name in Title (a dim chevron after it where the name opens the form), the metadata in dim Body, a counter (the bolt icon and "2 / 3" in Numeral 14sp, frost when full) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. On the split Habits view a card is picked by tapping it and shows a cool-steel edge.
+Read left to right: the name in Title (18sp semibold) with a dim chevron after it where the name opens the form (not on the Lab), the metadata in dim Body (one line with an ellipsis on a wide card), the counter (the side-on bolt at 16dp in steel and "2 / 3" in Numeral 18sp frost) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. A long press on Done opens the same menu anchored to the button, so Fail is two quick moves. On the split Habits view a card is picked by tapping it and takes the selection edge and fill.
+
+When every bolt of the period is in, Done gives way to a finished chip, not a button: a steel check and "All in" ("Held" for a break habit) in steel inside a 1dp steel outline on a transparent pill, and the card takes a 3dp uranium-glow bar down its left edge. A period filled with a skip or a sheared bolt shows the same chip in dim, reading "Closed". A future day keeps a disabled raised pill reading "Not yet".
+
+Deleting a habit, from its menu or the form, asks first, then shows a snackbar whose Undo puts the habit back at its old place with its bolts untouched.
 
 ### Tracker
 A habit's period as an 8dp pill split into one segment per slot: done in solid cool steel, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength. When every slot is done the whole tracker takes a soft uranium halo, as its frame goes critical on the bench.

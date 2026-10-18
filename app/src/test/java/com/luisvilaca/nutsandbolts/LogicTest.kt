@@ -86,4 +86,14 @@ class LogicTest {
         assertEquals(listOf(62, 0, 2), listOf(s.stats["core"], again.l, s.nuts)) // level 3 again pays nothing
         assertEquals(listOf(1, 2, 3, 10, 10), listOf(level(0), level(20), level(60), level(900), level(5000)))
     }
+
+    @Test fun deleteAndUndoKeepPlaceAndMarks() {
+        val s = fresh(); val a = daily; val b = weekly; s.habits += listOf(a, b)
+        mark(s, a, d("2026-10-12"), "done")
+        val at = removeHabit(s, a)
+        assertEquals(listOf(0, listOf(b)), listOf(at, s.habits))
+        restoreHabit(s, a, at)
+        assertEquals(listOf(a, b), s.habits)
+        assertEquals(1, periodMarks(s, a, d("2026-10-12")).size) // its marks were never touched
+    }
 }
