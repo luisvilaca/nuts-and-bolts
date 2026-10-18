@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.State
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
@@ -51,13 +52,15 @@ val SLOTS = linkedMapOf("head" to "Head", "body" to "Body", "arms" to "Arms", "l
 // What the robot is doing right now, set by logging and buying.
 class Reaction(val kind: String, val at: Long)
 
-// One clock for every animation on screen; frozen when the system's animations are off.
+// One clock for every animation on screen, frozen at 0 when the system's animations are off. It is a State to be read
+// inside a Canvas's draw lambda, so each frame redraws the picture without recomposing the screen around it; run is
+// false while the picture is off screen, and the loop stops.
 @Composable
-fun clock(): Long {
+fun clock(run: Boolean = true): State<Long> {
     val ctx = LocalContext.current
     val off = remember { Settings.Global.getFloat(ctx.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
-    var t by remember { mutableLongStateOf(0L) }
-    if (!off) LaunchedEffect(Unit) { while (true) withFrameMillis { t = it } }
+    val t = remember { mutableLongStateOf(0L) }
+    if (!off && run) LaunchedEffect(Unit) { while (true) withFrameMillis { t.longValue = it } }
     return t
 }
 
@@ -149,7 +152,7 @@ fun DrawScope.fit(w: Float, h: Float, cover: Boolean = false, block: DrawScope.(
 @Composable
 fun RobotView(store: Store, modifier: Modifier = Modifier, equip: Map<String, String?> = store.s.equip) {
     val t = clock()
-    Canvas(modifier) { fit(400f, 520f) { robot(equip, t, mood(store.s), store.react) } }
+    Canvas(modifier) { fit(400f, 520f) { robot(equip, t.value, mood(store.s), store.react) } }
 }
 
 // One part on its own, square-cropped for a shop tile (bases draw their room instead, see Shop.kt).

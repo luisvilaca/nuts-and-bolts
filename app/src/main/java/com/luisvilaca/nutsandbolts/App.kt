@@ -58,6 +58,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -74,7 +78,8 @@ import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// What the screens share that is not saved: where the owner is, and the message bar.
+// What the screens share: where the owner is (kept across the system ending the app in the background, see saver) and
+// the message bar.
 class Ui(val scope: CoroutineScope) {
     var tab by mutableStateOf("today")
     var settings by mutableStateOf(false)
@@ -88,6 +93,13 @@ class Ui(val scope: CoroutineScope) {
         snack.currentSnackbarData?.dismiss()
         if (snack.showSnackbar(msg, if (undo != null) "Undo" else null, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) { Sfx.play("undo"); undo?.invoke() }
     }
+
+    companion object {
+        fun saver(scope: CoroutineScope) = Saver<Ui, List<Any?>>(
+            save = { listOf(it.tab, it.edit, it.page?.toString(), it.date.toString(), it.settings) },
+            restore = { l -> Ui(scope).apply { tab = l[0] as String; edit = l[1] as String?; page = (l[2] as String?)?.let(LocalDate::parse); date = LocalDate.parse(l[3] as String); settings = l[4] as Boolean } },
+        )
+    }
 }
 
 // wide: a landscape window with room for two panes side by side. phone: a narrow window.
@@ -99,11 +111,11 @@ private val TAB_ICON = mapOf("today" to "base", "shop" to "shop", "habits" to "h
 @Composable
 fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remember { mutableStateOf(null) }) {
     val scope = rememberCoroutineScope()
-    val ui = remember { Ui(scope) }
+    val ui = rememberSaveable(saver = Ui.saver(scope)) { Ui(scope) }
+    LaunchedEffect(store) { snapshotFlow { store.s.sound }.collect { Sfx.on = it } }
     androidx.compose.runtime.LaunchedEffect(go.value) {
         go.value?.let { ui.tab = it; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
     }
-    store.tick // every change recomposes the screens
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
         val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
         // system Back: close what is open, then return to the Lab, then leave
@@ -163,6 +175,11 @@ fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier
         IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = if (ui.settings) W.act else W.dim) }
     }
 }
+
+// A value worked out from the data once per change (and per key), not on every recomposition: a month's progress,
+// each habit's record, today's bench.
+@Composable
+fun <T> derived(store: Store, vararg keys: Any?, calc: () -> T): T = remember(store.tick, *keys) { calc() }
 
 @Composable
 fun Wallet(s: Data) = Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "${plural(s.bolts, "bolt")}, ${plural(s.nuts, "nut")}" },
