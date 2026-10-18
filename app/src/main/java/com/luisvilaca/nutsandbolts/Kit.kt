@@ -55,7 +55,7 @@ fun Card(modifier: Modifier = Modifier, selected: Boolean = false, pad: Dp = 16.
         .drawWithContent { drawContent(); accent?.let { drawRect(it, size = Size(3.dp.toPx(), size.height)) } }
         .border(if (selected) 1.5.dp else 1.dp, if (selected) W.sel else W.border, CARD).padding(pad), content = content)
 
-// A segmented choice whose selection slides between options on a spring; labels may run to two lines.
+// A segmented choice whose selection slides between options on a spring; labels may run to three lines at large text.
 @Composable
 fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier = Modifier, set: (String) -> Unit) {
     val i = opts.indexOfFirst { it.first == cur }.coerceAtLeast(0)
@@ -69,7 +69,7 @@ fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier =
         opts.forEach { (k, v) ->
             val c by animateColorAsState(if (k == cur) W.text else W.dim, label = "segment label")
             Text(v, Modifier.weight(1f).selectable(k == cur, role = Role.RadioButton) { set(k) }.padding(horizontal = 8.dp, vertical = 10.dp),
-                style = MaterialTheme.typography.labelLarge, color = c, textAlign = TextAlign.Center, maxLines = 2)
+                style = MaterialTheme.typography.labelLarge, color = c, textAlign = TextAlign.Center, maxLines = 3) // room for large text
         }
     }
 }

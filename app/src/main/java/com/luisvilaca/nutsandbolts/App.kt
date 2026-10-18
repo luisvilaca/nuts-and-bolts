@@ -58,6 +58,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -124,7 +133,15 @@ fun App(store: Store, go: MutableState<String?> = remember { mutableStateOf(null
         BackHandler(enabled = ui.tab != Tab.Lab && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = Tab.Lab }
         Scaffold(
             containerColor = W.ground,
-            snackbarHost = { SnackbarHost(ui.snack) { Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act) } },
+            // on a wide window the message sits bottom-end over the side pane, at most 480dp wide and, on the Lab, above
+            // the attribute row it would otherwise cover just as a Done changes it
+            snackbarHost = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = if (lay.wide) Alignment.BottomEnd else Alignment.BottomCenter) {
+                    SnackbarHost(ui.snack, if (!lay.wide) Modifier else Modifier.widthIn(max = 480.dp).padding(end = 16.dp, bottom = if (ui.tab == Tab.Lab && ui.edit == null && !ui.settings) 104.dp else 0.dp)) {
+                        Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act)
+                    }
+                }
+            },
             // the owner wants the tabs at the bottom at every size, except under an open diary page, which needs the height
             bottomBar = { if (ui.page == null) BottomBar(ui) },
         ) { pad ->
@@ -152,7 +169,7 @@ private fun BottomBar(ui: Ui) {
             val on = ui.tab == k && !ui.settings
             Column(Modifier.weight(1f).fillMaxHeight().selectable(on, role = Role.Tab) { go(ui, k) },
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Box(Modifier.size(52.dp, 28.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
                     Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
                 }
                 Text(k.label, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
@@ -184,7 +201,7 @@ fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier
 fun <T> derived(store: Store, vararg keys: Any?, calc: () -> T): T = remember(store.tick, *keys) { calc() }
 
 @Composable
-fun Wallet(s: Data) = Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "${plural(s.bolts, "bolt")}, ${plural(s.nuts, "nut")}" },
+fun Wallet(s: Data) = Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "${plural(s.bolts, "bolt")}, ${plural(s.nuts, "nut")}"; liveRegion = LiveRegionMode.Polite },
     horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
     Coin("bolts", s.bolts); Coin("nuts", s.nuts)
 }
@@ -278,9 +295,11 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
     }
     val actions = @Composable { m: Modifier ->
         Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            val size = (if (stacked) Modifier.weight(1f) else Modifier.widthIn(min = 112.dp)).height(if (big) 52.dp else 44.dp)
-            Box(size) {
-                if (complete || (full && !ahead)) {
+            // a fixed width on a wide card: what fills it (button or chip) must not take the name's room
+            val size = (if (stacked) Modifier.weight(1f) else Modifier.width(132.dp)).height(if (big) 52.dp else 44.dp)
+            val still = animationsOff()
+            Crossfade(complete || (full && !ahead), size, animationSpec = if (still) snap() else tween(250), label = "finish") { finished -> Box(Modifier.fillMaxSize()) {
+                if (finished) {
                     // finished: a quiet chip, not a dead button; a period closed by a skip or a sheared bolt reads in dim
                     Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.steel else W.edge, CircleShape).longPress { menu = "done" }
                         .semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -288,12 +307,17 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                         Text(if (!complete) "Closed" else if (h.kind == Kind.Break) "Held" else "All in", Modifier.padding(start = if (complete) 6.dp else 0.dp),
                             style = MaterialTheme.typography.labelLarge, color = if (complete) W.steel else W.dim)
                     }
-                } else Button(onClick = { log(store, ui, h, d, Outcome.Done) }, enabled = !full, modifier = Modifier.matchParentSize().longPress { menu = "done" },
-                    shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
-                    Text(if (ahead) "Not yet" else label[0])
+                } else {
+                    val press = remember { MutableInteractionSource() }
+                    val down by press.collectIsPressedAsState()
+                    val k by animateFloatAsState(if (down) 0.96f else 1f, if (still) snap() else tween(150), label = "press")
+                    Button(onClick = { log(store, ui, h, d, Outcome.Done) }, enabled = !full, modifier = Modifier.matchParentSize().graphicsLayer { scaleX = k; scaleY = k }.longPress { menu = "done" },
+                        shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim), interactionSource = press) {
+                        Text(if (ahead) "Not yet" else label[0])
+                    }
                 }
                 DropdownMenu(menu == "done", { menu = null }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) { items() }
-            }
+            } }
             Box {
                 OutlinedIconButton(onClick = { menu = "more" }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
                     colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), "More for ${h.name}") }

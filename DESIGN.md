@@ -286,6 +286,9 @@ Deleting a habit, from its menu or the form, asks first, then shows a snackbar w
 ### Tracker
 A habit's period as an 8dp pill split into one segment per slot: done in solid cool steel, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength. When every slot is done the whole tracker takes a soft uranium halo, as its frame goes critical on the bench.
 
+### Large text
+Every screen is rendered at 1.3x font scale on the tablet and the phone (ScreensTest's large-* renders) and nothing clips: segment labels may take three lines, the form's schedule line wraps Day / Week below the count, and attribute names keep their own line.
+
 ### Segments
 A pill outlined in edge whose selection, a selection-fill pill with a 1.5dp selection edge, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
 
@@ -300,12 +303,13 @@ Material filter chips, 1dp edge border, frost label; selected takes the selectio
 
 ### Navigation
 - **Bar:** Lab, Shop, Habits, Diary on rail at the bottom of every window; Settings is an icon in the header that turns ready green while open.
-- **States:** the selected tab gets a raised 52x28dp indicator, a ready-green icon and a frost label; unselected are dim.
+- **States:** the selected tab gets a raised 64x32dp indicator, a ready-green icon and a frost label; unselected are dim.
 - **Header:** at least 60dp; display title, the date or summary beside it on wide windows, the wallet at right (the side-on bolt and its count in cool steel, the nut in gold, 22dp icons, Numeral), then Settings.
-- **Snackbar:** raised with frost text and a ready-green Undo, for every log and purchase; an Undo plays its own sound.
+- **Snackbar:** raised with frost text and a ready-green Undo, for every log and purchase; an Undo plays its own sound. On a wide window it is at most 480dp wide at the bottom end over the side pane, and on the Lab it rises above the attribute row so it never covers the levels a Done has just changed.
+- **Wallet:** a polite live region, so a screen reader announces the new balance after a Done.
 
 ### Attribute cards (Lab)
-Four cards (16dp inside) in a row: the attribute's icon, its name in Label Medium (13sp, frost) and "LV n" in Numeral on one line, over a 6dp gauge to the next level. A name is never cut: four across a narrow side (under 600dp) shows only the icon and level; under 400dp they go two by two with names. What each means for you (energy, mind, body, heart) is in the screen reader's description and a plain tooltip on a long press.
+Four cards (16dp inside) in a row: the attribute's icon and its name in Label Medium (13sp, frost), over a 6dp gauge to the next level with "LV n" in Numeral beside it, so large text never pushes the name into the level. A name is never cut: four across a narrow side (under 600dp) shows only the icon and level; under 400dp they go two by two with names. What each means for you (energy, mind, body, heart) is in the screen reader's description and a plain tooltip on a long press.
 
 ### Empty state (Lab)
 "The bench is empty" in Headline, one dim line ("Each habit becomes a frame on Rivet's bench. Every time you do it, a bolt goes in."), the Add your first habit button, and the starter chips, each led by the icon of the attribute it trains; a chip adds its habit with an Undo.
@@ -352,7 +356,7 @@ One robot grammar: 24dp line art at 1.8 stroke, square caps, mitred joins, angul
 A true diary template on the owner's paper: the weekday large in Lexend with the date beneath, a header rule, evenly ruled lines (no grid), a BOLTS field of five hex holes to fill in by hand and a DAY count at the top right beside the atom emblem, a large faint atom near the foot, and the log's owner and catalogue number in tracked caps at the bottom. The tools stand in a 56dp rail down the right edge, away from the writing hand: the calendar at the top; pen, eraser, a hairline and the five inks in the middle; undo, redo, paper and bin at the foot; on a short window the inks fold into the current ink's swatch. Tool tiles are 44x40dp with 10dp corners, the tool in hand raised with a 2x14dp ready-green bar on its inner side; ink swatches are 40x36dp targets with 22dp dots (26dp and a 2dp frost ring when chosen); an ink whose contrast with the page's paper is under 1.5:1 (ice blue on cream, matte black on matte black) shows at 40% with a thin dim slash through it, and can still be chosen. Menus open to the rail's left. Pen and eraser settings are labelled sliders with their value in Numeral and a true-size preview; the stabilizer shows its ten steps as ticks. The eraser's outline on the page is a white ring inside a dark one over a faint fill.
 
 ### Motion and sound
-One frame clock drives every animation and freezes when the system's animations are off. The robot idles, cheers on Done, droops on Fail and waves when its nameplate is tapped; bolts drive in, the reactor breathes and turns, positrons rise. Short synthesized sounds (tools/sfx.py) mark Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of Done's), a purchase (two coin clinks) and Undo (a falling blip); Settings has a switch.
+One frame clock drives every animation and freezes when the system's animations are off; it is read in the draw phase, so the bay redraws each frame without recomposing, and it stops while the bay is off screen. Done presses in to 96% over 150ms, and a card that completes cross-fades into its finished chip over 250ms; with animations off both land at once. The robot idles, cheers on Done, droops on Fail and waves when its nameplate is tapped; bolts drive in, the reactor breathes and turns, positrons rise. Short synthesized sounds (tools/sfx.py) mark Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of Done's), a purchase (two coin clinks) and Undo (a falling blip); Settings has a switch.
 
 ## Do's and Don'ts
 
