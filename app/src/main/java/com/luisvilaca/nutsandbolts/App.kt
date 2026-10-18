@@ -162,8 +162,9 @@ fun Wallet(s: Data) = Row(Modifier.semantics(mergeDescendants = true) { contentD
 }
 
 @Composable
-fun Coin(k: String, n: Int, small: Boolean = false) = Row(verticalAlignment = Alignment.CenterVertically) {
-    val c = if (k == "nuts") W.gold else W.steel
+// short: the balance does not cover it, so the price reads in dim instead of its metal
+fun Coin(k: String, n: Int, small: Boolean = false, short: Boolean = false) = Row(verticalAlignment = Alignment.CenterVertically) {
+    val c = if (short) W.dim else if (k == "nuts") W.gold else W.steel
     Icon(ICONS.getValue(k), null, Modifier.size(if (small) 18.dp else 22.dp), tint = c)
     Text("$n", Modifier.padding(start = 6.dp), style = Numeral.copy(fontSize = if (small) MaterialTheme.typography.bodyMedium.fontSize else Numeral.fontSize), color = c)
 }
@@ -246,8 +247,8 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                     colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), "More for ${h.name}") }
                 DropdownMenu(menu, { menu = false }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) {
                     val item = @Composable { text: String, icon: String, tint: androidx.compose.ui.graphics.Color, on: Boolean, go: () -> Unit ->
-                        DropdownMenuItem({ Text(text, color = if (on) tint else W.edge) }, { menu = false; go() }, enabled = on,
-                            leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.edge) })
+                        DropdownMenuItem({ Text(text, color = if (on) tint else W.dim.copy(alpha = 0.6f)) }, { menu = false; go() }, enabled = on,
+                            leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.dim.copy(alpha = 0.6f)) })
                     }
                     item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
                     item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }

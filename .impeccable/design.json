@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-18T11:35:00Z",
+  "generatedAt": "2026-10-18T11:39:18Z",
   "title": "Design System: Nuts And Bolts",
   "extensions": {
     "colorMeta": {
@@ -52,16 +52,16 @@
       "raised": {
         "role": "neutral",
         "displayName": "Raised",
-        "canonical": "#15302B",
+        "canonical": "#1C3A34",
         "tonalRamp": [
-          "#132B26",
-          "#224E46",
-          "#327266",
-          "#419585",
-          "#5FB9A9",
-          "#8DCDC2",
-          "#B8E0D9",
-          "#E3F3F0"
+          "#142925",
+          "#254C44",
+          "#356E63",
+          "#469082",
+          "#64B4A4",
+          "#91CABE",
+          "#BADED7",
+          "#E3F2EF"
         ]
       },
       "border": {
@@ -219,20 +219,15 @@
           "#DCFAED"
         ]
       },
-      "focus": {
-        "role": "primary",
-        "displayName": "Focus",
-        "canonical": "#4AE3A1",
-        "tonalRamp": [
-          "#083522",
-          "#0F613E",
-          "#168D5A",
-          "#1DBA76",
-          "#38E098",
-          "#72E9B6",
-          "#A7F1D1",
-          "#DCFAED"
-        ]
+      "selection": {
+        "role": "neutral",
+        "displayName": "Selection",
+        "canonical": "rgba(207,227,222,0.55)"
+      },
+      "selection-fill": {
+        "role": "neutral",
+        "displayName": "Selection Fill",
+        "canonical": "rgba(207,227,222,0.06)"
       },
       "uranium-glow": {
         "role": "tertiary",
@@ -267,16 +262,16 @@
       "shear-coral": {
         "role": "tertiary",
         "displayName": "Shear Coral",
-        "canonical": "#FF6B4A",
+        "canonical": "#FF7457",
         "tonalRamp": [
           "#3D0B00",
-          "#701400",
-          "#A31E00",
-          "#D62700",
-          "#FF431A",
-          "#FF7A5C",
-          "#FFAC99",
-          "#FFDED6"
+          "#701300",
+          "#A31C00",
+          "#D62500",
+          "#FF411A",
+          "#FF785C",
+          "#FFAB99",
+          "#FFDDD6"
         ]
       },
       "paper-matte-black": {
@@ -502,7 +497,7 @@
       "refersTo": "button-done",
       "description": "The one clear primary action per habit; also Buy, Save, Add.",
       "html": "<button class=\"ds-btn-done\">Done</button>",
-      "css": ".ds-btn-done { font-family: Lexend, sans-serif; background: #6EE787; color: #06281A; height: 44px; padding: 0 24px; border: none; border-radius: 9999px; font-size: 16px; font-weight: 600; } .ds-btn-done:disabled { background: #15302B; color: #9EB3AC; }"
+      "css": ".ds-btn-done { font-family: Lexend, sans-serif; background: #6EE787; color: #06281A; height: 44px; padding: 0 24px; border: none; border-radius: 9999px; font-size: 16px; font-weight: 600; } .ds-btn-done:disabled { background: #1C3A34; color: #9EB3AC; }"
     },
     {
       "name": "Menu Button",
@@ -526,15 +521,15 @@
       "refersTo": "segment-active",
       "description": "A pill of choices whose selection slides on a spring.",
       "html": "<div class=\"ds-seg\"><span class=\"on\">Build it</span><span>Break it</span></div>",
-      "css": ".ds-seg { font-family: Lexend, sans-serif; display: flex; border: 1px solid #24443E; border-radius: 22px; padding: 3px; } .ds-seg span { flex: 1; text-align: center; padding: 10px 8px; color: #9EB3AC; border-radius: 20px; } .ds-seg .on { background: #15302B; color: #E6F2EE; box-shadow: inset 0 0 0 1.5px #CFE3DE; }"
+      "css": ".ds-seg { font-family: Lexend, sans-serif; display: flex; border: 1px solid #24443E; border-radius: 22px; padding: 3px; } .ds-seg span { flex: 1; text-align: center; padding: 10px 8px; color: #9EB3AC; border-radius: 20px; } .ds-seg .on { background: #1C3A34; color: #E6F2EE; box-shadow: inset 0 0 0 1.5px #CFE3DE; }"
     },
     {
       "name": "Field",
       "kind": "input",
       "refersTo": "field",
-      "description": "A faint fill and a mint outline when focused.",
+      "description": "A faint fill and a ready-green outline when focused.",
       "html": "<input class=\"ds-field\" placeholder=\"Read 20 minutes\">",
-      "css": ".ds-field { font-family: Lexend, sans-serif; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; color: #E6F2EE; } .ds-field:focus { outline: none; border-color: #4AE3A1; }"
+      "css": ".ds-field { font-family: Lexend, sans-serif; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; color: #E6F2EE; } .ds-field:focus { outline: none; border-color: #6EE787; }"
     },
     {
       "name": "Bottom Bar",
@@ -550,7 +545,7 @@
       "refersTo": "bolt-slots",
       "description": "Driven head, dashed ring, sheared head, open hole: each slot state its own form.",
       "html": "<span class=\"ds-bolt done\"></span><span class=\"ds-bolt skip\"></span><span class=\"ds-bolt fail\"></span><span class=\"ds-bolt\"></span>",
-      "css": ".ds-bolt { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #9EB3AC; background: #081313; margin: 3px; } .ds-bolt.done { background: #CFE3DE; border-color: #6C8F87; } .ds-bolt.skip { background: transparent; border-style: dashed; } .ds-bolt.fail { background: #FF6B4A; border-color: #FF6B4A; }"
+      "css": ".ds-bolt { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #9EB3AC; background: #081313; margin: 3px; } .ds-bolt.done { background: #CFE3DE; border-color: #6C8F87; } .ds-bolt.skip { background: transparent; border-style: dashed; } .ds-bolt.fail { background: #FF7457; border-color: #FF7457; }"
     },
     {
       "name": "Gauge",
@@ -566,7 +561,7 @@
       "refersTo": "snackbar",
       "description": "After every log and purchase, with Undo.",
       "html": "<div class=\"ds-snack\">+5 bolts <button>Undo</button></div>",
-      "css": ".ds-snack { font-family: Lexend, sans-serif; background: #15302B; color: #E6F2EE; border-radius: 4px; padding: 14px 16px; display: flex; justify-content: space-between; } .ds-snack button { background: none; border: none; color: #6EE787; font-weight: 600; }"
+      "css": ".ds-snack { font-family: Lexend, sans-serif; background: #1C3A34; color: #E6F2EE; border-radius: 4px; padding: 14px 16px; display: flex; justify-content: space-between; } .ds-snack button { background: none; border: none; color: #6EE787; font-weight: 600; }"
     }
   ],
   "narrative": {

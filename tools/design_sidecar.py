@@ -6,7 +6,7 @@ front = md.split('---')[1]
 colors = dict(re.findall(r'^  ([a-z-]+): "(#[0-9A-Fa-f]{6}|rgba\([^)]*\))"', front.split('typography:')[0], re.M))
 
 ROLE = {
-    'ready-green': ('primary', 'Ready Green'), 'on-ready': ('primary', 'On-Ready'), 'focus': ('primary', 'Focus'),
+    'ready-green': ('primary', 'Ready Green'), 'on-ready': ('primary', 'On-Ready'),
     'cool-steel': ('secondary', 'Cool Steel'), 'joint': ('secondary', 'Joint'),
     'uranium-glow': ('tertiary', 'Uranium Glow'), 'nut-gold': ('tertiary', 'Nut Gold'), 'shear-coral': ('tertiary', 'Shear Coral'),
 }
@@ -61,10 +61,10 @@ components = [
      'html': '<div class="ds-seg"><span class="on">Build it</span><span>Break it</span></div>',
      'css': css('ds-seg', 'display: flex; border: 1px solid %s; border-radius: 22px; padding: 3px;' % C['edge']) +
             ' .ds-seg span { flex: 1; text-align: center; padding: 10px 8px; color: %s; border-radius: 20px; } .ds-seg .on { background: %s; color: %s; box-shadow: inset 0 0 0 1.5px %s; }' % (C['dim'], C['raised'], C['frost'], C['cool-steel'])},
-    {'name': 'Field', 'kind': 'input', 'refersTo': 'field', 'description': 'A faint fill and a mint outline when focused.',
+    {'name': 'Field', 'kind': 'input', 'refersTo': 'field', 'description': 'A faint fill and a ready-green outline when focused.',
      'html': '<input class="ds-field" placeholder="Read 20 minutes">',
      'css': css('ds-field', 'background: rgba(255,255,255,0.05); border: 1px solid %s; border-radius: 10px; padding: 12px 16px; color: %s;' % (C['border'], C['frost'])) +
-            ' .ds-field:focus { outline: none; border-color: %s; }' % C.get('focus', C['ready-green'])},
+            ' .ds-field:focus { outline: none; border-color: %s; }' % C['ready-green']},
     {'name': 'Bottom Bar', 'kind': 'navigation', 'refersTo': 'nav-container', 'description': 'Lab, Shop, Habits, Diary at the foot of every window; never a side rail.',
      'html': '<nav class="ds-bar"><a class="on">Lab</a><a>Shop</a><a>Habits</a><a>Diary</a></nav>',
      'css': css('ds-bar', 'display: flex; background: %s; height: 60px;' % C['rail']) +
