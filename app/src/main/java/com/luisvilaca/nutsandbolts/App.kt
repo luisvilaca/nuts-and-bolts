@@ -79,7 +79,7 @@ class Ui(val scope: CoroutineScope) {
     var tab by mutableStateOf("today")
     var settings by mutableStateOf(false)
     var edit by mutableStateOf<String?>(null) // habit id in the form; "" is a new habit
-    fun openForm(id: String) { edit = id; tab = "habits"; settings = false }
+    fun openForm(id: String) { edit = id; settings = false } // the form opens over the current tab, which it returns to
     var page by mutableStateOf<LocalDate?>(null) // the open diary page
     var date by mutableStateOf(LocalDate.now()) // the day Habits shows
     val snack = SnackbarHostState()
@@ -117,6 +117,7 @@ fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remem
             Box(Modifier.fillMaxSize().padding(pad)) {
                 when {
                     ui.settings -> SettingsScreen(store, ui, lay)
+                    ui.edit != null -> { BackHandler { ui.edit = null }; HabitForm(store, ui, lay, store.s.habits.find { it.id == ui.edit }) }
                     ui.tab == "today" -> LabScreen(store, ui, lay)
                     ui.tab == "shop" -> ShopScreen(store, ui, lay)
                     ui.tab == "habits" -> HabitsScreen(store, ui, lay)

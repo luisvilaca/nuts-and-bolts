@@ -72,6 +72,7 @@ class Data {
 
 // A habit comes off the list at its place, which comes back so undo puts it where it was. Its marks stay.
 fun removeHabit(s: Data, h: Habit): Int = s.habits.indexOf(h).also { if (it >= 0) s.habits.removeAt(it) }
+fun addSuggested(s: Data, h: Habit, id: String, t: LocalDate) { s.habits += Habit(id, h.name, h.kind, h.per, h.target, h.stat, h.weight, start = t) }
 fun restoreHabit(s: Data, h: Habit, at: Int) { if (h !in s.habits) s.habits.add(at.coerceIn(0, s.habits.size), h) }
 
 fun weekStart(d: LocalDate): LocalDate = d.minusDays((d.dayOfWeek.value - 1).toLong())

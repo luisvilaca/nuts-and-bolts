@@ -246,11 +246,11 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 
 A window is **wide** when it is landscape and at least 600dp wide; otherwise it **stacks**. A window whose short side is under 600dp is a **phone**. The bottom bar sits at the foot of every window at every size; there is no side rail.
 
-- **Wide Lab and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right. On the Lab the side holds today's habit cards, which scroll on their own, over the four attribute cards pinned at the bottom.
-- **Stacked Lab:** on a tablet held upright the bay sits under the header, the habits scroll below it and the attributes stay pinned at the foot; on a phone the page scrolls, attributes under the bay and habits after.
+- **Wide Lab and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right. On the Lab the side holds today's habit cards and, 12dp after them, the four attribute cards; when the list outgrows the room it scrolls on its own and the attributes stay in view at the foot.
+- **Stacked Lab:** on a tablet held upright the bay sits under the header, the habits below it and the attributes right after them (at the foot once the list has to scroll); on a phone the page scrolls, attributes under the bay and habits after.
 - **Habits:** no bay. Day / Calendar / History in a sliding segmented control. Wider than 720dp the Day view splits: habit cards left (56%), the picked habit's detail right (44%). The calendar fills the space below its stepper and never scrolls.
 - **Diary:** a calendar card that fills the screen; "Write today" (or "Open today") is a quiet text action beside the month. An open page fills the window beside a 56dp tool rail on the right edge; the bottom bar hides.
-- **Form:** cards, one group each. Wider than 720dp, two columns: Name, Type, Attribute and Schedule left; Weight, Reward and the actions right.
+- **Form:** opens over whichever tab asked for it (the Lab, Habits) and returns there on Cancel or Save. Cards, one group each. Wider than 720dp, two columns: Name, Type, Attribute and Schedule left; Weight, Reward and the actions right.
 - **Settings:** one column capped at 720dp.
 - **Rhythm:** 10dp to 12dp between cards, 16dp inside them; group labels 10dp above their content.
 - **Shop grid:** as many columns as fit at 156dp each (at least two), 12dp gaps.
@@ -305,7 +305,10 @@ Material filter chips, 1dp edge border, frost label; selected takes the selectio
 - **Snackbar:** raised with frost text and a ready-green Undo, for every log and purchase; an Undo plays its own sound.
 
 ### Attribute cards (Lab)
-Four small cards in a row: the attribute's icon, its name in Label Large and "LV n" in Numeral on one line, its meaning (Energy, Mind, Body, Heart) in dim Label Medium, and a 4dp gauge to the next level. Narrower than 560dp only the icon and level show (the screen reader still names them); narrower than 400dp they go two by two with words.
+Four cards (16dp inside) in a row: the attribute's icon, its name in Label Medium (13sp, frost) and "LV n" in Numeral on one line, over a 6dp gauge to the next level. A name is never cut: four across a narrow side (under 600dp) shows only the icon and level; under 400dp they go two by two with names. What each means for you (energy, mind, body, heart) is in the screen reader's description and a plain tooltip on a long press.
+
+### Empty state (Lab)
+"The bench is empty" in Headline, one dim line ("Each habit becomes a frame on Rivet's bench. Every time you do it, a bolt goes in."), the Add your first habit button, and the starter chips, each led by the icon of the attribute it trains; a chip adds its habit with an Undo.
 
 ### Habit detail (split Habits)
 The picked habit: its name in Headline with Edit, its metadata, four stats in Numeral over dim captions (done rate, running now, best run, failed in coral when any), a gauge of the current run against the best, and a LOG card listing every day it was logged, newest first, with that day's bolt marks and a count; a day opens that date.

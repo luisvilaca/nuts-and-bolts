@@ -165,6 +165,16 @@ class ScreensTest {
         org.junit.Assert.assertEquals("w", st.s.habits[0].id)
     }
 
+    // An edit opened on the Lab returns to the Lab: the form opens over the tab that asked for it.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun editReturnsToLab() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        tap("Drink water"); rule.onNodeWithText("Edit habit").assertExists()
+        tap("Cancel")
+        rule.onNodeWithText("Edit habit").assertDoesNotExist()
+        org.junit.Assert.assertEquals(2, rule.onAllNodesWithText("Lab").fetchSemanticsNodes().size) // the title and the tab
+    }
+
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
         val st = seed()
