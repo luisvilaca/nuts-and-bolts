@@ -186,8 +186,8 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
     ui.tell(when {
         after > before -> "Level up! ${st.name} is now ${st.stages[after - 1]}, level $after" + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
         after < before -> "${st.name} fell back to ${st.stages[after - 1]}, level $after. Lost ${plural(-k.b, "bolt")}."
-        kind == "done" -> "+${plural(k.b, "bolt")}, +${k.p} ${st.name}" + if (k.n > 0) ", and a nut for the streak" else ""
-        kind == "fail" -> "Lost ${plural(-k.b, "bolt")} and ${-k.p} ${st.name}"
+        kind == "done" -> "+${plural(k.b, "bolt")} · +${k.p} ${st.name}" + if (k.n > 0) " · +1 nut for the streak" else ""
+        kind == "fail" -> "Sheared · −${plural(-k.b, "bolt")} · −${-k.p} ${st.name}"
         else -> "Skipped. Nothing gained, nothing lost."
     }) { store.change { undo(this, h, d) } }
 }
@@ -195,7 +195,7 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
 fun meta(s: Data, h: Habit, d: LocalDate): String {
     val st = streak(s, h, d)
     return listOfNotNull(
-        "${h.target} a ${h.per}", STATS.getValue(h.stat).name, if (h.kind == "bad") "Break it" else null,
+        if (h.kind == "bad") "Break it" else null, "${h.target} a ${h.per}", STATS.getValue(h.stat).name,
         h.days?.let { ds -> ds.sorted().joinToString(" ") { DOW[it] } },
         h.end?.let { "until ${it.format(DateTimeFormatter.ofPattern("d MMM", Locale.UK))}" },
         if (st > 1) "$st ${h.per}s running" else null,
@@ -220,9 +220,12 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
     var deleting by remember { mutableStateOf(false) }
     val counter = @Composable { m: Modifier ->
         Column(m.semantics(mergeDescendants = true) {
-            contentDescription = "$logged of ${plural(h.target, "slot")} logged" + sl.count { it.s == "fail" }.let { if (it > 0) ", $it failed" else "" }
+            contentDescription = boltsIn(Progress(sl.count { it.s == "done" }, sl.count { it.s == "fail" }, h.target), false) + ", $logged of ${h.target} logged"
         }) {
-            Text("$logged / ${plural(h.target, "slot")}", style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = if (logged >= h.target) W.text else W.dim)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(ICONS.getValue("bolts"), null, Modifier.size(14.dp), tint = W.steel)
+                Text("$logged / ${h.target}", Modifier.padding(start = 6.dp), style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = if (logged >= h.target) W.text else W.dim)
+            }
             Tracker(sl, Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp))
         }
     }
@@ -231,7 +234,12 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
             Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier.widthIn(min = 112.dp)).height(if (big) 52.dp else 44.dp),
                 shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
                 // a greyed button says why it is greyed
-                Text(if (ahead) "Not yet" else if (full) "Logged" else label[0])
+                Text(when {
+                    ahead -> "Not yet"
+                    !full -> label[0]
+                    sl.all { it.s == "done" } -> if (h.kind == "bad") "Held" else "All in"
+                    else -> "Closed" // full, but with a skip or a sheared bolt in it
+                })
             }
             Box {
                 OutlinedIconButton(onClick = { menu = true }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
@@ -243,10 +251,10 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                     }
                     item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
                     item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }
-                    item("Take back the last mark", "undo", W.text, mine) {
+                    item("Take back the last bolt", "undo", W.text, mine) {
                         var m: Mark? = null
                         store.change { m = undo(this, h, d) }
-                        m?.let { Sfx.play("undo"); ui.tell("${mapOf("done" to "Done", "skip" to "Skipped", "fail" to "Failed").getValue(it.s)} mark removed") }
+                        m?.let { Sfx.play("undo"); ui.tell("Bolt taken back") }
                     }
                     androidx.compose.material3.HorizontalDivider(color = W.line)
                     item("Edit habit", "diary", W.text, true) { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }
