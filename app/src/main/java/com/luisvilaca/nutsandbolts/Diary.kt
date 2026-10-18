@@ -3,6 +3,11 @@ package com.luisvilaca.nutsandbolts
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.translate
 import android.view.MotionEvent
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.draw.alpha
 import android.view.MotionPredictor
 import android.os.Build
 import android.os.SystemClock
@@ -143,15 +148,34 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
             Spacer(Modifier.weight(1f))
-            TextButton({ ui.page = t }) {
-                Icon(ICONS.getValue("diary"), null, Modifier.size(18.dp), tint = W.act)
-                Text(if (t in s.diary) "Open today" else "Write today", Modifier.padding(start = 6.dp), color = W.act)
+            // an unwritten today is the one thing to do here, so it is a filled pill; a written one opens quietly
+            if (t in s.diary) TextButton({ ui.page = t }) { Text("Open today", color = W.act) }
+            else Button({ ui.page = t }, Modifier.height(44.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
+                Icon(ICONS.getValue("diary"), null, Modifier.size(18.dp)); Text("Write today", Modifier.padding(start = 8.dp))
             }
         }
         Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) {
-            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
+            Month(month, { it, room -> if (it in s.diary) { if (room > 0) PageThumb(store, it) else Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) } }, ahead = false, Modifier.weight(1f)) { ui.page = it }
         }
     }
+}
+
+// A written day in the calendar: a little picture of its page (paper and ink), loaded off the main thread and drawn
+// again whenever the page changes; the pen icon stands in until it is ready.
+@Composable
+private fun PageThumb(store: Store, d: LocalDate) {
+    val stamp = store.pageStamp(d)
+    val img by produceState<ImageBitmap?>(null, d, stamp) { value = withContext(Dispatchers.IO) { store.thumb(d)?.asImageBitmap() } }
+    val b = img
+    if (b == null) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel)
+    else Image(b, "the page for ${d.format(dayFmt)}", Modifier.fillMaxHeight(0.92f).aspectRatio(PAGE_W / PAGE_H).clip(RoundedCornerShape(3.dp))
+        .border(1.dp, W.border, RoundedCornerShape(3.dp)))
+}
+
+// How far apart an ink and a paper are in lightness, as a contrast ratio (1 is none, 21 is black on white).
+fun contrast(a: String, b: String): Float {
+    val x = hex(a).luminance(); val y = hex(b).luminance()
+    return (maxOf(x, y) + 0.05f) / (minOf(x, y) + 0.05f)
 }
 
 // ---------- the pen ----------
@@ -422,7 +446,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                         }
                     }
                     Box(Modifier.padding(vertical = 6.dp).size(22.dp, 1.dp).background(W.line))
-                    val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true, touchOk) { erase = false; pop = null; store.change { pen.color = c } } } }
+                    val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true, touchOk, faint = contrast(c, pad.page.paper) < 1.5f) { erase = false; pop = null; store.change { pen.color = c } } } }
                     if (short) Box {
                         Swatch(s.pen.color, "Ink colour", !erase, round = true, touchOk) { pop = "ink" }
                         Menu(pop == "ink", { pop = null }) { Row { inks() } }
@@ -474,12 +498,14 @@ private fun Tool(icon: String, label: String, on: Boolean, touchOk: () -> Boolea
 }
 
 @Composable
-private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, touchOk: () -> Boolean = { true }, onClick: () -> Unit) {
+// faint: the ink hardly shows on this page's paper, so the swatch is struck through at 40%; it can still be chosen.
+private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, touchOk: () -> Boolean = { true }, faint: Boolean = false, onClick: () -> Unit) {
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
     val kind = remember { arrayOfNulls<PointerType>(1) }
-    Box(Modifier.size(40.dp, 36.dp).clip(RoundedCornerShape(10.dp)).lastPointer(kind).clickable(onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = label; selected = on }, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(if (on) 26.dp else 22.dp).clip(shape).background(hex(c))
+    Box(Modifier.size(40.dp, 36.dp).clip(RoundedCornerShape(10.dp)).lastPointer(kind).clickable(onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = if (faint) "$label, hard to see on this paper" else label; selected = on }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(if (on) 26.dp else 22.dp).alpha(if (faint) 0.4f else 1f).clip(shape).background(hex(c))
             .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
+        if (faint) Canvas(Modifier.size(26.dp)) { drawLine(W.dim, Offset(size.width * 0.15f, size.height * 0.85f), Offset(size.width * 0.85f, size.height * 0.15f), 1.5.dp.toPx(), StrokeCap.Round) }
     }
 }
 
