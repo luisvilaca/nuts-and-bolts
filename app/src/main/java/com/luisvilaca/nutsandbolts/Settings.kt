@@ -95,7 +95,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 OutlinedButton({ open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore a backup", color = W.text) }
                 Text(s.backedUp?.let { "Last backup " + it.format(DateTimeFormatter.ofPattern("d MMMM", Locale.UK)) } ?: "Never backed up", style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
-            Text("One file with every habit, mark, part and diary page. Keep a copy off this device, in Drive for example.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Text("One file with every habit, bolt, part and diary page. Keep a copy off this device, in Drive for example.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Daily reminder")
             Row(verticalAlignment = Alignment.CenterVertically) {

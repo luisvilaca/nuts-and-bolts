@@ -269,20 +269,23 @@ Soft and machined. Every pressable action is a pill or a circle; the bay is fram
 
 ### Buttons
 - **Shape:** full pill, 44dp tall (52dp for a lead Done).
-- **Done / primary:** ready green with on-ready text in Label Large. When it cannot log it falls to raised with dim text and says why: "Logged" when the period is full, "Not yet" on a future day. Break habits read Resisted / Skip / Gave in.
-- **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu: Skip, Fail (coral), Take back the last mark, then Edit habit and Delete habit (coral). Delete asks first.
+- **Done / primary:** ready green with on-ready text in Label Large. When it cannot log it falls to raised with dim text and says why: "All in" (a break habit: "Held") when every bolt of the period is in, "Closed" when the period is full with a skip or a sheared bolt in it, "Not yet" on a future day. Break habits read Resisted / Skip / Gave in.
+- **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu: Skip, Fail (coral), Take back the last bolt, then Edit habit and Delete habit (coral). Delete asks first.
 - **Outlined:** 1dp edge border, frost text (Cancel, date pickers, backup).
 - **Text actions:** ready green for confirm, coral for destructive, frost for dismiss.
 - **FAB:** extended, ready green, bottom-end with a 20dp inset (Add habit).
 
 ### Habit card
-A card per habit: the name in Title (a dim chevron after it where the name opens the form), the metadata in dim Body, a counter ("2 / 3 slots" in Numeral 14sp, frost when full) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. On the split Habits view a card is picked by tapping it and shows a cool-steel edge.
+A card per habit: the name in Title (a dim chevron after it where the name opens the form), the metadata in dim Body, a counter (the bolt icon and "2 / 3" in Numeral 14sp, frost when full) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. On the split Habits view a card is picked by tapping it and shows a cool-steel edge.
 
 ### Tracker
 A habit's period as an 8dp pill split into one segment per slot: done in a glow-to-steel gradient with a faint halo, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength.
 
 ### Segments
 A pill outlined in edge whose selection, a raised pill with a 1.5dp steel border, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
+
+### Words
+One word for a slot on screen: the bolt. "Slot" and "mark" are code names only. A count reads "4 of 9 bolts in", with ", 1 sheared" for fails, or "9 bolts planned" for a day ahead; Done says "+5 bolts · +1 Battery", Fail "Sheared · −5 bolts · −1 Battery", the menu "Take back the last bolt". A break habit's metadata leads with "Break it".
 
 ### Fields
 A white-5% fill, 10dp corners, 12 by 16dp inside, a white-8% border at rest and a mint outline and cursor when focused. Errors are coral body text under the form; a missing name shows first as a dim hint.

@@ -109,7 +109,7 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
             if (!lay.wide) Text(summary(s, d, p), Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             controls()
             if (view == "cal") Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) { Month(month, { day, roomy -> DayMark(slotProgress(s, day), day > t, Modifier.size(if (roomy) 42.dp else 26.dp)) }, ahead = true, Modifier.weight(1f),
-                say = { day -> slotProgress(s, day).let { p -> if (day > t) plural(p.slots, "slot") + " planned" else "${p.done} of ${p.slots} done" + if (p.fail > 0) ", ${p.fail} failed" else "" } }) { ui.date = it; view = "day" } }
+                say = { day -> boltsIn(slotProgress(s, day), day > t) }) { ui.date = it; view = "day" } }
             // wider than 720dp the day splits: the habits on the left, the one picked in detail on the right
             else BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                 val split = maxWidth >= 720.dp && view == "day" && run.isNotEmpty()
@@ -136,9 +136,12 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
 
 private fun summary(s: Data, d: LocalDate, p: Progress) = when {
     s.habits.isEmpty() -> "No habits yet"
-    d > LocalDate.now() -> "${plural(p.slots, "slot")} planned"
-    else -> "${p.done} of ${p.slots} bolts fastened" + if (p.fail > 0) ", ${p.fail} failed" else ""
+    else -> boltsIn(p, d > LocalDate.now())
 }
+
+// The one way a count of slots is said: in bolts, driven in or sheared, or planned for a day ahead.
+fun boltsIn(p: Progress, ahead: Boolean) =
+    if (ahead) "${plural(p.slots, "bolt")} planned" else "${p.done} of ${plural(p.slots, "bolt")} in" + if (p.fail > 0) ", ${p.fail} sheared" else ""
 
 @Composable
 fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(verticalAlignment = Alignment.CenterVertically) {
@@ -199,7 +202,7 @@ private fun History(s: Data) {
                 Text(h.name, Modifier.padding(start = 10.dp).weight(1f), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("$pct%", style = Numeral, color = W.text)
             }
-            Text("${r.done} of ${plural(r.slots, "slot")} done" + (if (r.fail > 0) " · ${r.fail} failed" else "") + " · best run ${unit(r.best)}" + (if (r.now > 0) " · ${unit(r.now)} running now" else ""),
+            Text("${r.done} of ${plural(r.slots, "bolt")} in" + (if (r.fail > 0) " · ${r.fail} sheared" else "") + " · best run ${unit(r.best)}" + (if (r.now > 0) " · ${unit(r.now)} running now" else ""),
                 style = MaterialTheme.typography.bodyMedium, color = W.dim)
             Canvas(Modifier.fillMaxWidth().height(14.dp).padding(top = 6.dp).semantics { contentDescription = "best run ${unit(r.best)}, current ${unit(r.now)}" }) {
                 val step = minOf(14f * density, size.width / maxOf(r.best, 1))
@@ -225,10 +228,10 @@ private fun Detail(s: Data, ui: Ui, h: Habit, modifier: Modifier) = Column(modif
         }
         Text(meta(s, h, t), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            listOf("done" to "${if (r.slots > 0) r.done * 100 / r.slots else 0}%", "running now" to unit(r.now), "best run" to unit(r.best), "failed" to "${r.fail}")
+            listOf("bolts in" to "${if (r.slots > 0) r.done * 100 / r.slots else 0}%", "running now" to unit(r.now), "best run" to unit(r.best), "sheared" to "${r.fail}")
                 .forEach { (k, v) ->
                     Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
-                        Text(v, style = Numeral, color = if (k == "failed" && r.fail > 0) W.coral else W.text, maxLines = 1)
+                        Text(v, style = Numeral, color = if (k == "sheared" && r.fail > 0) W.coral else W.text, maxLines = 1)
                         Text(k, style = MaterialTheme.typography.labelMedium, color = W.dim)
                     }
                 }
@@ -247,7 +250,7 @@ private fun Detail(s: Data, ui: Ui, h: Habit, modifier: Modifier) = Column(modif
                 Text(day.format(shortFmt), Modifier.width(110.dp), style = MaterialTheme.typography.bodyMedium, color = if (day == t) W.text else W.dim)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { ms.forEach { SlotMark(Slot(it.s, false), 20.dp) } }
                 Spacer(Modifier.weight(1f))
-                Text(ms.groupingBy { it.s }.eachCount().entries.joinToString(" · ") { (k, n) -> "$n ${mapOf("done" to "done", "skip" to "skipped", "fail" to "failed").getValue(k)}" },
+                Text(ms.groupingBy { it.s }.eachCount().entries.joinToString(" · ") { (k, n) -> "$n ${mapOf("done" to "in", "skip" to "skipped", "fail" to "sheared").getValue(k)}" },
                     style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
         }
