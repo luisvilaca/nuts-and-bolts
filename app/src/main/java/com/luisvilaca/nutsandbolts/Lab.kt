@@ -62,7 +62,7 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
         when {
             s.habits.isEmpty() -> Empty(store, ui)
             run.isEmpty() -> Note("No habits run today.")
-            else -> run.forEach { HabitRow(store, ui, it, t) }
+            else -> run.forEach { HabitRow(store, ui, it, t, cue = false) }
         }
     }
 

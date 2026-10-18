@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -47,8 +48,10 @@ private val CARD = RoundedCornerShape(12.dp)
 
 // A surface card: the one container for form groups, habit rows and calendars. Selected cards take a steel edge.
 @Composable
-fun Card(modifier: Modifier = Modifier, selected: Boolean = false, pad: Dp = 16.dp, content: @Composable ColumnScope.() -> Unit) =
+// accent: a 3dp bar of that colour down the card's left edge (a finished habit glows there).
+fun Card(modifier: Modifier = Modifier, selected: Boolean = false, pad: Dp = 16.dp, accent: Color? = null, content: @Composable ColumnScope.() -> Unit) =
     Column(modifier.clip(CARD).background(W.card).background(if (selected) W.selFill else Color.Transparent)
+        .drawWithContent { drawContent(); accent?.let { drawRect(it, size = Size(3.dp.toPx(), size.height)) } }
         .border(if (selected) 1.5.dp else 1.dp, if (selected) W.sel else W.border, CARD).padding(pad), content = content)
 
 // A segmented choice whose selection slides between options on a spring; labels may run to two lines.
