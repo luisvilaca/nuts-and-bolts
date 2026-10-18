@@ -85,7 +85,7 @@ class Ui(val scope: CoroutineScope) {
 // wide: a landscape window with room for two panes side by side. phone: a narrow window.
 class Lay(val wide: Boolean, val phone: Boolean)
 
-private val TABS = listOf("today" to "Today", "shop" to "Shop", "habits" to "Habits", "diary" to "Diary")
+private val TABS = listOf("today" to "Lab", "shop" to "Shop", "habits" to "Habits", "diary" to "Diary")
 private val TAB_ICON = mapOf("today" to "base", "shop" to "shop", "habits" to "habits", "diary" to "diary")
 
 @Composable
@@ -98,7 +98,7 @@ fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remem
     store.tick // every change recomposes the screens
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
         val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
-        // system Back: close what is open, then return to Today, then leave
+        // system Back: close what is open, then return to the Lab, then leave
         BackHandler(enabled = ui.tab != "today" && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = "today" }
         Scaffold(
             containerColor = W.ground,
@@ -109,7 +109,7 @@ fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remem
             Box(Modifier.fillMaxSize().padding(pad)) {
                 when {
                     ui.settings -> SettingsScreen(store, ui, lay)
-                    ui.tab == "today" -> TodayScreen(store, ui, lay)
+                    ui.tab == "today" -> LabScreen(store, ui, lay)
                     ui.tab == "shop" -> ShopScreen(store, ui, lay)
                     ui.tab == "habits" -> HabitsScreen(store, ui, lay)
                     else -> DiaryScreen(store, ui, lay)

@@ -15,7 +15,7 @@ colors:
   joint-slate: "#6C8F87"
   ready-green: "#6EE787"
   on-ready: "#06281A"
-  cherenkov-blue: "#45E3F5"
+  uranium-glow: "#A6FF4D"
   nut-gold: "#F2C14E"
   shear-coral: "#FF6B4A"
   paper-matte-black: "#393939"
@@ -175,6 +175,10 @@ Density is compact and calm: 40dp controls, 28dp gutters on wide windows, one cl
 - Hairline rows, no cards around sections.
 - Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles.
 
+## Uranium glow (2026-10-18)
+
+Every glow in the app is uranium green #A6FF4D, in tune with the teal: the reactor's core, orbits, lamps and cable pulses, the light rail and its cone, the bay's wash, the attribute gauges, the slot tracker and a critical frame. The earlier Cherenkov blue and cyan are retired; where older sections below say Cherenkov, read uranium green.
+
 ## Cards, split views and fields (2026-10-18)
 
 - **Tokens:** ground #0D1615, card surface #152220 with a 1dp white-8% edge (steel, 1.5dp, when selected), secondary text #9EB3AC, focus mint #4AE3A1.
@@ -186,6 +190,8 @@ Density is compact and calm: 40dp controls, 28dp gutters on wide windows, one cl
 ## Reactor, gauges and sound (2026-10-18)
 
 - **The reactor** is a glass fusion capsule standing on the floor between the bench legs (the bench's lower shelf is gone). A plasma core burns inside with one orbit per three Core levels (one to four), electrons racing round them; copper-wound coil packs clamp it either side, a pressure gauge reads Core, ten lamps on a hazard-striped plinth light one per Core level, and pulses of Cherenkov light climb a cable up the right bench leg into the bench. All motion runs off the shared clock and holds still when animations are off.
+- **A completed habit goes critical:** when every slot of its period is done, its frame on the bench glows uranium green (#A6FF4D): a darker green fill, a solid rim, two soft outer strokes and a radial wash that breathe slowly, and positrons rising off the top: four-point white sparks with a green core and halo that swell and fade over a three-second flight, drifting aside, each with a thin trail of light below it. The glow ignites just after the last bolt seats.
+- **Attribute rows** read the name, then what it means for you and the stage reached ("Mind · 8-bit").
 - **Attribute gauges** carry the reactor's light: an edge-graphite track, a fill running from Cherenkov cyan into cool steel, a soft cyan halo round the fill and a bright spark at its leading edge.
 - **Sound:** short synthesized effects (tools/sfx.py, into res/raw) for Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of the Done sound), a purchase (two coin clinks) and Undo (a falling blip). A Sounds switch in Settings, on by default.
 
@@ -253,7 +259,7 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 
 Two window classes drive everything. A window is **wide** when it is landscape and at least 600dp wide: the Material navigation rail sits at the left and screens split into two panes. Otherwise the Material navigation bar sits at the foot and screens stack in one scroll. A window whose short side is under 600dp is a **phone**.
 
-- **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right (8dp start, 32dp end padding). On Today the next level-up (headline-small, with a dim body-large line naming the habit and how many Dones) heads the side, and the tally, attributes (one per row when the side is at least 560dp tall) and week sit at the bottom, at the bay's floor line. Stacked, the next level-up follows the tally. Shop's part detail sits under its bay.
+- **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right (8dp start, 32dp end padding). On the Lab the side holds today's habit cards (their own scroll) over the attributes, pinned at the bottom: four compact cards in a row (icon, name, LV, the meaning in dim, a 4dp gauge); under 560dp wide only icon and LV, under 400dp two by two with words. A tablet held upright pins them under the habits too; a phone scrolls the page with the attributes under the bay. The nameplate reads the name and mood only. Shop's part detail sits under its bay.
 - **Habits and Diary:** no bay at any size; no robot badge either; the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
 - **Stacked:** 20dp side gutters; the bay sits under the header (600dp tall on a tablet in portrait, 400dp on a phone, the same on Today and Shop). Habits, Diary and the form have no robot at all.
 - **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.

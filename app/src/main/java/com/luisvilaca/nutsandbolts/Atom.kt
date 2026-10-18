@@ -118,7 +118,7 @@ class Orbit(val h: Habit, val slots: List<Slot>)
 // Each base is its own room: wall, floor and the colour of the light the reactor feeds, plus what hangs on the wall.
 class Room(val sky: Color, val wall: Color, val floor: Color, val light: Color)
 val ROOMS = listOf(
-    Room(Color(0xFF13302B), Color(0xFF0B1A1A), Color(0xFF0E2420), Color(0xFF45E3F5)), // Charging Bay: greenhouse teal, Cherenkov cyan
+    Room(Color(0xFF13302B), Color(0xFF0B1A1A), Color(0xFF0E2420), W.glow), // Charging Bay: greenhouse teal, uranium glow
     Room(Color(0xFF33231A), Color(0xFF181010), Color(0xFF26180F), Color(0xFFFFB547)), // Workshop: warm wood, amber lamp
     Room(Color(0xFF261B4A), Color(0xFF110C24), Color(0xFF1A1430), Color(0xFFB48CFF)), // Observatory: violet night
     Room(Color(0xFF0B2C33), Color(0xFF071518), Color(0xFF0C2226), Color(0xFF3FF0D0)), // Star Deck: teal station light
@@ -168,8 +168,21 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
         val x = 620f + gap * (k + 0.5f)
         val w = br * 2.6f
         val top = bench - 30f - 44f * o.slots.size
-        drawRoundRect(W.raised, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f))
-        drawRoundRect(if (o.slots.any { it.s == "fail" }) W.joint else W.steel, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f), alpha = 0.7f, style = Stroke(2.5f))
+        // a habit with every slot done goes critical: its frame glows uranium green, breathing, specks of light rising off
+        // it; the glow ignites as the last bolt seats
+        val hot = o.slots.all { it.s == "done" }
+        if (hot) {
+            val ignite = if (fresh?.first == o.h.id) ((since(t, fresh.second) - 500f) / 700f).coerceIn(0f, 1f) else 1f
+            val beat = if (t == 0L) 1f else 0.8f + 0.2f * sin(t / 450.0 + k).toFloat()
+            val g = ignite * beat
+            val mid = Offset(x, (top + bench) / 2)
+            drawOval(Brush.radialGradient(listOf(RADIANT.copy(alpha = 0.45f * g), Color.Transparent), mid, (bench - top) * 0.75f),
+                mid - Offset(w * 2.2f, (bench - top) * 0.75f), Size(w * 4.4f, (bench - top) * 1.5f))
+            for ((grow, a) in listOf(14f to 0.12f, 7f to 0.25f)) drawRoundRect(RADIANT, Offset(x - w / 2 - grow / 2, top - grow / 2), Size(w + grow, bench - top + grow), CornerRadius(6f + grow / 2), alpha = a * g, style = Stroke(grow))
+            for (i in 0 until 3) positron(Offset(x, top), w, ((t / 3000.0 + i / 3.0 + k * 0.21) % 1.0).toFloat(), i, ignite)
+        }
+        drawRoundRect(if (hot) Color(0xFF173A22) else W.raised, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f))
+        drawRoundRect(when { hot -> RADIANT; o.slots.any { it.s == "fail" } -> W.joint; else -> W.steel }, Offset(x - w / 2, top), Size(w, bench - top), CornerRadius(6f), alpha = if (hot) 0.95f else 0.7f, style = Stroke(2.5f))
         drawRect(W.joint, Offset(x - w / 2 - 8f, bench - 12f), Size(w + 16f, 12f)) // the clamp
         val newest = o.slots.indexOfLast { it.s == "done" && !it.other }
         o.slots.forEachIndexed { j, sl ->
@@ -178,6 +191,26 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
             bolt(Offset(x, bench - 38f - 44f * j), br, sl, drive)
         }
     }
+}
+
+// A positron rising off a critical frame over its life ph (0..1): a four-point spark that swells and fades as it
+// climbs, drifting a little to one side, with a thin trail of light below it and a soft halo.
+private fun DrawScope.positron(top: Offset, w: Float, ph: Float, i: Int, ignite: Float) {
+    val life = sin(ph * PI.toFloat()) // 0 at birth and death, 1 at mid-flight
+    val side = if (i % 2 == 0) 1f else -1f
+    val p = top + Offset(side * (w * 0.15f + 14f * ph * ph), -10f - 80f * ph)
+    val a = life * ignite
+    if (a <= 0.01f) return
+    drawLine(Brush.verticalGradient(listOf(RADIANT.copy(alpha = 0.5f * a), Color.Transparent), p.y, p.y + 26f), p, p + Offset(-side * 4f, 26f), 2f, StrokeCap.Round)
+    drawCircle(Brush.radialGradient(listOf(RADIANT.copy(alpha = 0.35f * a), Color.Transparent), p, 12f), 12f, p)
+    val r = 3f + 4f * life
+    rotate(ph * 90f, p) {
+        drawPath(Path().apply {
+            moveTo(p.x, p.y - r); quadraticBezierTo(p.x, p.y, p.x + r, p.y); quadraticBezierTo(p.x, p.y, p.x, p.y + r)
+            quadraticBezierTo(p.x, p.y, p.x - r, p.y); quadraticBezierTo(p.x, p.y, p.x, p.y - r); close()
+        }, Color.White, alpha = 0.9f * a)
+    }
+    drawCircle(RADIANT, r * 0.35f, p, alpha = a)
 }
 
 // The light rail hangs on two wires and throws a soft cone of the room's light down onto the bench.
@@ -192,6 +225,7 @@ private fun DrawScope.lightRail(light: Color, core: Float) {
 }
 
 private val BENCH = Color(0xFF24443E)
+private val RADIANT = W.glow // a completed habit's frame, glowing like uranium glass
 
 private fun DrawScope.benchBase() {
     for (x in listOf(628f, 888f)) {

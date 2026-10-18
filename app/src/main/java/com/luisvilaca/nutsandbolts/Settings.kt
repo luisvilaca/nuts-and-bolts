@@ -33,6 +33,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -112,8 +118,11 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 Switch(s.pen.palm, { v -> store.change { pen.palm = v } }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
                 Text("Palm rejection", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
-            Text("On: once the pen has written, only the pen writes, and a finger or a resting palm scrolls the page. Off: fingers write too.",
+            Text("On: once the pen has written, only the pen writes and a finger scrolls the page. While the pen is near the page, or for a contact as broad as a palm, touches do nothing at all, on the page and on its tools. Off: fingers write too.",
                 Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+
+            SectionLabel("Pen buttons")
+            PenButtons(store)
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -137,4 +146,37 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         }, confirmButton = { TextButton({ remind(true, "%02d:%02d".format(st.hour, st.minute)); clock = false }) { Text("OK", color = W.act) } },
             dismissButton = { TextButton({ clock = false }) { Text("Cancel", color = W.text) } })
     }
+}
+
+// What each of the pen's two side buttons does on a diary page, and a pad to find out which button is which: hover the
+// pen over it and press a button, and that button's row lights up.
+private val PEN_ACTS = listOf("eraser" to "Pen ↔ eraser", "ink" to "Next ink", "undo" to "Undo", "none" to "Nothing")
+
+@Composable
+private fun PenButtons(store: Store) {
+    val s = store.s
+    var lit by remember { mutableIntStateOf(0) }
+    // a pen whose buttons arrive as keys lights the pad too, for a moment
+    var tick by remember { mutableIntStateOf(0) }
+    androidx.compose.runtime.DisposableEffect(Unit) { PenKeys.on = { b -> lit = b; tick++ }; onDispose { PenKeys.on = null } }
+    androidx.compose.runtime.LaunchedEffect(tick) { if (tick > 0) { kotlinx.coroutines.delay(900); lit = 0 } }
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(12.dp)).background(W.card)
+        .border(1.dp, if (lit > 0) W.act else W.border, RoundedCornerShape(12.dp))
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val bs = awaitPointerEvent().motionEvent?.buttonState ?: continue
+                    if (tick == 0 || bs != 0) lit = when { bs and android.view.MotionEvent.BUTTON_STYLUS_PRIMARY != 0 -> 1; bs and android.view.MotionEvent.BUTTON_STYLUS_SECONDARY != 0 -> 2; else -> 0 }
+                }
+            }
+        }, contentAlignment = Alignment.Center) {
+        Text(if (lit > 0) "Button ${lit}" else "Press a pen button (hovering over this pad, or anywhere) to see which is which",
+            Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyMedium, color = if (lit > 0) W.act else W.dim)
+    }
+    listOf(1 to s.pen.b1, 2 to s.pen.b2).forEach { (b, cur) ->
+        Text("BUTTON $b", Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label.copy(color = if (lit == b) W.act else W.dim))
+        Segments(PEN_ACTS, cur) { v -> store.change { if (b == 1) pen.b1 = v else pen.b2 = v } }
+    }
+    Text("A press works while the pen hovers over the page or writes on it. If a button does nothing here, the tablet may keep it for its own shortcut: turn that off in the tablet's pen settings.",
+        Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 }
