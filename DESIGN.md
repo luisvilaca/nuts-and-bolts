@@ -2,19 +2,22 @@
 name: Nuts And Bolts
 description: A habit tracker and diary where a small robot bolts together a frame for every habit at a reactor-powered workbench.
 colors:
-  graphite: "#0B1A1A"
-  rail-graphite: "#081313"
-  raised-graphite: "#15302B"
+  ground: "#0D1615"
+  rail: "#081313"
+  card: "#152220"
+  raised: "#15302B"
+  border: "rgba(255,255,255,0.08)"
   hairline: "#1B3632"
-  edge-graphite: "#24443E"
+  edge: "#24443E"
   bay-sky: "#13302B"
   bay-floor: "#0E2420"
   frost: "#E6F2EE"
-  dim-slate: "#8FB0A8"
+  dim: "#9EB3AC"
   cool-steel: "#CFE3DE"
-  joint-slate: "#6C8F87"
+  joint: "#6C8F87"
   ready-green: "#6EE787"
   on-ready: "#06281A"
+  focus: "#4AE3A1"
   uranium-glow: "#A6FF4D"
   nut-gold: "#F2C14E"
   shear-coral: "#FF6B4A"
@@ -31,7 +34,7 @@ typography:
     fontFamily: "Lexend, sans-serif"
     fontSize: "28sp"
     fontWeight: 700
-    lineHeight: "40sp"
+    lineHeight: "34sp"
     letterSpacing: "-0.01em"
   headline:
     fontFamily: "Lexend, sans-serif"
@@ -81,7 +84,7 @@ typography:
 rounded:
   swatch: "6dp"
   cell: "10dp"
-  tile: "12dp"
+  card: "12dp"
   menu: "16dp"
   bay: "20dp"
   pill: "9999dp"
@@ -89,67 +92,66 @@ spacing:
   xs: "4dp"
   sm: "8dp"
   md: "12dp"
+  card: "16dp"
   lg: "20dp"
   xl: "28dp"
-  xxl: "40dp"
 components:
   button-done:
     backgroundColor: "{colors.ready-green}"
     textColor: "{colors.on-ready}"
     typography: "{typography.label-large}"
     rounded: "{rounded.pill}"
-    height: "40dp"
+    height: "44dp"
   button-done-disabled:
-    backgroundColor: "{colors.raised-graphite}"
-    textColor: "{colors.dim-slate}"
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.dim}"
     rounded: "{rounded.pill}"
-    height: "40dp"
+    height: "44dp"
   button-done-lead:
     backgroundColor: "{colors.ready-green}"
     textColor: "{colors.on-ready}"
     rounded: "{rounded.pill}"
     height: "52dp"
-  icon-button-skip:
+  button-menu:
     textColor: "{colors.cool-steel}"
     rounded: "{rounded.pill}"
-    size: "40dp"
-  icon-button-fail:
-    textColor: "{colors.shear-coral}"
-    rounded: "{rounded.pill}"
-    size: "40dp"
+    size: "44dp"
   button-outlined:
     textColor: "{colors.frost}"
     rounded: "{rounded.pill}"
-    height: "40dp"
+    height: "44dp"
   fab:
     backgroundColor: "{colors.ready-green}"
     textColor: "{colors.on-ready}"
+  card:
+    backgroundColor: "{colors.card}"
+    rounded: "{rounded.card}"
+    padding: "16dp"
   nav-container:
-    backgroundColor: "{colors.rail-graphite}"
-    textColor: "{colors.dim-slate}"
+    backgroundColor: "{colors.rail}"
+    textColor: "{colors.dim}"
   nav-item-selected:
-    backgroundColor: "{colors.raised-graphite}"
+    backgroundColor: "{colors.raised}"
     textColor: "{colors.frost}"
   segment-active:
-    backgroundColor: "{colors.raised-graphite}"
+    backgroundColor: "{colors.raised}"
     textColor: "{colors.frost}"
-  chip-selected:
-    backgroundColor: "{colors.raised-graphite}"
+  field:
+    backgroundColor: "rgba(255,255,255,0.05)"
     textColor: "{colors.frost}"
-  part-tile:
-    backgroundColor: "{colors.raised-graphite}"
-    rounded: "{rounded.tile}"
+    rounded: "10dp"
+    padding: "12dp 16dp"
   bay-panel:
     backgroundColor: "{colors.bay-sky}"
     rounded: "{rounded.bay}"
     padding: "20dp"
   snackbar:
-    backgroundColor: "{colors.raised-graphite}"
+    backgroundColor: "{colors.raised}"
     textColor: "{colors.frost}"
   snackbar-action:
     textColor: "{colors.ready-green}"
   menu:
-    backgroundColor: "{colors.raised-graphite}"
+    backgroundColor: "{colors.raised}"
     rounded: "{rounded.menu}"
     padding: "16dp"
 ---
@@ -160,73 +162,57 @@ components:
 
 **Creative North Star: "Reactor Workshop"**
 
-A robot's workbench after dark. The app is a deep greenhouse-teal workshop (the Grow Room's tint, which the owner preferred, 2026-10-18) in which the robot stands on its round platform beside a steel bench. Under the bench sits a small reactor that powers it all; its Cherenkov-blue core and the light rail it feeds hang over the bench and glow brighter as the Core attribute rises. Every habit running today is a steel frame clamped upright on the bench and every slot is a bolt hole in it: Done drives a bolt home, Skip leaves a dashed ring, Fail shears the bolt, and an open slot is an empty tapped hole. The week is seven small plates with three holes each, more bolted the better the day went. Cherenkov blue belongs to the reactor alone; the interface itself stays graphite, cool steel and frost, with ready green as the one live colour.
+A robot's workbench after dark. The app is a deep greenhouse-teal lab in which the robot stands on its round platform beside a steel bench. Under the bench a glass fusion capsule powers it all; its uranium-green light and the light rail it feeds hang over the bench and brighten as the Core attribute rises. Every habit running today is a steel frame clamped upright on the bench and every slot is a bolt hole in it: Done drives a bolt home, Skip leaves a dashed ring, Fail shears the bolt, and an open slot is an empty tapped hole. A habit with every bolt in goes critical: its frame glows uranium green and positrons rise off it. Uranium green is light, not paint; the interface itself stays teal, cool steel and frost, with ready green as the one live colour.
 
-Hierarchy comes from type scale and hairlines, not boxes. Rows are separated by one-pixel graphite rules, sections are announced by small tracked caps, and the only filled surfaces are controls, shop part tiles and the framed bay. The bolt is the single ornament and always carries meaning: the slot, the day, the five hex holes of the diary page's gauge and the bolt emblem printed on every page.
+Content sits on cards: every habit, form group, history item and calendar is a card one step above the ground. The bolt is the single ornament and always carries meaning: the slot, the day, the five hex holes of the diary page's gauge. The diary page's emblem is an atom, three orbits round a nucleus.
 
-Density is compact and calm: 40dp controls, 28dp gutters on wide windows, one clear Done per row with Skip and Fail quieter beside it. One rounded, open face (Lexend) carries everything.
+Density is compact and calm: 44dp controls, 28dp gutters on wide windows, one clear Done per habit with everything else in its menu. One rounded, open face (Lexend) carries everything.
 
 **Key Characteristics:**
-- Graphite-blue ground with a deeper rail; tonal steps, no shadows.
+- Greenhouse-teal ground with a deeper rail; content on cards; tonal steps, no shadows.
 - One live accent (ready green); gold for nuts, coral for failure, cool steel for selection, metal and driven bolts.
-- Cherenkov blue only as the reactor's light inside the bay.
+- Uranium glow as the only light: the reactor, its rail, the gauges, a critical frame.
 - Lexend throughout: bold display, semibold titles, tracked small caps for labels.
 - Bolts and frames as the one ornament and the one state language.
-- Hairline rows, no cards around sections.
 - Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles.
-
-## Uranium glow (2026-10-18)
-
-Every glow in the app is uranium green #A6FF4D, in tune with the teal: the reactor's core, orbits, lamps and cable pulses, the light rail and its cone, the bay's wash, the attribute gauges, the slot tracker and a critical frame. The earlier Cherenkov blue and cyan are retired; where older sections below say Cherenkov, read uranium green.
-
-## Cards, split views and fields (2026-10-18)
-
-- **Tokens:** ground #0D1615, card surface #152220 with a 1dp white-8% edge (steel, 1.5dp, when selected), secondary text #9EB3AC, focus mint #4AE3A1.
-- **Cards** (12dp corners, 16dp inside) hold every form group, every habit row, the history items and both calendars. This replaces the earlier hairline rows.
-- **Habit row:** name and meta; a counter ("2 / 3 slots" in Numeral over a segmented tracker: done charged cyan to steel with a faint halo, failed coral, skipped dashed, open edge graphite); one Done pill (44dp, 52dp lead) that reads Logged or Not yet when it cannot log; a 44dp menu button with Skip, Fail, Take back the last mark, Edit and Delete.
-- **Split above 720dp:** Habits' day view puts the habit cards left (56%) and the picked habit right (44%): its done rate, current and best run, failures, a run gauge and its log newest first. The form puts Name, Type, Attribute and Schedule left, Weight, a Reward card (what a Done pays, what a fail takes, the period's most, its nuts, Dones to the attribute's next level) and the actions right.
-- **Segments** slide their selection on a spring (damping 0.8) and cross-fade label colour; four choices in a column under 420dp fall into a two-by-two chip grid. **Fields** sit on a white-5% fill, 12 by 16dp inside, with a mint outline when focused.
-
-## Reactor, gauges and sound (2026-10-18)
-
-- **The reactor** is a glass fusion capsule standing on the floor between the bench legs (the bench's lower shelf is gone). A plasma core burns inside with one orbit per three Core levels (one to four), electrons racing round them; copper-wound coil packs clamp it either side, a pressure gauge reads Core, ten lamps on a hazard-striped plinth light one per Core level, and pulses of Cherenkov light climb a cable up the right bench leg into the bench. All motion runs off the shared clock and holds still when animations are off.
-- **A completed habit goes critical:** when every slot of its period is done, its frame on the bench glows uranium green (#A6FF4D): a darker green fill, a solid rim, two soft outer strokes and a radial wash that breathe slowly, and positrons rising off the top: four-point white sparks with a green core and halo that swell and fade over a three-second flight, drifting aside, each with a thin trail of light below it. The glow ignites just after the last bolt seats.
-- **Attribute rows** read the name, then what it means for you and the stage reached ("Mind · 8-bit").
-- **Attribute gauges** carry the reactor's light: an edge-graphite track, a fill running from Cherenkov cyan into cool steel, a soft cyan halo round the fill and a bright spark at its leading edge.
-- **Sound:** short synthesized effects (tools/sfx.py, into res/raw) for Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of the Done sound), a purchase (two coin clinks) and Undo (a falling blip). A Sounds switch in Settings, on by default.
+- Synthesized sound for the moments that change something.
 
 ## Colors
 
-A dark workshop lit by one small reactor, where green means ready or pressable and every other colour holds a single job.
+A dark lab lit by one small reactor, where ready green means pressable or here and every other colour holds a single job.
 
 ### Primary
-- **Ready Green** (ready-green): the Done pill, primary buttons and the FAB, and the place markers (selected bar icon, the shop tab indicator, today's ring on the calendars and the week strip, the chevron on Today's tally link, the active diary tool's underline, the diary calendar's page mark). Also field focus, the reminder switch track, confirm text actions and the snackbar's Undo. In the robot it lights the eyes, the smile and the dashed platform ring. Text on it is **On-Ready** (on-ready), a near-black green.
+- **Ready Green** (ready-green): the Done pill, primary buttons and the FAB, switches, confirm text actions, the snackbar's Undo, and the place markers (selected tab icon, the shop tab indicator, today's ring on the calendars, the active diary tool's bar, the diary calendar's page mark). In the starter robot it lights the eyes, the smile and the dashed platform ring. Text on it is **On-Ready** (on-ready), a near-black green.
+- **Focus** (focus): a mint outline and cursor on the field being typed in.
 
 ### Secondary
-- **Cool Steel** (cool-steel): bolts and their counts, a driven bolt's head, the frames' 70% rim and the bench's top edge, attribute icons and gauge fills, and every selected state that is not a place: the active segment's border, selected chips' border, the selection ring on a shop part, the robot's nameplate.
-- **Joint Slate** (joint-slate): the robot's joints and claws, a bolt head's rim, the light rail's hanging wires, the frames' clamps, the reactor's casing and conduit, and the rim of a frame whose habit failed today.
+- **Cool Steel** (cool-steel): driven bolt heads and their counts, the frames' 70% rim and the bench's top edge, attribute icons, gauge fills (with the glow), and every selected state that is not a place: the active segment's border, selected chips, the selected habit card's edge, the selection ring on a shop part, the robot's nameplate.
+- **Joint** (joint): the robot's joints and claws, a bolt head's rim, the light rail's wires, the frames' clamps, the reactor's coil packs, and the rim of a frame whose habit failed today.
+
+### Light
+- **Uranium Glow** (uranium-glow): every glow in the app and nothing else. The reactor's plasma core, orbits, electrons, level lamps and the pulses climbing its cable; the light rail over the bench and its cone; the radial wash over the bay; the attribute gauges (a glow-to-steel fill with a soft halo and a bright leading spark); the done segments of a habit's tracker; a critical frame and its positrons. Other base rooms keep their own lamp colour on the rail (amber, violet, teal station light); the reactor glows green in every room.
 
 ### Tertiary
-- **Cherenkov Blue** (cherenkov-blue): the reactor's light only: its core window (35% to 90% with the Core attribute, breathing slowly), the light rail over the bench (solid, with a halo), the radial glow washing the bay at 10% to 32%, the faint light cone, the base's orbiting rings at higher tiers, and the Isotope Antenna's bulb. Never in the interface chrome.
-- **Nut Gold** (nut-gold): nuts, their counts, and gold parts of the robot's world. Never a general highlight.
-- **Shear Coral** (shear-coral): sheared bolts on rows, frames and the week; the Fail button's cross and its 45% border; destructive text actions; form errors.
+- **Nut Gold** (nut-gold): nuts, their counts, gold parts of the robot's world. Never a general highlight.
+- **Shear Coral** (shear-coral): sheared bolts and failed tracker segments; Fail and Gave in in the habit menu; destructive text actions; form errors.
 
 ### Neutral
-- **Graphite** (graphite): the ground of every screen.
-- **Rail Graphite** (rail-graphite): the bottom bar, the diary toolbar, the robot's face glass, an open bolt hole, the reactor's fuel rods and the bay floor's lower edge; a step deeper than the ground.
-- **Raised Graphite** (raised-graphite): controls at rest, the selected nav indicator, active segments and selected chips, disabled Done, shop part tiles, menus, the snackbar, the frames, the day plates and the reactor vessel.
-- **Bay Sky** (bay-sky) to **Bay Floor** (bay-floor): the bay's vertical gradient (sky into ground) and its floor band (floor into rail), with a 10% cool-steel skirting line where they meet.
-- **Hairline** (hairline): row dividers, calendar week rules, empty gauge and run tracks.
-- **Edge Graphite** (edge-graphite): outlines at rest (outlined buttons, fields, chips, segments, Skip), disabled glyphs, future-day plates, the bench top and legs.
-- **Frost** (frost): primary text. **Dim Slate** (dim-slate): secondary text, metadata, labels, unselected nav, open and skipped bolt holes.
+- **Ground** (ground): every screen.
+- **Rail** (rail): the bottom bar, the diary tool rail, the robot's face glass, an open bolt hole; a step below the ground.
+- **Card** (card): every card, with a 1dp white-8% **Border** (border).
+- **Raised** (raised): controls at rest, the selected tab indicator, the active segment, selected chips, disabled Done, shop part tiles, menus, the snackbar, the frames and the day plates.
+- **Bay Sky** (bay-sky) to **Bay Floor** (bay-floor): the bay's vertical gradient and its floor band, with the room's light as a skirting line where they meet.
+- **Hairline** (hairline): calendar week rules, dividers in menus.
+- **Edge** (edge): outlines at rest (outlined buttons, chips, segments, the menu button), gauge and tracker tracks, future-day plates, the bench top and legs.
+- **Frost** (frost): primary text. **Dim** (dim): secondary text, metadata, labels, unselected tabs, open and skipped bolt holes.
 
 ### Diary papers and inks
-The diary page keeps the owner's own materials, separate from the app palette (owner-pinned). Papers (three replaceable slots, each page keeps the paper it was written on): Matte Black (paper-matte-black), Cream (paper-cream), Night (paper-night). Inks with the owner's roles: Ice Blue (ink-ice-blue) for text, Matrix Green (ink-matrix-green) for headers, Electric Cyan (ink-electric-cyan) for vectors and equations, Neon Fuchsia (ink-neon-fuchsia) for annotations, Matte Black (ink-matte-black) for cream paper. The printed template follows the paper: on dark paper the weekday, header rule and small bolt emblem are Matrix Green, the date and field labels Ice Blue at 72%, the rules white at 15% and the large foot emblem Electric Cyan at 20%; on light paper all of it is Matte Black at matching strengths.
+The diary page keeps the owner's own materials, separate from the app palette (owner-pinned). Papers (three replaceable slots, each page keeps the paper it was written on): Matte Black (paper-matte-black), Cream (paper-cream), Night (paper-night). Inks with the owner's roles: Ice Blue (ink-ice-blue) for text, Matrix Green (ink-matrix-green) for headers, Electric Cyan (ink-electric-cyan) for vectors and equations, Neon Fuchsia (ink-neon-fuchsia) for annotations, Matte Black (ink-matte-black) for cream paper. The printed template follows the paper: on dark paper the weekday, header rule and atom emblem are Matrix Green, the date and field labels Ice Blue at 72%, the rules white at 15% and the large foot emblem Electric Cyan at 20%; on light paper all of it is Matte Black at matching strengths.
 
 ### Named Rules
-**The Ready Or Pressable Rule.** Ready green appears only where something can be pressed or marks where the owner is (plus the starter robot's eyes, smile and the platform ring; painted parts carry their finish's own eye colour). Done is shown by a steel bolt, not by green. Selection that is not a place is cool steel.
+**The Ready Or Pressable Rule.** Ready green appears only where something can be pressed or marks where the owner is (plus the starter robot's eyes, smile and platform ring; painted parts carry their finish's own eye colour). Selection that is not a place is cool steel.
 
-**The Light Stays In The Bay Rule.** Cherenkov blue and each room's light colour are light, not paint: they live inside the bay (the reactor core, the light rail and its cone, the room's glow) and never colour a control, a label or a mark.
+**The Light Is Light Rule.** Uranium green is light, not paint: it glows (the reactor, the rail, gauges, completed work) and never fills a control, a label or text.
 
 **The One Meaning Rule.** Gold is nuts, coral is failed or destructive. Neither decorates, warns generally, or adds variety.
 
@@ -240,159 +226,154 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 
 ### Hierarchy
 - **Display** (700, 28sp, 34sp, -0.01em): screen titles in the header.
-- **Headline** (600, 22sp, 28sp): the empty-state line ("The bench is empty").
-- **Title Large** (600, 21sp, 28sp): a shop part's name in its detail, the selected day's name on Habits.
-- **Title** (600, 18sp, 24sp): habit names in rows and history, the month and day stepper.
-- **Body Large** (400, 16sp, 24sp): header subtitle (the date), notes, part names in the grid, attribute names (at 500).
-- **Body** (400, 14sp, 20sp): habit metadata joined by " · ", summaries, helper text.
-- **Label Large** (600, 16sp, 20sp): button text, shop tabs, calendar day numbers.
-- **Label Medium** (500, 13sp, 16sp): weekday names under the week's plates, attribute glosses.
-- **Label** (500, 13sp, 0.14em tracking, uppercase, dim slate): section labels ("THIS WEEK"), the day's status line ("TODAY · 4 OF 9 BOLTS FASTENED · 1 FAILED"), form field labels, calendar weekday heads, part catalogue numbers, the robot's nameplate (at body-large size in cool steel).
-- **Numeral** (600, 18sp, tabular figures): wallet balances, attribute values and percentages, the target stepper, the reminder time. At small sizes it drops to 14sp.
+- **Headline** (600, 22sp, 28sp): the empty-state line ("The bench is empty"), the picked habit's name in Habits' detail pane.
+- **Title Large** (600, 21sp, 28sp): a shop part's name in its detail.
+- **Title** (600, 18sp, 24sp): habit names on cards and in history, the month and day stepper.
+- **Body Large** (400, 16sp, 24sp): header subtitle (the date), notes, part names in the grid, field text.
+- **Body** (400, 14sp, 20sp): habit metadata joined by " · ", summaries, helper text, the reward lines.
+- **Label Large** (600, 16sp, 20sp): button text, segment labels, shop tabs, calendar day numbers, attribute names on the Lab.
+- **Label Medium** (500, 13sp, 16sp): attribute meanings, stat captions in the detail pane.
+- **Label** (500, 13sp, 0.14em tracking, uppercase, dim): form group labels, the detail pane's LOG, calendar weekday heads, the robot's nameplate (at body-large size in cool steel).
+- **Numeral** (600, 18sp, tabular figures): wallet balances, levels, the card counter (at 14sp), stats, the target stepper, the reminder time.
 
 ### Named Rules
 **The One Face Rule.** Lexend sets everything, including the printed diary template. Contrast comes from weight (400 to 700), size and tracked caps, never from a second family.
 
-**The Tabular Count Rule.** Every count and balance uses Numeral with tabular figures so columns of numbers hold still as they change.
+**The Tabular Count Rule.** Every count and balance uses Numeral with tabular figures so numbers hold still as they change.
 
 ## Layout
 
-Two window classes drive everything. A window is **wide** when it is landscape and at least 600dp wide: the Material navigation rail sits at the left and screens split into two panes. Otherwise the Material navigation bar sits at the foot and screens stack in one scroll. A window whose short side is under 600dp is a **phone**.
+A window is **wide** when it is landscape and at least 600dp wide; otherwise it **stacks**. A window whose short side is under 600dp is a **phone**. The bottom bar sits at the foot of every window at every size; there is no side rail.
 
-- **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right (8dp start, 32dp end padding). On the Lab the side holds today's habit cards (their own scroll) over the attributes, pinned at the bottom: four compact cards in a row (icon, name, LV, the meaning in dim, a 4dp gauge); under 560dp wide only icon and LV, under 400dp two by two with words. A tablet held upright pins them under the habits too; a phone scrolls the page with the attributes under the bay. The nameplate reads the name and mood only. Shop's part detail sits under its bay.
-- **Habits and Diary:** no bay at any size; no robot badge either; the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
-- **Stacked:** 20dp side gutters; the bay sits under the header (600dp tall on a tablet in portrait, 400dp on a phone, the same on Today and Shop). Habits, Diary and the form have no robot at all.
-- **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.
-- **Rows:** 12dp vertical padding, a hairline under each. A habit row whose column is under 560dp puts its buttons on a second line with Done filling the width.
-- **Section rhythm:** section labels sit 28dp below what precedes them and 10dp above what they label (22dp and 8dp in the form). Gaps between controls are 8dp or 12dp.
+- **Wide Lab and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right. On the Lab the side holds today's habit cards, which scroll on their own, over the four attribute cards pinned at the bottom.
+- **Stacked Lab:** on a tablet held upright the bay sits under the header, the habits scroll below it and the attributes stay pinned at the foot; on a phone the page scrolls, attributes under the bay and habits after.
+- **Habits:** no bay. Day / Calendar / History in a sliding segmented control. Wider than 720dp the Day view splits: habit cards left (56%), the picked habit's detail right (44%). The calendar fills the space below its stepper and never scrolls.
+- **Diary:** a calendar card that fills the screen; "Write today" (or "Open today") is a quiet text action beside the month. An open page fills the window beside a 56dp tool rail on the right edge; the bottom bar hides.
+- **Form:** cards, one group each. Wider than 720dp, two columns: Name, Type, Attribute and Schedule left; Weight, Reward and the actions right.
+- **Settings:** one column capped at 720dp.
+- **Rhythm:** 10dp to 12dp between cards, 16dp inside them; group labels 10dp above their content.
 - **Shop grid:** as many columns as fit at 156dp each (at least two), 12dp gaps.
-- **Calendars:** a hairline grid that always fills the space below its month stepper and never scrolls, on Habits and Diary, phone and tablet, either orientation: each week a ruled row of equal height, each day its number with its mark (a day plate, or the pen icon for a diary page) beneath, or beside the number when rows are under 60dp. Diary's "Write today" (or "Open today") is a quiet text action at the right of the month stepper.
 
 ### Named Rules
-**The No Card Rule.** Sections are never boxed. Hierarchy is type scale, tracked labels and hairlines; the only filled surfaces are controls, shop part tiles, menus and the bay.
+**The Content On Cards Rule.** Habits, form groups, history items and calendars sit on cards (12dp corners, 16dp inside, the card surface and a white-8% border). The bay is framed, not carded. Nothing nests a card in a card.
 
 ## Elevation & Depth
 
-Flat. Depth is tonal: rail graphite sits below the graphite ground and raised graphite lifts controls and tiles. The one atmospheric effect is light, inside the bay: a vertical sky gradient, the floor band graded into the rail, and the reactor's Cherenkov radial glow. The robot's shell carries the only gradient on a figure (white to pale steel blue). Material's own FAB and snackbar keep their default elevation; nothing else casts a shadow.
-
-### Named Rules
-**The Tonal Step Rule.** To lift a surface, move it one graphite step (rail, ground, raised). Never add a shadow; the only glow in the app is the reactor's.
+Flat. Depth is tonal: rail < ground < card < raised, each one step. The one atmospheric effect is light: inside the bay a vertical sky gradient, the floor band graded into the rail, and the reactor's uranium radial wash; outside it, the gauges' and trackers' glow. The robot's shell carries the only gradient on a figure. Material's FAB and snackbar keep their default elevation; nothing else casts a shadow.
 
 ## Shapes
 
-Soft and machined against straight hairlines. Every pressable action is a pill or a circle; the bay is framed with 20dp corners; part tiles, week days and diary tools have 12dp corners, calendar cells 10dp, menus 16dp, paper swatches 6dp. Progress is a pill track: the attribute gauge is 8dp tall, a habit's run bar 14dp with the best run in cool steel at 55% and the current run in ready green, drawn exactly its days long. The bolt family is drawn from circles: a solid head with a cross, a dashed ring, a split head and a ringed hole.
+Soft and machined. Every pressable action is a pill or a circle; the bay is framed with 20dp corners; cards and part tiles have 12dp corners, fields 10dp, calendar cells 10dp, menus 16dp, paper swatches 6dp. Progress is a pill track: the attribute gauge, the habit tracker (one segment per slot, 4dp apart), a habit's run bar. The bolt family is drawn from circles: a solid head with a cross, a dashed ring, a split head and a ringed hole.
 
 ## Components
 
 ### Buttons
-Confident on the primary, quiet on the rest.
-- **Shape:** full pill (rounded.pill), 40dp tall (44dp for form, shop and settings actions).
-- **Done / primary:** ready green with on-ready text in Label Large. Disabled when the period is full: raised graphite with dim text. Bad habits relabel the trio Resisted / Skip / Gave in.
-- **Skip:** a 40dp outlined circle, 1dp edge-graphite border, a cool-steel minus.
-- **Fail:** a 40dp outlined circle, coral cross, border coral at 45%; both fall to edge graphite when disabled.
-- **Outlined:** 1dp edge-graphite border, frost text (Cancel, Take off, backup, date pickers).
+- **Shape:** full pill, 44dp tall (52dp for a lead Done).
+- **Done / primary:** ready green with on-ready text in Label Large. When it cannot log it falls to raised with dim text and says why: "Logged" when the period is full, "Not yet" on a future day. Break habits read Resisted / Skip / Gave in.
+- **Menu button:** a 44dp outlined circle with the three-dot icon in cool steel, beside Done. Its menu: Skip, Fail (coral), Take back the last mark, then Edit habit and Delete habit (coral). Delete asks first.
+- **Outlined:** 1dp edge border, frost text (Cancel, date pickers, backup).
 - **Text actions:** ready green for confirm, coral for destructive, frost for dismiss.
-- **FAB:** extended, ready green with on-ready content, bottom-end with a 24dp inset (Add habit).
+- **FAB:** extended, ready green, bottom-end with a 20dp inset (Add habit).
+
+### Habit card
+A card per habit: the name in Title (a dim chevron after it where the name opens the form), the metadata in dim Body, a counter ("2 / 3 slots" in Numeral 14sp, frost when full) over the tracker, then Done and the menu button. Narrower than 480dp the counter and buttons take their own lines. On the split Habits view a card is picked by tapping it and shows a cool-steel edge.
+
+### Tracker
+A habit's period as an 8dp pill split into one segment per slot: done in a glow-to-steel gradient with a faint halo, failed coral, skipped a dashed dim outline, open an edge track. A slot logged on another day of the week is at half strength.
+
+### Segments
+A pill outlined in edge whose selection, a raised pill with a 1.5dp steel border, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
+
+### Fields
+A white-5% fill, 10dp corners, 12 by 16dp inside, a white-8% border at rest and a mint outline and cursor when focused. Errors are coral body text under the form; a missing name shows first as a dim hint.
 
 ### Chips
-- **Style:** Material filter chips, 1dp edge-graphite border, frost label.
-- **State:** selected fills raised graphite with a 1.5dp cool-steel border. Starter-habit suggestion chips are 40dp tall with an edge-graphite border.
-
-### Cards / Containers
-- **Bay panel:** the bay clipped to 20dp corners inside 12dp of padding, with the robot's nameplate (name in tracked caps, mood and "building N frames" in dim body) 20dp inside its top corner on Today.
-- **Shop part tile:** one raised-graphite tile per part, 12dp corners, square art; the selection ring (2dp cool steel) sits on the tile itself. Name and price or status sit beneath it (catalogue numbers stay in the data, never on screen), unboxed.
-- **Menus:** raised graphite, 16dp corners, 16dp padding, 300dp wide.
-- **Shadow Strategy:** none (see Elevation & Depth).
-
-### Inputs / Fields
-- **Style:** Material outlined text fields, edge-graphite border at rest.
-- **Focus:** border, label and cursor turn ready green.
-- **Error:** coral body text below the form.
+Material filter chips, 1dp edge border, frost label; selected fills raised with a 1.5dp steel border. Starter-habit suggestion chips are 40dp tall.
 
 ### Navigation
-- **Bar:** Today, Shop, Habits, Diary on rail graphite at the bottom of every window, never a side rail; Settings is an icon in the header.
-- **States:** selected item gets a raised-graphite indicator, ready-green icon and frost label; unselected are dim slate.
-- **Segmented views (Day / Calendar / History):** active segment raised graphite with frost text and a cool-steel border; inactive on the ground with edge-graphite borders.
-- **Header:** at least 60dp; display title, dim summary beside it on wide windows, the wallet at right (bolt icon and count in cool steel, nut in gold, 22dp icons, Numeral), then Settings. No robot badge anywhere.
-- **Snackbar:** raised graphite with frost text and a ready-green Undo, for every log and purchase.
+- **Bar:** Lab, Shop, Habits, Diary on rail at the bottom of every window; Settings is an icon in the header that turns ready green while open.
+- **States:** the selected tab gets a raised 52x28dp indicator, a ready-green icon and a frost label; unselected are dim.
+- **Header:** at least 60dp; display title, the date or summary beside it on wide windows, the wallet at right (bolt icon and count in cool steel, nut in gold, 22dp icons, Numeral), then Settings.
+- **Snackbar:** raised with frost text and a ready-green Undo, for every log and purchase; an Undo plays its own sound.
+
+### Attribute cards (Lab)
+Four small cards in a row: the attribute's icon, its name in Label Large and "LV n" in Numeral on one line, its meaning (Energy, Mind, Body, Heart) in dim Label Medium, and a 4dp gauge to the next level. Narrower than 560dp only the icon and level show (the screen reader still names them); narrower than 400dp they go two by two with words.
+
+### Habit detail (split Habits)
+The picked habit: its name in Headline with Edit, its metadata, four stats in Numeral over dim captions (done rate, running now, best run, failed in coral when any), a gauge of the current run against the best, and a LOG card listing every day it was logged, newest first, with that day's bolt marks and a count; a day opens that date.
+
+### Reward card (form)
+What the habit as set up pays: the bolts and points of each Done (or each resist), what a fail takes back, the most a period can bring, how its nuts are earned, and how many Dones take its attribute to the next stage.
 
 ### Bolt slots (signature)
 Each slot state has its own form, seen face on; colour only confirms it.
-- **Done:** a bolt head driven home, solid cool steel with a joint-slate rim and the bolts currency's cross recessed in graphite.
-- **Skipped:** a dashed dim-slate ring with a dash across it (the Skip button's minus).
+- **Done:** a bolt head driven home, solid cool steel with a joint rim and the bolts currency's cross recessed.
+- **Skipped:** a dashed dim ring with a dash across it.
 - **Failed:** a sheared head, solid coral, split diagonally into two halves pushed apart.
-- **Open:** an empty tapped hole: a rail-graphite disc with a dim-slate ring and a fainter inner thread ring.
-- A slot logged on another day of the week shows at 45%. Row marks are 26dp, 4dp apart; tapping an own mark removes the newest mark of the day.
+- **Open:** an empty tapped hole: a rail disc with a dim ring and a fainter inner thread ring.
+- A slot logged on another day of the week shows at 45%.
 
-### The reactor bench and day plates (signature)
-- **Bay:** the robot on its round platform (dashed green ring) steps left; at right, two joint-slate wires hang the Cherenkov light rail over a steel bench on two legs. Between the legs the reactor vessel (raised graphite, joint-slate casing) shows its blue core window crossed by three fuel rods, fed up to the bench by a short conduit; its glow and the rail brighten with the Core attribute and breathe slowly. One frame per habit running today, up to six, spaced evenly: a raised-graphite plate clamped upright whose height grows with its target, with one bolt hole per slot from the bottom up; its rim is joint slate if the habit failed today. With no habits the bench holds one dashed frame.
+### The reactor bench (signature)
+- **Bay:** the robot on its round platform (dashed green ring) stands left; at right two joint wires hang the light rail over a steel bench on two legs. One frame per habit running today, up to six, spaced evenly: a raised plate clamped upright whose height grows with its target, one bolt hole per slot from the bottom up; its rim is joint if the habit failed today. With no habits the bench holds one dashed frame.
+- **Reactor:** a glass fusion capsule standing on the floor between the bench legs. A plasma core burns inside with one orbit per three Core levels (one to four), electrons racing round them; copper-wound coil packs clamp it either side, a pressure gauge reads Core, ten lamps on a hazard-striped plinth light one per Core level, and pulses of light climb a cable up the right bench leg into the bench.
 - **Drive:** Done screws the newest bolt on that habit's frame in over 700ms (cubic ease-out): the head grows to size while its cross turns three quarters of a turn, and the robot cheers.
-- **Day plate:** a day as a small plate with three bolt holes, one, two or three driven home (any done, half, all); the last hole shows a sheared bolt when anything failed; a dashed blank plate while the day is ahead, a plain blank plate when nothing ran. 42dp in the week strip, 26dp in the calendar.
+- **Critical:** when every slot of a habit's period is done its frame glows uranium green: a darker green fill, a solid rim, two soft outer strokes and a radial wash that breathe slowly. Positrons rise off its top: four-point white sparks with a green core and halo that swell and fade over a three-second flight, drifting aside, each trailing a thin line of light. The glow ignites just after the last bolt seats.
+- **Day plate:** a day as a small plate with three bolt holes, one, two or three driven home (any done, half, all); the last hole shows a sheared bolt when anything failed; a dashed blank plate while the day is ahead, a plain blank plate when nothing ran. 42dp in roomy calendar cells, 26dp in tight ones.
 
 ### Icons
 One robot grammar: 24dp line art at 1.8 stroke, square caps, mitred joins, angular strokes and a small pivot-joint circle wherever a part would hinge. Tinted by context (cool steel, dim, ready green, gold, coral).
 
 ### Diary page
-A true diary template on the owner's paper: the weekday large in Lexend with the date beneath, a 2.5-unit header rule, 37 evenly ruled lines (no grid), a BOLTS field of five hex holes to fill in by hand and a DAY count at the top right beside a small bolt emblem (side on, threaded), a large faint bolt near the foot, and the log's owner and catalogue number in tracked caps at the bottom. The toolbar is one thin rail-graphite line (44dp) in three parts: the calendar at left, the pen, the eraser, a hairline divider and the inks centred, undo, redo, paper and bin at right; on a narrow window the inks fold into the current ink's swatch and the groups spread instead of centring. Tool tiles are 44x40dp with 10dp corners, the tool in hand raised with a 14x2dp ready-green underline; ink swatches are 36dp targets with 22dp dots (26dp and a 2dp frost ring when chosen). Pen and eraser settings are labelled sliders with their value in Numeral at the right and a true-size preview (the nib's line in the current ink, the eraser's outline); the stabilizer shows its ten steps as ticks. The eraser's outline on the page is a white ring inside a dark one over a faint fill. The tab bar hides under an open page.
+A true diary template on the owner's paper: the weekday large in Lexend with the date beneath, a header rule, evenly ruled lines (no grid), a BOLTS field of five hex holes to fill in by hand and a DAY count at the top right beside the atom emblem, a large faint atom near the foot, and the log's owner and catalogue number in tracked caps at the bottom. The tools stand in a 56dp rail down the right edge, away from the writing hand: the calendar at the top; pen, eraser, a hairline and the five inks in the middle; undo, redo, paper and bin at the foot; on a short window the inks fold into the current ink's swatch. Tool tiles are 44x40dp with 10dp corners, the tool in hand raised with a 2x14dp ready-green bar on its inner side; ink swatches are 40x36dp targets with 22dp dots (26dp and a 2dp frost ring when chosen). Menus open to the rail's left. Pen and eraser settings are labelled sliders with their value in Numeral and a true-size preview; the stabilizer shows its ten steps as ticks. The eraser's outline on the page is a white ring inside a dark one over a faint fill.
 
-### Motion
-One frame clock drives every animation and freezes when the system's animations are off. The robot idles, cheers on Done, droops on Fail and waves when its nameplate is tapped; bolts drive in and the reactor breathes as above.
+### Motion and sound
+One frame clock drives every animation and freezes when the system's animations are off. The robot idles, cheers on Done, droops on Fail and waves when its nameplate is tapped; bolts drive in, the reactor breathes and turns, positrons rise. Short synthesized sounds (tools/sfx.py) mark Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of Done's), a purchase (two coin clinks) and Undo (a falling blip); Settings has a switch.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** give each habit row exactly one ready-green Done pill (40dp, full pill) and keep Skip and Fail as 40dp outlined circles beside it.
+- **Do** give each habit exactly one ready-green Done pill and put Skip, Fail, take back, Edit and Delete in its menu.
 - **Do** show every slot state with its own bolt form (driven, dashed, sheared, open hole) so state never depends on colour alone.
 - **Do** set every screen in Lexend, counts and balances in Numeral with tabular figures.
-- **Do** separate rows and calendar weeks with one hairline (hairline) and announce sections with a 13sp label tracked 0.14em.
-- **Do** lift surfaces by one graphite step (rail, ground, raised) instead of shadows.
-- **Do** keep Cherenkov blue inside the bay as the reactor and the light it powers.
+- **Do** put content on cards one tonal step above the ground, and lift surfaces by tone instead of shadows.
+- **Do** keep uranium green as light: the reactor, the rail, gauges, completed work.
 - **Do** show selection in cool steel and offer Undo in the snackbar after every log and purchase.
-- **Do** keep the diary page on the owner's papers and inks, ruled lines only.
+- **Do** keep the diary page on the owner's papers and inks, ruled lines only, with the atom emblem.
 
 ### Don't:
 - **Don't** use ready green for decoration, emphasis or non-place selection; it means pressable or here.
-- **Don't** put Cherenkov blue on a control, label, mark or text.
+- **Don't** paint a control, label or text uranium green.
 - **Don't** use coral for anything but failure and destruction, or gold for anything but nuts.
-- **Don't** wrap sections in cards, or build the dark-dashboard default of glowing stat cards and progress rings.
-- **Don't** add ornaments beyond bolts and frames, or bring back plants.
+- **Don't** nest cards, or build the dark-dashboard default of glowing stat tiles and progress rings.
+- **Don't** add ornaments beyond bolts, frames and the atom, or bring back plants.
 - **Don't** put squared or grid paper anywhere; calendars use ruled rows, the diary ruled lines.
-- **Don't** draw icons outside the robot grammar (24dp, 1.8 stroke, square caps, pivot joints) or substitute glyphs and emoji for them.
+- **Don't** draw icons outside the robot grammar or substitute glyphs and emoji for them.
 
 ## Parts catalogue
 
 The shop sells parts in six slots, drawn from the robot roles in Theme.kt.
 
-**One bay, everywhere.** Today, Shop and the base tiles all draw the same room picture with the same framing (scene x 40..960, y 120..880 always visible), so trying a part on in the Shop shows it exactly as it will look on Today.
+**One bay, everywhere.** The Lab, Shop and the base tiles all draw the same room picture with the same framing (scene x 40..960, y 120..880 always visible), so trying a part on in the Shop shows it exactly as it will look on the Lab.
 
 **Finishes.** The starter parts keep the white factory shell; every other part carries its own finish (shell gradient, flat panels, joints, eyes and glass): Copper, Cobalt, Signal orange, Mint enamel, Stealth, Brass, Violet, Uranium green, Chrome, Hazard yellow, Rose and Cherenkov navy. A robot built from the catalogue is a deliberate patchwork; the neck takes the body's joint colour.
 
-**Rooms.** Each base is a room with its own wall, floor and light colour, which tints the skirting, the light rail and its cone:
-- **Charging Bay:** graphite and Cherenkov blue; panelled walls and a charging station whose screen shows the Battery attribute in five cells, cabled to the platform.
-- **Workshop:** warm wood and amber light; a pegboard with spanner, hammer and screwdriver, copper, teal and amber parts bins, hazard tape along the skirting.
-- **Observatory:** violet night; a bolted porthole between the rail's wires onto a nebula and a ringed sunset planet.
+**Rooms.** Each base is a room with its own wall, floor and light colour, which tints the skirting and the light rail and its cone:
+- **Charging Bay:** greenhouse teal and uranium light; panelled walls and a charging station whose screen shows the Battery attribute in five cells, cabled to the platform.
+- **Workshop:** warm wood and amber light; a pegboard with spanner, hammer and screwdriver, parts bins, hazard tape along the skirting.
+- **Observatory:** violet night; a bolted porthole onto a nebula and a ringed sunset planet.
 - **Star Deck:** teal station light; a panoramic window onto a planet's limb and its moon, and a console of coloured keys.
-- **Reactor Hall:** uranium green; an arched window onto cooling towers breathing steam at dusk, the radiation sign, and coolant pipes with an orange valve running into the reactor.
+- **Reactor Hall:** uranium green; an arched window onto cooling towers breathing steam at dusk, the radiation sign, and coolant pipes with an orange valve.
 
-**The reactor** under the bench in every room: a domed steel vessel on a plinth with two bolted flanges, a viewport where four fuel rods stand dark against Cherenkov light (brighter with Core), a conduit up to the bench, and a pressure gauge whose needle reads the Core attribute. The workshop line added with the Reactor Workshop look:
-- **Welding Mask** (head): a box head behind a dark riveted visor; its eyes are one Cherenkov slit that blinks like a pair.
-- **Tokamak** (body): a rounded body with a torus window whose blue plasma ring circulates.
-- **Wrenches** and **Arc Welders** (arms): open-end wrenches; torch nozzles with a pulsing blue arc.
-- **Hydraulics** (legs): piston cylinders over flat feet.
-- **Dosimeter** and **Hard Hat** (accessories): a chest badge with a glowing reading; a gold hard hat with a blue lamp.
-- **Reactor Hall** (base, tier 5): two cooling towers breathing steam on the left of the bay.
-- The Aquarium became the **Coolant Tank** (bubbles instead of plants), and the Sprout the **Isotope Antenna**. No plants anywhere.
+The workshop line: **Welding Mask** (head, one slit eye that blinks like a pair), **Tokamak** (body, a torus window whose plasma ring circulates), **Wrenches** and **Arc Welders** (arms), **Hydraulics** (legs), **Dosimeter** and **Hard Hat** (accessories), **Reactor Hall** (base, tier 5). The Aquarium became the **Coolant Tank** and the Sprout the **Isotope Antenna**; plants were removed from the app.
 
 ## Levels
 
-Each attribute climbs ten levels; level n starts at 10 n (n - 1) points (0, 20, 60, 120 ... 900) and points count on past the top. Done adds the habit's weight in points, Fail takes them back, so a level can be lost. Reaching a level for the first time pays 2 nuts (stored on the mark, so undo is exact); climbing back to a level already reached pays nothing. The robot cheers and the snackbar leads with the news ("Level up! Core is now Fission Pile, level 4, +2 nuts").
+Each attribute climbs ten levels; level n starts at 10 n (n - 1) points (0, 20, 60, 120 ... 900) and points count on past the top. Done adds the habit's weight in points, Fail takes them back, so a level can be lost. Reaching a level for the first time pays 2 nuts (stored on the mark, so undo is exact); climbing back to a level already reached pays nothing. The robot cheers, the level-up sound plays and the snackbar leads with the news ("Level up! Core is now Fission Pile, level 4, +2 nuts").
 
-The stages, in the robot's own terms:
+The stages, in the robot's own terms (named in the level-up news and the form's reward card, not on the Lab):
 - **Battery:** AA Cell, Nickel Pack, Lithium Cell, Li-ion Bank, Solid-State, Supercapacitor, Graphene Cell, Fusion Cell, Zero-Point Cell, Antimatter Cell.
 - **Processor:** 4-bit, 8-bit, 16-bit, 32-bit, 64-bit, Multicore, Neural Engine, Quantum Core, Photonic Mind, Singularity.
 - **Chassis:** Tin Can, Aluminium, Steel, Titanium, Carbon Fibre, Tungsten, Graphene, Nanoweave, Diamond Lattice, Neutronium.
 - **Core:** Spark, Dynamo, Turbine, Fission Pile, Breeder, Tokamak, Fusion Heart, Stellarator, Star Core, Supernova.
 
-On Today the attributes sit beside the bay, right above the week: each row has the attribute's icon, its name in body-large, the stage name in dim label-medium, an 8dp steel gauge on an edge-graphite track for the way to the next level, and "LV n" in Numeral. The room answers too: the reactor's glow and gauge follow the Core level, and the Charging Bay's station lights a cell for every two Battery levels. Mood follows the average level (under 2 low power, 4 and up fully charged).
-
-The diary page's emblem is an atom: three orbits round a nucleus.
+The room answers too: the reactor's glow, lamps, orbits and gauge follow the Core level, and the Charging Bay's station lights a cell for every two Battery levels. Mood follows the average level (under 2 low power, 4 and up fully charged).

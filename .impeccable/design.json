@@ -1,112 +1,132 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-17T00:00:00Z",
+  "generatedAt": "2026-10-18T11:32:03Z",
   "title": "Design System: Nuts And Bolts",
   "extensions": {
     "colorMeta": {
-      "greenhouse-teal": {
+      "ground": {
         "role": "neutral",
-        "displayName": "Greenhouse Teal",
-        "canonical": "#0B1A1A",
+        "displayName": "Ground",
+        "canonical": "#0D1615",
         "tonalRamp": [
-          "#173636",
-          "#285F5F",
-          "#398888",
-          "#4BB1B1",
-          "#72C3C3",
-          "#9BD5D5",
-          "#C4E6E6",
-          "#EDF7F7"
+          "#172625",
+          "#2A4743",
+          "#3D6762",
+          "#508781",
+          "#6FAAA3",
+          "#98C2BE",
+          "#BFD9D6",
+          "#E5F0EF"
         ]
       },
-      "rail-teal": {
+      "rail": {
         "role": "neutral",
-        "displayName": "Rail Teal",
+        "displayName": "Rail",
         "canonical": "#081313",
         "tonalRamp": [
-          "#173636",
-          "#285F5F",
-          "#398888",
-          "#4AB1B1",
-          "#72C4C4",
-          "#9BD5D5",
-          "#C4E6E6",
-          "#EDF7F7"
+          "#122B2B",
+          "#214F4F",
+          "#307373",
+          "#3F9797",
+          "#5EBBBB",
+          "#8CCFCF",
+          "#B7E1E1",
+          "#E2F3F3"
         ]
       },
-      "raised-teal": {
+      "card": {
         "role": "neutral",
-        "displayName": "Raised Teal",
+        "displayName": "Card",
+        "canonical": "#152220",
+        "tonalRamp": [
+          "#172624",
+          "#2B4541",
+          "#3E655F",
+          "#52847D",
+          "#71A79F",
+          "#9AC1BB",
+          "#C0D8D4",
+          "#E6EFEE"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
         "canonical": "#15302B",
         "tonalRamp": [
-          "#173530",
-          "#295E54",
-          "#3B8678",
-          "#4DAF9D",
-          "#74C2B4",
-          "#9CD4C9",
-          "#C5E6DF",
-          "#EDF7F5"
+          "#132B26",
+          "#224E46",
+          "#327266",
+          "#419585",
+          "#5FB9A9",
+          "#8DCDC2",
+          "#B8E0D9",
+          "#E3F3F0"
         ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "rgba(255,255,255,0.08)"
       },
       "hairline": {
         "role": "neutral",
         "displayName": "Hairline",
         "canonical": "#1B3632",
         "tonalRamp": [
-          "#19332F",
-          "#2D5A53",
-          "#408177",
-          "#54A89B",
-          "#79BCB2",
-          "#A0D0C9",
-          "#C7E3DF",
-          "#EEF7F5"
+          "#142926",
+          "#254B45",
+          "#366D65",
+          "#478F84",
+          "#66B3A7",
+          "#92C9C1",
+          "#BBDDD8",
+          "#E4F1EF"
         ]
       },
-      "edge-teal": {
+      "edge": {
         "role": "neutral",
-        "displayName": "Edge Teal",
+        "displayName": "Edge",
         "canonical": "#24443E",
         "tonalRamp": [
-          "#1A322E",
-          "#2F5850",
-          "#437E73",
-          "#57A496",
-          "#7CBAAE",
-          "#A2CEC6",
-          "#C8E2DD",
-          "#EEF6F5"
+          "#152824",
+          "#274943",
+          "#386B61",
+          "#4A8C80",
+          "#69B0A2",
+          "#94C7BD",
+          "#BCDCD6",
+          "#E4F1EF"
         ]
       },
       "bay-sky": {
         "role": "neutral",
         "displayName": "Bay Sky",
-        "canonical": "#0F2424",
+        "canonical": "#13302B",
         "tonalRamp": [
-          "#173636",
-          "#285F5F",
-          "#398888",
-          "#4AB1B1",
-          "#72C4C4",
-          "#9BD5D5",
-          "#C4E6E6",
-          "#EDF8F8"
+          "#112C27",
+          "#205048",
+          "#2E7569",
+          "#3D9989",
+          "#5BBEAD",
+          "#8AD1C5",
+          "#B6E2DA",
+          "#E2F3F0"
         ]
       },
       "bay-floor": {
         "role": "neutral",
         "displayName": "Bay Floor",
-        "canonical": "#0E2020",
+        "canonical": "#0E2420",
         "tonalRamp": [
-          "#173535",
-          "#295E5E",
-          "#3B8686",
-          "#4DAFAF",
-          "#74C2C2",
-          "#9CD4D4",
-          "#C5E6E6",
-          "#EDF7F7"
+          "#112C27",
+          "#1F5148",
+          "#2E7668",
+          "#3C9A89",
+          "#5ABFAC",
+          "#89D1C4",
+          "#B6E2DA",
+          "#E2F4F0"
         ]
       },
       "frost": {
@@ -114,104 +134,119 @@
         "displayName": "Frost",
         "canonical": "#E6F2EE",
         "tonalRamp": [
-          "#1A322A",
-          "#2E594A",
-          "#427F6B",
-          "#56A58B",
-          "#7BBAA5",
-          "#A2CEBF",
-          "#C8E2DA",
-          "#EEF6F4"
+          "#152822",
+          "#264A3E",
+          "#386B5A",
+          "#498D76",
+          "#68B098",
+          "#94C7B6",
+          "#BCDCD1",
+          "#E4F1ED"
         ]
       },
-      "dim-sage": {
+      "dim": {
         "role": "neutral",
-        "displayName": "Dim Sage",
-        "canonical": "#8FB0A8",
+        "displayName": "Dim",
+        "canonical": "#9EB3AC",
         "tonalRamp": [
-          "#202D2A",
-          "#384F49",
-          "#507169",
-          "#689389",
-          "#8AACA4",
-          "#ACC4BE",
-          "#CEDCD9",
-          "#F0F4F3"
+          "#1B2220",
+          "#313F3A",
+          "#485C55",
+          "#5E786F",
+          "#7E9A91",
+          "#A3B7B1",
+          "#C6D2CE",
+          "#E8EDEB"
         ]
       },
-      "mint-steel": {
+      "cool-steel": {
         "role": "secondary",
-        "displayName": "Mint Steel",
+        "displayName": "Cool Steel",
         "canonical": "#CFE3DE",
         "tonalRamp": [
-          "#1C302B",
-          "#32554C",
-          "#477A6D",
-          "#5D9F8E",
-          "#80B5A8",
-          "#A5CBC1",
-          "#CAE0DB",
-          "#EFF6F4"
+          "#172723",
+          "#29473F",
+          "#3C675C",
+          "#4F8779",
+          "#6EAA9B",
+          "#98C3B8",
+          "#BFD9D3",
+          "#E5F0ED"
         ]
       },
-      "joint-sage": {
+      "joint": {
         "role": "secondary",
-        "displayName": "Joint Sage",
+        "displayName": "Joint",
         "canonical": "#6C8F87",
         "tonalRamp": [
-          "#212C29",
-          "#3A4D48",
-          "#536E68",
-          "#6C8F87",
-          "#8DA9A2",
-          "#AEC2BD",
-          "#CFDBD8",
-          "#F0F4F3"
+          "#1A2321",
+          "#30403C",
+          "#465D58",
+          "#5C7A73",
+          "#7C9C95",
+          "#A2B9B4",
+          "#C5D3D0",
+          "#E8EDEC"
         ]
       },
-      "leaf-green": {
+      "ready-green": {
         "role": "primary",
-        "displayName": "Leaf Green",
+        "displayName": "Ready Green",
         "canonical": "#6EE787",
         "tonalRamp": [
-          "#0B4216",
-          "#137427",
-          "#1BA638",
-          "#24D849",
-          "#53E371",
-          "#85EB9A",
-          "#B7F3C4",
-          "#E9FBED"
+          "#093512",
+          "#106021",
+          "#178C2F",
+          "#1EB83E",
+          "#3ADE5C",
+          "#73E88B",
+          "#A7F1B7",
+          "#DCF9E2"
         ]
       },
-      "on-leaf": {
+      "on-ready": {
         "role": "primary",
-        "displayName": "On-Leaf",
+        "displayName": "On-Ready",
         "canonical": "#06281A",
         "tonalRamp": [
-          "#0A432B",
-          "#12754C",
-          "#19A86D",
-          "#21DB8E",
-          "#51E5A8",
-          "#83ECC1",
-          "#B6F4DB",
-          "#E9FCF4"
+          "#083523",
+          "#0F623F",
+          "#158E5C",
+          "#1CBA79",
+          "#37E19B",
+          "#71EAB8",
+          "#A6F2D3",
+          "#DCFAED"
         ]
       },
-      "grow-magenta": {
-        "role": "tertiary",
-        "displayName": "Grow Magenta",
-        "canonical": "#E05AD0",
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus",
+        "canonical": "#4AE3A1",
         "tonalRamp": [
-          "#400C3A",
-          "#711566",
-          "#A31F93",
-          "#D428BF",
-          "#DF56CF",
-          "#E987DD",
-          "#F2B8EB",
-          "#FBEAF9"
+          "#083522",
+          "#0F613E",
+          "#168D5A",
+          "#1DBA76",
+          "#38E098",
+          "#72E9B6",
+          "#A7F1D1",
+          "#DCFAED"
+        ]
+      },
+      "uranium-glow": {
+        "role": "tertiary",
+        "displayName": "Uranium Glow",
+        "canonical": "#A6FF4D",
+        "tonalRamp": [
+          "#1F3D00",
+          "#387000",
+          "#52A300",
+          "#6BD600",
+          "#8CFF1A",
+          "#ADFF5C",
+          "#CCFF99",
+          "#EBFFD6"
         ]
       },
       "nut-gold": {
@@ -219,199 +254,199 @@
         "displayName": "Nut Gold",
         "canonical": "#F2C14E",
         "tonalRamp": [
-          "#473405",
-          "#7E5B09",
-          "#B4820D",
-          "#EAA911",
-          "#F1BE44",
-          "#F5D17B",
-          "#F9E4B1",
-          "#FDF7E7"
+          "#392904",
+          "#694C08",
+          "#986E0B",
+          "#C8900F",
+          "#EFB429",
+          "#F4CA67",
+          "#F8DEA0",
+          "#FCF2D9"
         ]
       },
-      "wilt-coral": {
+      "shear-coral": {
         "role": "tertiary",
-        "displayName": "Wilt Coral",
+        "displayName": "Shear Coral",
         "canonical": "#FF6B4A",
         "tonalRamp": [
-          "#4C0E00",
-          "#871900",
-          "#C12300",
-          "#FB2E00",
-          "#FF5B37",
-          "#FF8B71",
-          "#FFBAAB",
-          "#FFEAE6"
+          "#3D0B00",
+          "#701400",
+          "#A31E00",
+          "#D62700",
+          "#FF431A",
+          "#FF7A5C",
+          "#FFAC99",
+          "#FFDED6"
         ]
       },
       "paper-matte-black": {
-        "role": "diary",
-        "displayName": "Matte Black",
+        "role": "neutral",
+        "displayName": "Paper Matte Black",
         "canonical": "#393939",
         "tonalRamp": [
-          "#262626",
-          "#434343",
-          "#616161",
-          "#7E7E7E",
-          "#9B9B9B",
-          "#B8B8B8",
-          "#D5D5D5",
-          "#F2F2F2"
+          "#1F1F1F",
+          "#383838",
+          "#525252",
+          "#6B6B6B",
+          "#8C8C8C",
+          "#ADADAD",
+          "#CCCCCC",
+          "#EBEBEB"
         ]
       },
       "paper-cream": {
-        "role": "diary",
-        "displayName": "Cream",
+        "role": "neutral",
+        "displayName": "Paper Cream",
         "canonical": "#F4ECD8",
         "tonalRamp": [
-          "#3C2F11",
-          "#69541E",
-          "#97782A",
-          "#C49C37",
-          "#D3B363",
-          "#E0C990",
-          "#EDDFBE",
-          "#F9F5EB"
+          "#30260D",
+          "#584619",
+          "#7F6524",
+          "#A7852F",
+          "#CDA84C",
+          "#DBC180",
+          "#E9D8AF",
+          "#F6EFDF"
         ]
       },
       "paper-night": {
-        "role": "diary",
-        "displayName": "Night",
+        "role": "neutral",
+        "displayName": "Paper Night",
         "canonical": "#0B1020",
         "tonalRamp": [
-          "#141C39",
-          "#223264",
-          "#314890",
-          "#405EBB",
-          "#6A81CC",
-          "#95A6DB",
-          "#C1CAEA",
-          "#ECEFF8"
+          "#10172E",
+          "#1D2A53",
+          "#2A3D79",
+          "#37509F",
+          "#546FC4",
+          "#8699D5",
+          "#B3BFE5",
+          "#E1E5F5"
         ]
       },
       "ink-ice-blue": {
-        "role": "diary",
-        "displayName": "Ice Blue",
+        "role": "neutral",
+        "displayName": "Ink Ice Blue",
         "canonical": "#E0F7FA",
         "tonalRamp": [
-          "#0B3C42",
-          "#136974",
-          "#1B96A6",
-          "#23C4D8",
-          "#52D2E3",
-          "#85DFEB",
-          "#B7ECF3",
-          "#E9F9FB"
+          "#083035",
+          "#105761",
+          "#177F8D",
+          "#1EA7B8",
+          "#39CCDF",
+          "#72DBE8",
+          "#A7E8F1",
+          "#DCF6F9"
         ]
       },
       "ink-matrix-green": {
-        "role": "diary",
-        "displayName": "Matrix Green",
+        "role": "neutral",
+        "displayName": "Ink Matrix Green",
         "canonical": "#00FF88",
         "tonalRamp": [
-          "#004C29",
-          "#008748",
-          "#00C167",
-          "#00FB86",
-          "#37FFA2",
-          "#71FFBD",
-          "#ABFFD8",
-          "#E6FFF3"
+          "#003D21",
+          "#00703C",
+          "#00A357",
+          "#00D672",
+          "#1AFF94",
+          "#5CFFB3",
+          "#99FFCF",
+          "#D6FFEC"
         ]
       },
       "ink-electric-cyan": {
-        "role": "diary",
-        "displayName": "Electric Cyan",
+        "role": "neutral",
+        "displayName": "Ink Electric Cyan",
         "canonical": "#00E5FF",
         "tonalRamp": [
-          "#00454C",
-          "#007987",
-          "#00ADC1",
-          "#00E2FB",
-          "#37EBFF",
-          "#71F1FF",
-          "#ABF6FF",
-          "#E6FCFF"
+          "#00373D",
+          "#006570",
+          "#0093A3",
+          "#00C0D6",
+          "#1AE8FF",
+          "#5CEEFF",
+          "#99F5FF",
+          "#D6FBFF"
         ]
       },
       "ink-neon-fuchsia": {
-        "role": "diary",
-        "displayName": "Neon Fuchsia",
+        "role": "neutral",
+        "displayName": "Ink Neon Fuchsia",
         "canonical": "#FF007F",
         "tonalRamp": [
-          "#4C0026",
-          "#870043",
-          "#C10060",
-          "#FB007D",
-          "#FF379A",
-          "#FF71B8",
-          "#FFABD5",
-          "#FFE6F2"
+          "#3D001E",
+          "#700038",
+          "#A30051",
+          "#D6006B",
+          "#FF1A8C",
+          "#FF5CAD",
+          "#FF99CC",
+          "#FFD6EB"
         ]
       },
       "ink-matte-black": {
-        "role": "diary",
-        "displayName": "Matte Black",
+        "role": "neutral",
+        "displayName": "Ink Matte Black",
         "canonical": "#393939",
         "tonalRamp": [
-          "#262626",
-          "#434343",
-          "#616161",
-          "#7E7E7E",
-          "#9B9B9B",
-          "#B8B8B8",
-          "#D5D5D5",
-          "#F2F2F2"
+          "#1F1F1F",
+          "#383838",
+          "#525252",
+          "#6B6B6B",
+          "#8C8C8C",
+          "#ADADAD",
+          "#CCCCCC",
+          "#EBEBEB"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Screen titles; the phone's lead habit name."
+        "purpose": "Screen titles in the header."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "The empty-state line."
+        "purpose": "The empty-state line; the picked habit in the detail pane."
       },
       "title-large": {
         "displayName": "Title Large",
-        "purpose": "Shop part name in detail; the selected day on Habits."
+        "purpose": "A shop part's name in its detail."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Habit names in rows and history; steppers."
+        "purpose": "Habit names on cards and in history; the steppers."
       },
       "body-large": {
         "displayName": "Body Large",
-        "purpose": "Header date, notes, part names, attribute names."
+        "purpose": "Header subtitle, notes, part names, field text."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Habit metadata, summaries, helper text."
+        "purpose": "Habit metadata, summaries, helper and reward text."
       },
       "label-large": {
         "displayName": "Label Large",
-        "purpose": "Button text, shop tabs, calendar day numbers."
+        "purpose": "Buttons, segments, shop tabs, day numbers, attribute names."
       },
       "label-medium": {
         "displayName": "Label Medium",
-        "purpose": "Weekday names, attribute glosses."
+        "purpose": "Attribute meanings, stat captions."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Tracked uppercase section labels, status line, nameplate, catalogue numbers."
+        "purpose": "Tracked uppercase group labels, weekday heads, the nameplate."
       },
       "numeral": {
         "displayName": "Numeral",
-        "purpose": "Balances, attribute values, percentages, steppers; tabular figures."
+        "purpose": "Balances, levels, counters and stats, tabular."
       }
     },
     "shadows": [
       {
-        "name": "grow-light-glow",
-        "value": "radial-gradient(circle 460px at center, rgba(224,90,208,0.22), transparent)",
-        "purpose": "The grow lamp's wash over the bay; the only glow in the app."
+        "name": "uranium-glow",
+        "value": "radial-gradient(circle 420px at center, rgba(166,255,77,0.08..0.26), transparent)",
+        "purpose": "The reactor's wash over the bay; with the gauges' and a critical frame's halo, the only glow."
       },
       {
         "name": "material-default",
@@ -421,32 +456,42 @@
     ],
     "motion": [
       {
-        "name": "leaf-unfurl",
-        "value": "700ms cubic-bezier(0.33, 1, 0.68, 1)",
-        "purpose": "Done grows the newest leaf on its sprout from nothing (cubic ease-out)."
+        "name": "bolt-drive",
+        "value": "700ms cubic ease-out",
+        "purpose": "Done screws the newest bolt in: the head grows while its cross turns three quarters."
+      },
+      {
+        "name": "segment-slide",
+        "value": "spring(dampingRatio 0.8, stiffness 500)",
+        "purpose": "A segmented choice slides its selection."
+      },
+      {
+        "name": "positron",
+        "value": "3000ms loop",
+        "purpose": "Sparks rising off a critical frame."
       },
       {
         "name": "frame-clock",
         "value": "one frame clock, frozen when animator duration scale is 0",
-        "purpose": "Drives robot idle, cheer, droop and wave, the lamp pulse and the unfurl."
+        "purpose": "Drives the robot, the reactor, the drive and the positrons."
       }
     ],
     "breakpoints": [
       {
         "name": "wide",
-        "value": "landscape and width >= 600dp (rail, two panes)"
+        "value": "landscape and width >= 600dp (bay beside a side pane)"
       },
       {
         "name": "phone",
         "value": "short side < 600dp"
       },
       {
-        "name": "row-stack",
-        "value": "row column < 560dp (buttons on a second line)"
+        "name": "split",
+        "value": "width >= 720dp (Habits day view and form in two columns)"
       },
       {
-        "name": "rail-mark",
-        "value": "height >= 560dp (sprout mark shown)"
+        "name": "card-stack",
+        "value": "habit card < 480dp (counter and buttons on their own lines)"
       }
     ]
   },
@@ -455,96 +500,96 @@
       "name": "Done Button",
       "kind": "button",
       "refersTo": "button-done",
-      "description": "The one clear primary action per habit row; also Buy, Save, Add.",
+      "description": "The one clear primary action per habit; also Buy, Save, Add.",
       "html": "<button class=\"ds-btn-done\">Done</button>",
-      "css": ".ds-btn-done { font-family: Lexend, sans-serif; background: #6EE787; color: #06281A; height: 48px; padding: 0 24px; border: none; border-radius: 9999px; font-size: 16px; font-weight: 600; transition: filter .15s; } .ds-btn-done:hover { filter: brightness(1.06); } .ds-btn-done:focus-visible { outline: 2px solid #CFE3DE; outline-offset: 2px; } .ds-btn-done:disabled { background: #15302B; color: #8FB0A8; }"
+      "css": ".ds-btn-done { font-family: Lexend, sans-serif; background: #6EE787; color: #06281A; height: 44px; padding: 0 24px; border: none; border-radius: 9999px; font-size: 16px; font-weight: 600; } .ds-btn-done:disabled { background: #15302B; color: #9EB3AC; }"
     },
     {
-      "name": "Skip and Fail",
+      "name": "Menu Button",
       "kind": "button",
-      "refersTo": "icon-button-fail",
-      "description": "Quieter 48dp outlined circles beside Done: steel minus, coral cross with a 45% coral border.",
-      "html": "<div class=\"ds-trio\"><button class=\"ds-skip\" aria-label=\"Skip\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M5 12h14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\"/></svg></button><button class=\"ds-fail\" aria-label=\"Fail\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\"/></svg></button></div>",
-      "css": ".ds-trio { display: flex; gap: 8px; background: #0B1A1A; padding: 8px; } .ds-skip, .ds-fail { width: 48px; height: 48px; border-radius: 50%; background: transparent; display: grid; place-items: center; } .ds-skip { border: 1px solid #24443E; color: #CFE3DE; } .ds-fail { border: 1px solid rgba(255,107,74,.45); color: #FF6B4A; } .ds-skip:hover, .ds-fail:hover { background: #15302B; } .ds-skip:focus-visible, .ds-fail:focus-visible { outline: 2px solid #CFE3DE; outline-offset: 2px; }"
+      "refersTo": "button-menu",
+      "description": "A 44dp outlined circle beside Done; its menu holds Skip, Fail, take back, Edit and Delete.",
+      "html": "<button class=\"ds-btn-menu\" aria-label=\"More\">⋮</button>",
+      "css": ".ds-btn-menu { font-family: Lexend, sans-serif; width: 44px; height: 44px; border-radius: 50%; background: transparent; border: 1px solid #24443E; color: #CFE3DE; }"
     },
     {
-      "name": "Outlined Button",
-      "kind": "button",
-      "refersTo": "button-outlined",
-      "description": "Secondary actions: Cancel, Take off, backup, date pickers.",
-      "html": "<button class=\"ds-btn-out\">Cancel</button>",
-      "css": ".ds-btn-out { font-family: Lexend, sans-serif; background: transparent; color: #E6F2EE; height: 48px; padding: 0 24px; border: 1px solid #24443E; border-radius: 9999px; font-size: 16px; font-weight: 600; } .ds-btn-out:hover { background: #15302B; } .ds-btn-out:focus-visible { outline: 2px solid #CFE3DE; outline-offset: 2px; }"
+      "name": "Card",
+      "kind": "container",
+      "refersTo": "card",
+      "description": "The container for habits, form groups, history items and calendars.",
+      "html": "<div class=\"ds-card\">…</div>",
+      "css": ".ds-card { font-family: Lexend, sans-serif; background: #152220; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; color: #E6F2EE; }"
     },
     {
-      "name": "Outlined Field",
+      "name": "Segments",
+      "kind": "control",
+      "refersTo": "segment-active",
+      "description": "A pill of choices whose selection slides on a spring.",
+      "html": "<div class=\"ds-seg\"><span class=\"on\">Build it</span><span>Break it</span></div>",
+      "css": ".ds-seg { font-family: Lexend, sans-serif; display: flex; border: 1px solid #24443E; border-radius: 22px; padding: 3px; } .ds-seg span { flex: 1; text-align: center; padding: 10px 8px; color: #9EB3AC; border-radius: 20px; } .ds-seg .on { background: #15302B; color: #E6F2EE; box-shadow: inset 0 0 0 1.5px #CFE3DE; }"
+    },
+    {
+      "name": "Field",
       "kind": "input",
-      "refersTo": "",
-      "description": "Material outlined field; edge teal at rest, leaf green on focus.",
-      "html": "<label class=\"ds-field\"><span>Name</span><input placeholder=\"Read 20 minutes\"></label>",
-      "css": ".ds-field { font-family: Lexend, sans-serif; display: grid; gap: 4px; color: #8FB0A8; font-size: 13px; } .ds-field input { font-family: Lexend, sans-serif; background: transparent; color: #E6F2EE; font-size: 16px; padding: 14px 16px; border: 1px solid #24443E; border-radius: 4px; caret-color: #6EE787; } .ds-field input:focus-visible { outline: none; border: 2px solid #6EE787; } .ds-field:focus-within span { color: #6EE787; }"
+      "refersTo": "field",
+      "description": "A faint fill and a mint outline when focused.",
+      "html": "<input class=\"ds-field\" placeholder=\"Read 20 minutes\">",
+      "css": ".ds-field { font-family: Lexend, sans-serif; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; color: #E6F2EE; } .ds-field:focus { outline: none; border-color: #4AE3A1; }"
     },
     {
-      "name": "Filter Chip",
-      "kind": "chip",
-      "refersTo": "chip-selected",
-      "description": "Weekday and option chips; selected is raised teal with a mint-steel border.",
-      "html": "<div class=\"ds-chips\"><button class=\"ds-chip on\">Mon</button><button class=\"ds-chip\">Tue</button></div>",
-      "css": ".ds-chips { display: flex; gap: 8px; } .ds-chip { font-family: Lexend, sans-serif; height: 32px; padding: 0 14px; border-radius: 8px; background: transparent; color: #E6F2EE; border: 1px solid #24443E; font-size: 14px; font-weight: 500; } .ds-chip.on { background: #15302B; border: 1.5px solid #CFE3DE; } .ds-chip:hover { background: #15302B; } .ds-chip:focus-visible { outline: 2px solid #CFE3DE; outline-offset: 2px; }"
+      "name": "Bottom Bar",
+      "kind": "navigation",
+      "refersTo": "nav-container",
+      "description": "Lab, Shop, Habits, Diary at the foot of every window; never a side rail.",
+      "html": "<nav class=\"ds-bar\"><a class=\"on\">Lab</a><a>Shop</a><a>Habits</a><a>Diary</a></nav>",
+      "css": ".ds-bar { font-family: Lexend, sans-serif; display: flex; background: #081313; height: 60px; } .ds-bar a { flex: 1; text-align: center; color: #9EB3AC; font-size: 13px; } .ds-bar .on { color: #E6F2EE; }"
     },
     {
-      "name": "Navigation Rail",
-      "kind": "nav",
-      "refersTo": "nav-item-selected",
-      "description": "Rail-teal rail; selected item has a raised-teal indicator and a leaf-green icon.",
-      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav on\"><span class=\"ds-ind\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M7 8.5h10l2 2v7l-2 2H7l-2-2v-7zM12 8.5v-3M9.5 13v2M14.5 13v2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\"/></svg></span>Today</a><a class=\"ds-nav\"><span class=\"ds-ind\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4zM8.5 12.2l2.4 2.4 4.6-5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"square\"/></svg></span>Habits</a></nav>",
-      "css": ".ds-rail { font-family: Lexend, sans-serif; background: #081313; width: 80px; padding: 12px 0; display: grid; gap: 12px; justify-items: center; } .ds-nav { display: grid; justify-items: center; gap: 4px; color: #8FB0A8; font-size: 12px; font-weight: 500; cursor: pointer; } .ds-ind { width: 56px; height: 32px; border-radius: 16px; display: grid; place-items: center; } .ds-nav.on { color: #E6F2EE; } .ds-nav.on .ds-ind { background: #15302B; color: #6EE787; } .ds-nav:hover .ds-ind { background: rgba(21,48,43,.6); }"
+      "name": "Bolt Slots",
+      "kind": "indicator",
+      "refersTo": "bolt-slots",
+      "description": "Driven head, dashed ring, sheared head, open hole: each slot state its own form.",
+      "html": "<span class=\"ds-bolt done\"></span><span class=\"ds-bolt skip\"></span><span class=\"ds-bolt fail\"></span><span class=\"ds-bolt\"></span>",
+      "css": ".ds-bolt { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #9EB3AC; background: #081313; margin: 3px; } .ds-bolt.done { background: #CFE3DE; border-color: #6C8F87; } .ds-bolt.skip { background: transparent; border-style: dashed; } .ds-bolt.fail { background: #FF6B4A; border-color: #FF6B4A; }"
     },
     {
-      "name": "Leaf Slots",
-      "kind": "custom",
-      "refersTo": "",
-      "description": "One leaf per slot: unfurled done, dashed skipped, coral wilt failed, open bud.",
-      "html": "<div class=\"ds-leaves\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 22 26\"><path d=\"M11 24C11 14 4 10 3 3C10 3 16 9 11 24Z\" fill=\"#6EE787\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 22 26\"><path d=\"M11 24C11 14 4 10 3 3C10 3 16 9 11 24Z\" fill=\"none\" stroke=\"#8FB0A8\" stroke-width=\"2\" stroke-dasharray=\"3 2.5\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 22 26\"><path d=\"M11 24C11 18 12 14 18 12C16 17 13 18 11 24Z\" fill=\"#FF6B4A\"/></svg><svg width=\"26\" height=\"26\" viewBox=\"0 0 22 26\"><path d=\"M11 24C11 18 8 15 8 11C8 8 10 6 11 5C12 6 14 8 14 11C14 15 11 18 11 24Z\" fill=\"none\" stroke=\"#8FB0A8\" stroke-width=\"2\"/></svg></div>",
-      "css": ".ds-leaves { display: flex; gap: 4px; background: #0B1A1A; padding: 8px; }"
-    },
-    {
-      "name": "Section Label and Gauge",
-      "kind": "custom",
-      "refersTo": "",
-      "description": "Tracked caps label over an attribute row with an 8dp steel gauge.",
-      "html": "<div class=\"ds-attr\"><div class=\"ds-label\">ATTRIBUTES</div><div class=\"ds-row\"><span>Battery</span><div class=\"ds-gauge\"><i style=\"width:62%\"></i></div><b>62</b></div></div>",
-      "css": ".ds-attr { font-family: Lexend, sans-serif; background: #0B1A1A; padding: 12px; color: #E6F2EE; } .ds-label { font-size: 13px; font-weight: 500; letter-spacing: .14em; color: #8FB0A8; margin-bottom: 10px; } .ds-row { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 500; } .ds-gauge { flex: 1; height: 8px; border-radius: 4px; background: #1B3632; overflow: hidden; } .ds-gauge i { display: block; height: 100%; background: #CFE3DE; } .ds-row b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }"
+      "name": "Gauge",
+      "kind": "indicator",
+      "refersTo": "gauge",
+      "description": "A glow-to-steel fill on an edge track with a soft halo and a bright leading spark.",
+      "html": "<div class=\"ds-gauge\"><i style=\"width:60%\"></i></div>",
+      "css": ".ds-gauge { height: 8px; border-radius: 4px; background: #24443E; } .ds-gauge i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #A6FF4D, #CFE3DE); box-shadow: 0 0 10px #A6FF4D66; }"
     },
     {
       "name": "Snackbar",
-      "kind": "custom",
+      "kind": "feedback",
       "refersTo": "snackbar",
-      "description": "Every log and purchase confirms here with Undo.",
-      "html": "<div class=\"ds-snack\"><span>+1 bolt, +2 Battery</span><button>Undo</button></div>",
-      "css": ".ds-snack { font-family: Lexend, sans-serif; display: flex; align-items: center; justify-content: space-between; gap: 24px; background: #15302B; color: #E6F2EE; padding: 8px 8px 8px 16px; border-radius: 4px; font-size: 14px; box-shadow: 0 3px 6px rgba(0,0,0,.3); } .ds-snack button { font-family: Lexend, sans-serif; background: none; border: none; color: #6EE787; font-weight: 600; font-size: 14px; padding: 10px 12px; border-radius: 20px; } .ds-snack button:hover { background: rgba(110,231,135,.08); }"
+      "description": "After every log and purchase, with Undo.",
+      "html": "<div class=\"ds-snack\">+5 bolts <button>Undo</button></div>",
+      "css": ".ds-snack { font-family: Lexend, sans-serif; background: #15302B; color: #E6F2EE; border-radius: 4px; padding: 14px 16px; display: flex; justify-content: space-between; } .ds-snack button { background: none; border: none; color: #6EE787; font-weight: 600; }"
     }
   ],
   "narrative": {
-    "northStar": "Night Grow Room",
-    "overview": "A hydroponic bay after dark. The app is a deep greenhouse-teal room in which the robot stands on its round platform beside a glass tray under a hanging magenta grow light. Every habit running today is a sprout in that tray and every slot is a leaf on it: Done unfurls a leaf, Skip leaves a dashed outline, Fail wilts a coral leaf, and an open slot is still a bud. The week is seven small sprouts that stand taller and carry more leaves the better the day went. The grow light's magenta belongs to the bay alone; the interface itself stays teal, mint steel and frost, with leaf green as the one live colour.\n\nHierarchy comes from type scale and hairlines, not boxes. Rows are separated by one-pixel teal rules, sections are announced by small tracked caps, and the only filled surfaces are controls, shop part tiles and the framed bay. The leaf is the single ornament and always carries meaning: the app mark (a sprout with two leaves in a tray), the slot, the day, the five buds of the diary page's gauge and the leaf emblem printed on every page.\n\nDensity is calm and evening-friendly: 48dp targets, 28dp gutters on wide windows, one clear Done per row with Skip and Fail quieter beside it. One rounded, open face (Lexend) carries everything.",
+    "northStar": "Reactor Workshop",
+    "overview": "A robot's workbench after dark. The app is a deep greenhouse-teal lab in which the robot stands on its round platform beside a steel bench. Under the bench a glass fusion capsule powers it all; its uranium-green light and the light rail it feeds hang over the bench and brighten as the Core attribute rises. Every habit running today is a steel frame clamped upright on the bench and every slot is a bolt hole in it: Done drives a bolt home, Skip leaves a dashed ring, Fail shears the bolt, and an open slot is an empty tapped hole. A habit with every bolt in goes critical: its frame glows uranium green and positrons rise off it. Uranium green is light, not paint; the interface itself stays teal, cool steel and frost, with ready green as the one live colour.\n\nContent sits on cards: every habit, form group, history item and calendar is a card one step above the ground. The bolt is the single ornament and always carries meaning: the slot, the day, the five hex holes of the diary page's gauge. The diary page's emblem is an atom, three orbits round a nucleus.\n\nDensity is compact and calm: 44dp controls, 28dp gutters on wide windows, one clear Done per habit with everything else in its menu. One rounded, open face (Lexend) carries everything.",
     "keyCharacteristics": [
-      "Greenhouse-teal ground with a deeper rail; tonal steps, no shadows.",
-      "One live accent (leaf green); gold for nuts, coral for failure, mint steel for selection and metal.",
-      "Magenta only as the grow light inside the bay.",
+      "Greenhouse-teal ground with a deeper rail; content on cards; tonal steps, no shadows.",
+      "One live accent (ready green); gold for nuts, coral for failure, cool steel for selection, metal and driven bolts.",
+      "Uranium glow as the only light: the reactor, its rail, the gauges, a critical frame.",
       "Lexend throughout: bold display, semibold titles, tracked small caps for labels.",
-      "Leaves and sprouts as the one ornament and the one state language.",
-      "Hairline rows, no cards around sections.",
-      "Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles."
+      "Bolts and frames as the one ornament and the one state language.",
+      "Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles.",
+      "Synthesized sound for the moments that change something."
     ],
     "rules": [
       {
-        "name": "The Grown Or Pressable Rule",
-        "body": "Leaf green appears only where something can be pressed, has grown, or marks where the owner is (plus the robot's eyes, smile and platform ring). Selection that is not a place is mint steel.",
+        "name": "The Ready Or Pressable Rule",
+        "body": "Ready green appears only where something can be pressed or marks where the owner is (plus the starter robot's eyes, smile and platform ring; painted parts carry their finish's own eye colour). Selection that is not a place is cool steel.",
         "section": "colors"
       },
       {
-        "name": "The Lamp Stays In The Bay Rule",
-        "body": "Magenta is light, not paint: it lives inside the bay as the grow lamp and its glow, and never colours a control, a label or a mark.",
+        "name": "The Light Is Light Rule",
+        "body": "Uranium green is light, not paint: it glows (the reactor, the rail, gauges, completed work) and never fills a control, a label or text.",
         "section": "colors"
       },
       {
@@ -559,38 +604,32 @@
       },
       {
         "name": "The Tabular Count Rule",
-        "body": "Every count and balance uses Numeral with tabular figures so columns of numbers hold still as they change.",
+        "body": "Every count and balance uses Numeral with tabular figures so numbers hold still as they change.",
         "section": "typography"
       },
       {
-        "name": "The No Card Rule",
-        "body": "Sections are never boxed. Hierarchy is type scale, tracked labels and hairlines; the only filled surfaces are controls, shop part tiles, menus and the bay.",
+        "name": "The Content On Cards Rule",
+        "body": "Habits, form groups, history items and calendars sit on cards (12dp corners, 16dp inside, the card surface and a white-8% border). The bay is framed, not carded. Nothing nests a card in a card.",
         "section": "layout"
-      },
-      {
-        "name": "The Tonal Step Rule",
-        "body": "To lift a surface, move it one teal step (rail, ground, raised). Never add a shadow; the only glow in the app is the grow lamp's.",
-        "section": "elevation"
       }
     ],
     "dos": [
-      "Do give each habit row exactly one leaf-green Done pill (48dp, full pill) and keep Skip and Fail as 48dp outlined circles beside it.",
-      "Do show every slot state with its own leaf form (unfurled, dashed, wilted, bud) so state never depends on colour alone.",
+      "Do give each habit exactly one ready-green Done pill and put Skip, Fail, take back, Edit and Delete in its menu.",
+      "Do show every slot state with its own bolt form (driven, dashed, sheared, open hole) so state never depends on colour alone.",
       "Do set every screen in Lexend, counts and balances in Numeral with tabular figures.",
-      "Do separate rows and calendar weeks with one hairline (hairline) and announce sections with a 13sp label tracked 0.14em.",
-      "Do lift surfaces by one teal step (rail, ground, raised) instead of shadows.",
-      "Do keep magenta inside the bay as the grow lamp and its glow.",
-      "Do show selection in mint steel and offer Undo in the snackbar after every log and purchase.",
-      "Do keep the diary page on the owner's papers and inks, ruled lines only."
+      "Do put content on cards one tonal step above the ground, and lift surfaces by tone instead of shadows.",
+      "Do keep uranium green as light: the reactor, the rail, gauges, completed work.",
+      "Do show selection in cool steel and offer Undo in the snackbar after every log and purchase.",
+      "Do keep the diary page on the owner's papers and inks, ruled lines only, with the atom emblem."
     ],
     "donts": [
-      "Don't use leaf green for decoration, emphasis or non-place selection; it means pressable, grown, or here.",
-      "Don't put magenta on a control, label, mark or text.",
+      "Don't use ready green for decoration, emphasis or non-place selection; it means pressable or here.",
+      "Don't paint a control, label or text uranium green.",
       "Don't use coral for anything but failure and destruction, or gold for anything but nuts.",
-      "Don't wrap sections in cards, or build the dark-dashboard default of glowing stat cards and progress rings.",
-      "Don't add ornaments beyond leaves and sprouts.",
+      "Don't nest cards, or build the dark-dashboard default of glowing stat tiles and progress rings.",
+      "Don't add ornaments beyond bolts, frames and the atom, or bring back plants.",
       "Don't put squared or grid paper anywhere; calendars use ruled rows, the diary ruled lines.",
-      "Don't draw icons outside the robot grammar (24dp, 1.8 stroke, square caps, pivot joints) or substitute glyphs and emoji for them."
+      "Don't draw icons outside the robot grammar or substitute glyphs and emoji for them."
     ]
   }
 }
