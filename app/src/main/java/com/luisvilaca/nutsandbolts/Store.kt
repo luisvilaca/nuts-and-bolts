@@ -131,7 +131,7 @@ internal fun dataFrom(o: JSONObject) = Data().apply {
     o.optJSONObject("equip")?.let { j -> equip.keys.toList().forEach { k -> equip[k] = j.str(k)?.takeIf { it in owned } ?: equip[k] } }
     o.getJSONArray("habits").let { a ->
         for (i in 0 until a.length()) a.getJSONObject(i).let { j ->
-            habits += Habit(j.getString("id"), j.getString("name"), j.getString("kind"), j.getString("per"), j.getInt("target").coerceIn(1, 7),
+            habits += Habit(j.getString("id"), j.getString("name"), j.getString("kind"), j.getString("per"), j.getInt("target").coerceIn(1, maxTarget(j.getString("per"))),
                 j.getString("stat").also { require(it in STATS) }, j.getString("weight").also { require(it in WEIGHTS) },
                 j.date("start"), j.date("end"), j.optJSONArray("days")?.let { d -> (0 until d.length()).map(d::getInt).toSet() })
         }

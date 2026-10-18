@@ -59,8 +59,8 @@ class LogicTest {
         assertEquals(2, streak(t, mwf, d("2026-10-15"))) // days off neither break nor extend
         assertEquals(1, mark(t, mwf, d("2026-10-16"), "done")!!.n)
         mark(t, mwf, d("2026-10-19"), "fail")
-        assertEquals(Record(4, 3, 1, 3, 0), record(t, mwf, d("2026-10-19")))
-        assertEquals(Record(3, 3, 0, 3, 3), record(t, mwf, d("2026-10-16"))) // today's open slot does not end the run
+        assertEquals(Record(4, 3, 1, 3, 0, 4), record(t, mwf, d("2026-10-19")))
+        assertEquals(Record(3, 3, 0, 3, 3, 3), record(t, mwf, d("2026-10-16"))) // today's open slot does not end the run
     }
 
     @Test fun buyingNeedsBothCurrencies() {
@@ -97,5 +97,12 @@ class LogicTest {
         restoreHabit(s, a, at)
         assertEquals(listOf(a, b), s.habits)
         assertEquals(1, periodMarks(s, a, d("2026-10-12")).size) // its marks were never touched
+    }
+
+    @Test fun targetsAndLifetime() {
+        assertEquals(listOf(12, 7), listOf(maxTarget("day"), maxTarget("week")))
+        val s = fresh(); val h = daily.apply { start = d("2026-10-01") }; s.habits += h
+        mark(s, h, d("2026-10-02"), "done")
+        assertEquals(10, record(s, h, d("2026-10-10")).periods) // 1st to 10th October, one period a day
     }
 }

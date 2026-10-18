@@ -163,11 +163,15 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
     if (s.habits.isEmpty()) drawRoundRect(W.dim, Offset(750f, bench - 90f), Size(30f, 90f), CornerRadius(6f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
     val shown = orbits.take(6)
     val gap = 290f / max(1, shown.size)
-    val br = min(13f, gap * 0.3f) // bolts shrink on a crowded bench so neighbours do not overlap
+    // bolts shrink on a crowded bench so neighbours do not overlap, and tall frames close up their holes so a dozen
+    // still stand below the light rail
+    val tallest = shown.maxOfOrNull { it.slots.size } ?: 1
+    val pitch = min(44f, 190f / tallest)
+    val br = min(min(13f, gap * 0.3f), pitch * 0.4f)
     shown.forEachIndexed { k, o ->
         val x = 620f + gap * (k + 0.5f)
         val w = br * 2.6f
-        val top = bench - 30f - 44f * o.slots.size
+        val top = bench - 38f - pitch * (o.slots.size - 1) - (br + 23f) // the top bolt sits as far below the frame head as before
         // a habit with every slot done goes critical: its frame glows uranium green, breathing, specks of light rising off
         // it; the glow ignites as the last bolt seats
         val hot = o.slots.all { it.s == "done" }
@@ -188,7 +192,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
         o.slots.forEachIndexed { j, sl ->
             var drive = 1f
             if (fresh != null && fresh.first == o.h.id && j == newest) drive = min(1f, since(t, fresh.second) / 700f).let { 1 - (1 - it).pow(3) }
-            bolt(Offset(x, bench - 38f - 44f * j), br, sl, drive)
+            bolt(Offset(x, bench - 38f - pitch * j), br, sl, drive)
         }
     }
 }

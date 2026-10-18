@@ -80,7 +80,7 @@ class ScreensTest {
         shot("$prefix-today")
         tap("Shop"); shot("$prefix-shop")
         tap("Habits"); shot("$prefix-habits")
-        tap("Calendar"); shot("$prefix-habits-cal"); tap("Day")
+        tap("Calendar"); shot("$prefix-habits-cal"); tap("History"); shot("$prefix-habits-hist"); tap("Day")
         tap("Add habit"); shot("$prefix-form")
         tap("Cancel"); tap("Diary"); shot("$prefix-diary")
         tap("Open today".takeIf { LocalDate.now() in st.s.diary } ?: "Write today"); shot("$prefix-page")
@@ -185,6 +185,14 @@ class ScreensTest {
         tap("Lab"); tap("Shop")
         rule.onNodeWithText("Trying on: Dome, Wrenches").assertDoesNotExist()
         org.junit.Assert.assertEquals("head-box", st.s.equip["head"]) // trying on buys nothing
+    }
+
+    // A dozen bolts on one frame still stand below the light rail.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun crowdedBench() {
+        val st = seed()
+        st.change { habits += Habit("x", "Twelve", per = "day", target = 12, stat = "core", start = LocalDate.now().minusDays(1)) }
+        rule.setContent { NbTheme { BayPanel(st, Modifier.size(600.dp, 600.dp), orbitsFor(st.s, LocalDate.now())) } }
+        shot("bench-twelve")
     }
 
     // The pen and eraser menus open with their sliders and values (popups are not in the screenshots).

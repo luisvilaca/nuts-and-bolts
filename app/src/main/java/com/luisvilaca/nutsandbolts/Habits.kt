@@ -47,6 +47,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.sp
+import kotlin.math.min
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,11 +105,22 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
     Box(Modifier.fillMaxSize()) {
         // only what overflows scrolls: the calendar always fits the screen, the day and the history scroll if they must
         Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
-            Header("Habits", summary(s, d, p).takeIf { lay.wide }, store, ui, lay)
-            if (!lay.wide) Text(summary(s, d, p), Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            val sum = when {
+                s.habits.isEmpty() -> "No habits yet"
+                view == "cal" -> monthSummary(s, month)
+                view == "hist" -> "${plural(s.habits.size, "habit")} · best run " + s.habits.map { h -> record(s, h, t).best.let { it to h.per } }.maxByOrNull { it.first }!!.let { (n, per) -> plural(n, per) }
+                else -> boltsIn(p, d > t)
+            }
+            Header("Habits", sum.takeIf { lay.wide }, store, ui, lay)
+            if (!lay.wide) Text(sum, Modifier.padding(bottom = 4.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             controls()
-            if (view == "cal") Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) { Month(month, { day, roomy -> DayMark(slotProgress(s, day), day > t, Modifier.size(if (roomy) 42.dp else 26.dp)) }, ahead = true, Modifier.weight(1f),
-                say = { day -> boltsIn(slotProgress(s, day), day > t) }) { ui.date = it; view = "day" } }
+            if (view == "cal") Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
+                Card(Modifier.weight(1f), pad = 12.dp) {
+                    Month(month, { day, room -> CalendarMark(slotProgress(s, day), day > t, room) }, ahead = true, Modifier.weight(1f),
+                        say = { day -> slotProgress(s, day).let { if (it.slots == 0) "nothing ran" else boltsIn(it, day > t) } }) { ui.date = it; view = "day" }
+                }
+                Legend(Modifier.padding(top = 8.dp, start = 4.dp))
+            }
             // wider than 720dp the day splits: the habits on the left, the one picked in detail on the right
             else BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                 val split = maxWidth >= 720.dp && view == "day" && run.isNotEmpty()
@@ -124,14 +140,19 @@ fun HabitsScreen(store: Store, ui: Ui, lay: Lay) {
                 }
             }
         }
-        if (view != "cal") ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.openForm("") },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp).height(48.dp), containerColor = W.act, contentColor = W.onAct)
+        // reachable from every view; a new habit starts on the day picked last
+        ExtendedFloatingActionButton(text = { Text("Add habit") }, icon = { Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)) }, onClick = { ui.openForm("") },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp, if (view == "cal") 48.dp else 20.dp).height(48.dp), containerColor = W.act, contentColor = W.onAct)
     }
 }
 
-private fun summary(s: Data, d: LocalDate, p: Progress) = when {
-    s.habits.isEmpty() -> "No habits yet"
-    else -> boltsIn(p, d > LocalDate.now())
+// A month's bolts up to today: "41 of 60 bolts in October".
+private fun monthSummary(s: Data, m: YearMonth): String {
+    val t = LocalDate.now()
+    val ps = (1..m.lengthOfMonth()).map { m.atDay(it) }.filter { it <= t }.map { slotProgress(s, it) }
+    val name = m.format(DateTimeFormatter.ofPattern("MMMM", Locale.UK))
+    if (ps.isEmpty()) return "${plural((1..m.lengthOfMonth()).sumOf { slotProgress(s, m.atDay(it)).slots }, "bolt")} planned in $name"
+    return "${ps.sumOf { it.done }} of ${plural(ps.sumOf { it.slots }, "bolt")} in $name" + ps.sumOf { it.fail }.let { if (it > 0) ", $it sheared" else "" }
 }
 
 // The one way a count of slots is said: in bolts, driven in or sheared, or planned for a day ahead.
@@ -148,14 +169,15 @@ fun Stepper(label: String, prev: () -> Unit, next: (() -> Unit)?) = Row(vertical
 // A month of day tiles that always fills the space it is given, so it never scrolls: each week a ruled row of equal
 // height, the day's mark under its number, or beside it when the rows are short. ahead: future days open too.
 @Composable
-// say: what a day holds, read out with its date; mark gets whether the cell has room for a large mark
-fun Month(m: YearMonth, mark: @Composable (LocalDate, Boolean) -> Unit, ahead: Boolean, modifier: Modifier = Modifier, say: (LocalDate) -> String = { "" }, open: (LocalDate) -> Unit) {
+// say: what a day holds, read out with its date; mark gets how much room its cell has: 0 a short row (the mark sits
+// beside the number), 1 a cell of 60dp or more, 2 one of 110dp or more
+fun Month(m: YearMonth, mark: @Composable (LocalDate, Int) -> Unit, ahead: Boolean, modifier: Modifier = Modifier, say: (LocalDate) -> String = { "" }, open: (LocalDate) -> Unit) {
     val t = LocalDate.now()
     val lead = m.atDay(1).dayOfWeek.value - 1
     val weeks = (lead + m.lengthOfMonth() + 6) / 7
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val compact = (maxHeight - 24.dp) / weeks < 60.dp
-        val roomy = (maxHeight - 24.dp) / weeks >= 110.dp
+        val room = if ((maxHeight - 24.dp) / weeks >= 110.dp) 2 else 1
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.padding(bottom = 4.dp)) { DOW.forEach { Text(it.uppercase(), Modifier.weight(1f).padding(start = 6.dp), style = Label) } }
             (0 until weeks).forEach { w ->
@@ -173,8 +195,8 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate, Boolean) -> Unit, ahead: B
                                     Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.edge else W.text)
                                 }
                             }
-                            if (compact) Row(cell, verticalAlignment = Alignment.CenterVertically) { num(); Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { mark(d, false) } }
-                            else Column(cell) { num(); Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { mark(d, roomy) } }
+                            if (compact) Row(cell, verticalAlignment = Alignment.CenterVertically) { num(); Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { mark(d, 0) } }
+                            else Column(cell) { num(); Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { mark(d, room) } }
                         }
                     }
                 }
@@ -183,7 +205,27 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate, Boolean) -> Unit, ahead: B
     }
 }
 
-// Every habit's lifetime. A run is drawn exactly its length: one step per day or week.
+// A day in the habits calendar: its plate, 42dp in a roomy cell and 26dp otherwise, with "2/3" under it where there is
+// room; nothing at all on a day when no habit ran.
+@Composable
+private fun CalendarMark(p: Progress, future: Boolean, room: Int) {
+    if (p.slots == 0) return
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        DayMark(p, future, Modifier.size(if (room == 2) 42.dp else 26.dp))
+        if (room > 0 && !future) Text("${p.done}/${p.slots}", style = Numeral.copy(fontSize = 12.sp), color = W.dim)
+    }
+}
+
+// What the plates' holes mean, drawn with the real bolts.
+@Composable
+private fun Legend(modifier: Modifier) = Row(modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+    listOf("done" to "driven = done", "" to "ring = open", "fail" to "split = sheared").forEach { (st, words) ->
+        SlotMark(Slot(st, false), 18.dp)
+        Text(words, Modifier.padding(start = 6.dp, end = 18.dp), style = MaterialTheme.typography.labelMedium, color = W.dim)
+    }
+}
+
+// Every habit's lifetime: its rate and runs, the run bar across its whole life, and its last twelve weeks.
 @Composable
 private fun History(s: Data) {
     val t = LocalDate.now()
@@ -199,11 +241,59 @@ private fun History(s: Data) {
             }
             Text("${r.done} of ${plural(r.slots, "bolt")} in" + (if (r.fail > 0) " · ${r.fail} sheared" else "") + " · best run ${unit(r.best)}" + (if (r.now > 0) " · ${unit(r.now)} running now" else ""),
                 style = MaterialTheme.typography.bodyMedium, color = W.dim)
-            Canvas(Modifier.fillMaxWidth().height(14.dp).padding(top = 6.dp).semantics { contentDescription = "best run ${unit(r.best)}, current ${unit(r.now)}" }) {
-                val step = minOf(14f * density, size.width / maxOf(r.best, 1))
-                drawRoundRect(W.line, Offset.Zero, Size(size.width, size.height), CornerRadius(size.height / 2))
-                drawRoundRect(W.steel, Offset.Zero, Size(step * r.best, size.height), CornerRadius(size.height / 2), alpha = 0.55f)
-                drawRoundRect(W.glow, Offset.Zero, Size(step * r.now, size.height), CornerRadius(size.height / 2))
+            RunBar(h, r, Modifier.padding(top = 10.dp))
+            Strip(s, h, Modifier.padding(top = 12.dp))
+        }
+    }
+}
+
+// A habit's whole life as a track, one step per day or week since it began: the best run in steel and the current run
+// in glow, both reaching to today at the right, so a one-day run reads as one day of a long life, not an empty bar.
+@Composable
+private fun RunBar(h: Habit, r: Record, modifier: Modifier) = Column(modifier) {
+    val unit = { n: Int -> plural(n, h.per) }
+    Canvas(Modifier.fillMaxWidth().height(8.dp).semantics { contentDescription = "best run ${unit(r.best)}, current ${unit(r.now)}, over ${unit(r.periods)}" }) {
+        val step = size.width / maxOf(r.periods, 1)
+        val cr = CornerRadius(size.height / 2)
+        drawRoundRect(W.edge, Offset.Zero, size, cr)
+        drawRoundRect(W.steel, Offset(size.width - step * r.best, 0f), Size(step * r.best, size.height), cr, alpha = 0.55f)
+        drawRoundRect(W.glow, Offset(size.width - step * r.now, 0f), Size(step * r.now, size.height), cr)
+    }
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+        Text("${unit(r.periods)} ago", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = W.dim)
+        Text("today", style = MaterialTheme.typography.labelMedium, color = W.dim)
+    }
+}
+
+// The last twelve weeks of a habit: a weekly habit as twelve week plates, a daily one as a field of day pips, seven to
+// a week, oldest at the left. A pip is steel when the day was full, half steel when partly done, coral with a sheared
+// bolt, and an empty ring when nothing went in; days the habit did not run are left blank.
+@Composable
+private fun Strip(s: Data, h: Habit, modifier: Modifier) {
+    val t = LocalDate.now()
+    val first = weekStart(t).minusWeeks(11)
+    if (h.per == "week") Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        (0 until 12L).forEach { w ->
+            val d = first.plusWeeks(w)
+            val ms = periodMarks(s, h, d)
+            // a week before the habit began stays empty
+            if (!periodDates(h, d).any { active(h, it) }) Spacer(Modifier.size(28.dp))
+            else DayMark(Progress(ms.count { it.second.s == "done" }, ms.count { it.second.s == "fail" }, h.target), d > t, Modifier.size(28.dp))
+        }
+    } else Canvas(modifier.size(14.dp * 12, 14.dp * 7).semantics { contentDescription = "the last twelve weeks of ${h.name}" }) {
+        val cw = size.width / 12f; val ch = size.height / 7f
+        val rr = min(cw, ch) * 0.34f
+        for (w in 0 until 12) for (i in 0 until 7) {
+            val d = first.plusDays((w * 7 + i).toLong())
+            if (d > t || !active(h, d)) continue
+            val c = Offset(cw * (w + 0.5f), ch * (i + 0.5f))
+            val ms = s.marks[d]?.get(h.id).orEmpty()
+            val done = ms.count { it.s == "done" }
+            when {
+                ms.any { it.s == "fail" } -> drawCircle(W.coral, rr, c)
+                done >= h.target -> drawCircle(W.steel, rr, c)
+                done > 0 -> { drawCircle(W.edge, rr, c); drawArc(W.steel, 90f, 180f, true, c - Offset(rr, rr), Size(rr * 2, rr * 2)) }
+                else -> drawCircle(W.edge, rr - 1f, c, style = Stroke(1.5f))
             }
         }
     }
@@ -231,8 +321,7 @@ private fun Detail(s: Data, ui: Ui, h: Habit, modifier: Modifier) = Column(modif
                     }
                 }
         }
-        Gauge(if (r.best > 0) r.now.toFloat() / r.best else 0f, Modifier.fillMaxWidth().padding(top = 16.dp))
-        Text("The current run against the best", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.labelMedium, color = W.dim)
+        RunBar(h, r, Modifier.padding(top = 16.dp))
     }
     Card(Modifier.fillMaxWidth()) {
         Text("LOG", Modifier.padding(bottom = 8.dp), style = Label)
@@ -287,25 +376,34 @@ private fun Long.date() = java.time.Instant.ofEpochMilli(this).atZone(ZoneOffset
 @Composable
 fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     val s = store.s
-    var name by remember { mutableStateOf(h?.name ?: "") }
-    var kind by remember { mutableStateOf(h?.kind ?: "good") }
-    var target by remember { mutableStateOf(h?.target ?: 1) }
-    var per by remember { mutableStateOf(h?.per ?: "day") }
-    var weight by remember { mutableStateOf(h?.weight ?: "medium") }
-    var stat by remember { mutableStateOf(h?.stat ?: "battery") }
+    // every field survives the system ending the app in the background (dates and day sets are serializable)
+    var name by rememberSaveable { mutableStateOf(h?.name ?: "") }
+    var kind by rememberSaveable { mutableStateOf(h?.kind ?: "good") }
+    var target by rememberSaveable { mutableStateOf(h?.target ?: 1) }
+    var per by rememberSaveable { mutableStateOf(h?.per ?: "day") }
+    var weight by rememberSaveable { mutableStateOf(h?.weight ?: "medium") }
+    var stat by rememberSaveable { mutableStateOf(h?.stat ?: "battery") }
     // an undated habit has run since its first mark
-    var start by remember { mutableStateOf(h?.start ?: h?.let { x -> s.marks.keys.filter { s.marks[it]!!.containsKey(x.id) }.minOrNull() } ?: ui.date) }
-    var end by remember { mutableStateOf(h?.end) }
-    var ends by remember { mutableStateOf(h?.end != null) }
-    var days by remember { mutableStateOf(h?.days ?: (0..6).toSet()) }
-    var picking by remember { mutableStateOf<String?>(null) }
-    var confirm by remember { mutableStateOf(false) }
+    var start by rememberSaveable { mutableStateOf(h?.start ?: h?.let { x -> s.marks.keys.filter { s.marks[it]!!.containsKey(x.id) }.minOrNull() } ?: ui.date) }
+    var end by rememberSaveable { mutableStateOf(h?.end) }
+    var ends by rememberSaveable { mutableStateOf(h?.end != null) }
+    var days by rememberSaveable { mutableStateOf(HashSet(h?.days ?: (0..6).toSet())) }
+    var picking by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirm by rememberSaveable { mutableStateOf(false) }
     val problem = when {
         name.isBlank() -> "Give the habit a name."
         days.isEmpty() -> "Pick at least one day of the week."
         ends && end == null -> "Pick the day it ends, or let it run indefinitely."
         ends && end!! < start -> "The end day comes before the start day."
         else -> null
+    }
+    val save = {
+        store.change {
+            val x = h ?: Habit(newId(), "").also { habits += it }
+            x.name = name.trim(); x.kind = kind; x.per = per; x.target = target; x.weight = weight; x.stat = stat
+            x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }?.toSet()
+        }
+        ui.edit = null
     }
     val seg = @Composable { opts: List<Pair<String, String>>, cur: String, set: (String) -> Unit ->
         // the choices slide; past two options a narrow column lays them out two to a row instead
@@ -343,9 +441,11 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton({ target = (target - 1).coerceAtLeast(1) }) { Icon(ICONS.getValue("minus"), "Fewer", tint = W.text) }
                 Text("$target", Modifier.widthIn(min = 28.dp), style = Numeral, color = W.text)
-                IconButton({ target = (target + 1).coerceAtMost(7) }) { Icon(ICONS.getValue("plus"), "More", tint = W.text) }
+                IconButton({ target = (target + 1).coerceAtMost(maxTarget(per)) }, enabled = target < maxTarget(per)) {
+                    Icon(ICONS.getValue("plus"), "More", tint = if (target < maxTarget(per)) W.text else W.edge)
+                }
                 Text("times a", Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.bodyLarge)
-                Box(Modifier.widthIn(max = 240.dp)) { seg(listOf("day" to "Day", "week" to "Week"), per) { per = it } }
+                Box(Modifier.widthIn(max = 240.dp)) { seg(listOf("day" to "Day", "week" to "Week"), per) { per = it; target = target.coerceAtMost(maxTarget(it)) } }
             }
             FlowRow(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("From", style = MaterialTheme.typography.bodyLarge)
@@ -356,14 +456,25 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
             }
             FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DOW.forEachIndexed { i, n ->
-                    FilterChip(i in days, { days = if (i in days) days - i else days + i }, { Text(n) },
+                    FilterChip(i in days, { days = HashSet(if (i in days) days - i else days + i) }, { Text(n) },
+                        leadingIcon = if (i in days) ({ Icon(ICONS.getValue("check"), null, Modifier.size(16.dp), tint = W.steel) }) else null,
                         colors = FilterChipDefaults.filterChipColors(selectedContainerColor = W.selFill, selectedLabelColor = W.text, labelColor = W.text),
                         border = FilterChipDefaults.filterChipBorder(true, i in days, borderColor = W.edge, selectedBorderColor = W.sel, selectedBorderWidth = 1.5.dp))
                 }
             }
         }
     }
-    val right = @Composable {
+    val actions = @Composable { m: Modifier ->
+        Row(m.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (h != null) TextButton({ confirm = true }) { Text("Delete habit", color = W.coral) }
+            Spacer(Modifier.weight(1f))
+            OutlinedButton({ ui.edit = null }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Cancel", color = W.text) }
+            Button(save, Modifier.height(44.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
+                Text(if (h == null) "Add habit" else "Save changes")
+            }
+        }
+    }
+    val right = @Composable { pinned: Boolean ->
         group("Weight") {
             seg(WEIGHTS.map { (k, w) -> k to "${w.name}\n${plural(w.bolts, "bolt")}, ${plural(w.pts, "point")}" }, weight) { weight = it }
             hint("Done pays this much. Failed takes the same amount back.")
@@ -371,31 +482,26 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         group("Reward") { Reward(s, kind, per, target, weight, stat) }
         // a hint while the name is still empty, an error once something is written
         if (problem != null) Text(problem, Modifier.padding(horizontal = 4.dp), style = MaterialTheme.typography.bodyMedium, color = if (name.isEmpty()) W.dim else W.coral)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (h != null) TextButton({ confirm = true }) { Text("Delete habit", color = W.coral) }
-            Spacer(Modifier.weight(1f))
-            OutlinedButton({ ui.edit = null }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Cancel", color = W.text) }
-            Button({
-                store.change {
-                    val x = h ?: Habit(newId(), "").also { habits += it }
-                    x.name = name.trim(); x.kind = kind; x.per = per; x.target = target; x.weight = weight; x.stat = stat
-                    x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }
-                }
-                ui.edit = null
-            }, Modifier.height(44.dp), enabled = problem == null, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
-                Text(if (h == null) "Add habit" else "Save changes")
-            }
-        }
+        if (!pinned) actions(Modifier)
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 28.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header(if (h == null) "New habit" else "Edit habit", null, store, ui, lay)
-        // wider than 720dp: what the habit is on the left, what it pays and the actions on the right
-        BoxWithConstraints {
-            if (maxWidth >= 720.dp) Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Column(Modifier.weight(1.1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { left() }
-                Column(Modifier.weight(0.9f), verticalArrangement = Arrangement.spacedBy(12.dp)) { right() }
-            } else Column(Modifier.widthIn(max = 720.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { left(); right() }
+    Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
+        // the form's own bar: back, what it is, and Save, so saving never needs a scroll to the end
+        Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton({ ui.edit = null }, Modifier.size(40.dp)) { Icon(ICONS.getValue("prev"), "Back", tint = W.text) }
+            Text(if (h == null) "New habit" else "Edit habit", Modifier.padding(start = 8.dp).weight(1f), style = MaterialTheme.typography.displaySmall, maxLines = 1)
+            TextButton(save, enabled = problem == null) { Text("Save", color = if (problem == null) W.act else W.dim, style = MaterialTheme.typography.labelLarge) }
+        }
+        BoxWithConstraints(Modifier.weight(1f)) {
+            // wider than 720dp: what the habit is on the left, scrolling; what it pays and the actions on the right, held still
+            if (maxWidth >= 720.dp) Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(Modifier.weight(1.1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { left() }
+                Column(Modifier.weight(0.9f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { right(false) }
+            } else Column(Modifier.fillMaxSize()) {
+                Column(Modifier.weight(1f).widthIn(max = 720.dp).verticalScroll(rememberScrollState()).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { left(); right(true) }
+                // on a phone Cancel and Save stay pinned above the keyboard
+                actions(Modifier.background(W.ground).imePadding().padding(vertical = 10.dp))
+            }
         }
     }
 
