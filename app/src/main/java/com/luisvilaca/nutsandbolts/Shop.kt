@@ -1,6 +1,7 @@
 package com.luisvilaca.nutsandbolts
 
 import java.time.LocalDate
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -103,7 +104,7 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.titleLarge)
             // owned parts say what they are through the button alone
-            if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false) }
+            if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false, short = p.bolts > s.bolts || p.nuts > s.nuts) }
         }
         val btn = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)
         when {
@@ -113,6 +114,7 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                 store.change { ok = buy(this, p) }
                 if (ok) {
                     store.react("cheer")
+                    Sfx.play("buy")
                     ui.tell("${p.name} is yours") { store.change { owned -= p.id; bolts += p.bolts; nuts += p.nuts; equip[p.slot] = before } }
                 }
             }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(if (need.isEmpty()) "Buy" else "Need $need") }
@@ -124,11 +126,14 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
 }
 
 @Composable
-private fun Price(p: Part, owned: Boolean) {
+// short: the balance does not cover it yet, so the price is dimmed
+private fun Price(p: Part, owned: Boolean, short: Boolean = false) {
     when {
         owned -> Text("Owned", style = MaterialTheme.typography.bodyMedium, color = W.dim)
         p.bolts == 0 && p.nuts == 0 -> Text("Free", style = MaterialTheme.typography.bodyMedium, color = W.dim)
-        else -> { if (p.bolts > 0) Coin("bolts", p.bolts, small = true); if (p.nuts > 0) Coin("nuts", p.nuts, small = true) }
+        else -> Row(Modifier.alpha(if (short) 0.45f else 1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (p.bolts > 0) Coin("bolts", p.bolts, small = true); if (p.nuts > 0) Coin("nuts", p.nuts, small = true)
+        }
     }
 }
 
@@ -145,7 +150,7 @@ private fun Tile(store: Store, p: Part, sel: Boolean, modifier: Modifier, onClic
         }
         Text(p.name, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.padding(top = 4.dp).height(22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned)
+            if (eq) Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.act) else Price(p, p.id in s.owned, short = p.bolts > s.bolts || p.nuts > s.nuts)
         }
     }
 }

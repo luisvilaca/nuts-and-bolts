@@ -95,7 +95,7 @@ fun SlotMark(slot: Slot, size: Dp = 26.dp, modifier: Modifier = Modifier) =
 // when something failed; a dashed blank plate while the day is ahead.
 @Composable
 fun DayMark(p: Progress, future: Boolean, modifier: Modifier = Modifier, today: Boolean = false) = Canvas(modifier) {
-    if (today) drawCircle(W.steel, size.minDimension * 0.47f, center, style = Stroke(1.5.dp.toPx()))
+    if (today) drawCircle(W.act, size.minDimension * 0.47f, center, style = Stroke(1.5.dp.toPx()))
     val pw = size.width * 0.72f; val ph = size.height * 0.36f
     val tl = center - Offset(pw / 2, ph / 2)
     if (future || p.slots == 0) {
@@ -118,7 +118,7 @@ class Orbit(val h: Habit, val slots: List<Slot>)
 // Each base is its own room: wall, floor and the colour of the light the reactor feeds, plus what hangs on the wall.
 class Room(val sky: Color, val wall: Color, val floor: Color, val light: Color)
 val ROOMS = listOf(
-    Room(Color(0xFF131D31), Color(0xFF0C1320), Color(0xFF0F1828), Color(0xFF4CC9FF)), // Charging Bay: graphite, Cherenkov blue
+    Room(Color(0xFF13302B), Color(0xFF0B1A1A), Color(0xFF0E2420), Color(0xFF45E3F5)), // Charging Bay: greenhouse teal, Cherenkov cyan
     Room(Color(0xFF33231A), Color(0xFF181010), Color(0xFF26180F), Color(0xFFFFB547)), // Workshop: warm wood, amber lamp
     Room(Color(0xFF261B4A), Color(0xFF110C24), Color(0xFF1A1430), Color(0xFFB48CFF)), // Observatory: violet night
     Room(Color(0xFF0B2C33), Color(0xFF071518), Color(0xFF0C2226), Color(0xFF3FF0D0)), // Star Deck: teal station light
@@ -127,12 +127,11 @@ val ROOMS = listOf(
 
 // The whole bay, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
 // show, so Today, Shop and the base tiles all frame the same picture. band: room left at the top for the nameplate.
-// foot: room left at the bottom for the levels.
-fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f, foot: Float = 0f) {
+fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f) {
     val tier = (PART[equip["base"]]?.tier ?: 1).coerceIn(1, ROOMS.size)
     val r = ROOMS[tier - 1]
-    val k = min(size.width / 920f, (size.height - band - foot) / 760f)
-    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - foot - 760f * k) / 2 - 120f * k
+    val k = min(size.width / 920f, (size.height - band) / 760f)
+    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 120f * k
     val fy = oy + 700f * k
     drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
     drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
@@ -149,7 +148,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
     val bench = 596f
     drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
     when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); else -> chargingBay(s) }
-    val heart = Offset(765f, 702f)
+    val heart = Offset(765f, 706f)
     drawCircle(Brush.radialGradient(listOf(W.glow.copy(alpha = (0.08f + 0.18f * core) * pulse), Color.Transparent), heart, 420f), 420f, heart)
     lightRail(r.light, core)
     // Rivet and its platform stand left to share the floor with the bench
@@ -158,7 +157,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
         translate(250f, 165f) { scale(1.25f, 1.25f, Offset.Zero) { robot(equip, t, mood(s), react) } }
     }
     benchBase()
-    reactor(core, pulse)
+    reactor(level(s.stats.getValue("core")), core, pulse, t)
     benchTop()
 
     if (s.habits.isEmpty()) drawRoundRect(W.dim, Offset(750f, bench - 90f), Size(30f, 90f), CornerRadius(6f), style = Stroke(3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
@@ -186,55 +185,99 @@ private fun DrawScope.lightRail(light: Color, core: Float) {
     for (x in listOf(650f, 880f)) drawLine(W.joint, Offset(x, -300f), Offset(x, 346f), 3f)
     drawPath(Path().apply { moveTo(624f, 370f); lineTo(906f, 370f); lineTo(934f, 596f); lineTo(596f, 596f); close() },
         Brush.verticalGradient(listOf(light.copy(alpha = 0.12f + 0.1f * core), Color.Transparent), 370f, 596f))
-    drawRoundRect(Color(0xFF1A2233), Offset(612f, 344f), Size(306f, 22f), CornerRadius(8f))
+    drawRoundRect(Color(0xFF16302C), Offset(612f, 344f), Size(306f, 22f), CornerRadius(8f))
     drawLine(Color.White.copy(alpha = 0.18f), Offset(620f, 347f), Offset(910f, 347f), 2f)
     drawRoundRect(light, Offset(622f, 362f), Size(286f, 9f), CornerRadius(4.5f), alpha = 0.3f, style = Stroke(12f))
     drawRoundRect(light, Offset(622f, 362f), Size(286f, 9f), CornerRadius(4.5f), alpha = 0.6f + 0.4f * core)
 }
 
-private val BENCH = Color(0xFF2A3A55)
+private val BENCH = Color(0xFF24443E)
 
 private fun DrawScope.benchBase() {
     for (x in listOf(628f, 888f)) {
         drawRect(BENCH, Offset(x, 618f), Size(14f, 150f))
         drawRect(Color.Black.copy(alpha = 0.25f), Offset(x + 9f, 618f), Size(5f, 150f))
     }
-    drawRect(BENCH, Offset(642f, 744f), Size(246f, 8f))
 }
 
 private fun DrawScope.benchTop() {
-    drawRect(Color(0xFF22304A), Offset(604f, 606f), Size(322f, 16f))
-    drawRect(Color(0xFF8FA0BC), Offset(604f, 596f), Size(322f, 10f))
+    drawRect(Color(0xFF1F4640), Offset(604f, 606f), Size(322f, 16f))
+    drawRect(Color(0xFF8FB8AE), Offset(604f, 596f), Size(322f, 10f))
     drawLine(Color.White.copy(alpha = 0.35f), Offset(604f, 597f), Offset(926f, 597f), 2f)
     for (i in 0 until 8) drawCircle(W.joint, 2.5f, Offset(620f + i * 41f, 614f))
 }
 
-// The reactor: a domed steel vessel on a plinth, bolted flanges, a viewport onto the core where the fuel rods stand
-// dark against Cherenkov light, a conduit up to the bench and a pressure gauge whose needle reads the Core attribute.
-private fun DrawScope.reactor(core: Float, pulse: Float) {
-    val metal = Brush.horizontalGradient(listOf(Color(0xFF1A2438), Color(0xFF45597F), Color(0xFF1A2438)), 716f, 814f)
-    drawRoundRect(Color(0xFF151C2B), Offset(704f, 752f), Size(122f, 18f), CornerRadius(6f))
-    drawRect(W.joint, Offset(760f, 620f), Size(10f, 12f))
-    drawPath(Path().apply { moveTo(722f, 664f); quadraticBezierTo(722f, 630f, 765f, 628f); quadraticBezierTo(808f, 630f, 808f, 664f); close() }, metal)
-    drawRoundRect(metal, Offset(716f, 660f), Size(98f, 94f), CornerRadius(10f))
-    for (y in listOf(656f, 736f)) {
-        drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF9AAAC4), Color(0xFF55657F)), y, y + 12f), Offset(710f, y), Size(110f, 12f), CornerRadius(3f))
-        for (i in 0 until 8) drawCircle(Color(0xFF2A3446), 2f, Offset(718f + i * 13.5f, y + 6f))
+// The reactor: a glass fusion capsule standing on the floor under the bench. In it a plasma core burns with an orbit
+// for every three Core levels (an atom, the diary's emblem), electrons racing round them; coil packs clamp it either
+// side, ten lamps on the plinth read the Core level, and pulses of light run up a cable on the bench leg to power the
+// bench. Everything turns with t and holds still when t is 0 (animations off).
+private fun DrawScope.reactor(lv: Int, core: Float, pulse: Float, t: Long) {
+    val c = Offset(765f, 706f)
+    val glow = W.glow
+    val metal = Brush.horizontalGradient(listOf(Color(0xFF132A26), Color(0xFF4A7A70), Color(0xFF132A26)), 700f, 830f)
+    // the plinth, its hazard stripes and the level lamps
+    drawRoundRect(Color(0xFF0E2420), Offset(672f, 772f), Size(186f, 22f), CornerRadius(5f))
+    clipPath(Path().apply { addRect(Rect(676f, 774f, 854f, 778f)) }) {
+        for (i in 0 until 24) drawLine(W.gold, Offset(670f + i * 9f, 780f), Offset(678f + i * 9f, 772f), 3.5f, alpha = 0.5f)
     }
-    drawRoundRect(Color(0xFF0B1626), Offset(736f, 672f), Size(58f, 60f), CornerRadius(12f))
-    drawRoundRect(Brush.radialGradient(listOf(Color(0xFFE6FBFF), W.glow, Color(0xFF0B3A66)), Offset(765f, 702f), 44f), Offset(740f, 676f), Size(50f, 52f),
-        CornerRadius(10f), alpha = (0.4f + 0.6f * core) * pulse)
-    for (x in listOf(749f, 759f, 771f, 781f)) drawLine(Color(0xFF0B1626), Offset(x, 684f), Offset(x, 720f), 5f, StrokeCap.Round, alpha = 0.85f)
-    drawRoundRect(W.steel, Offset(736f, 672f), Size(58f, 60f), CornerRadius(12f), alpha = 0.55f, style = Stroke(3f))
-    drawLine(Color.White.copy(alpha = 0.25f), Offset(744f, 690f), Offset(756f, 678f), 3f, StrokeCap.Round)
-    drawRect(W.joint, Offset(814f, 688f), Size(18f, 8f))
-    val g = Offset(846f, 692f)
-    drawCircle(Color(0xFFE8EEF7), 16f, g)
-    drawCircle(W.joint, 16f, g, style = Stroke(3f))
-    drawArc(W.dim, 150f, 240f, false, g - Offset(11f, 11f), Size(22f, 22f), style = Stroke(2f))
+    for (i in 0 until 10) {
+        val o = Offset(698f + i * 15f, 786f)
+        if (i < lv) drawCircle(glow, 6f, o, alpha = 0.25f * pulse)
+        drawCircle(if (i < lv) glow else W.line, 3f, o)
+    }
+    // the power cable: out of the right coil pack, along the floor and up the bench leg, light running through it
+    val cable = Path().apply { moveTo(830f, 742f); cubicTo(860f, 742f, 872f, 760f, 884f, 740f); lineTo(884f, 612f) }
+    drawPath(cable, W.rail, style = Stroke(9f, cap = StrokeCap.Round))
+    drawPath(cable, glow.copy(alpha = 0.18f + 0.3f * core), style = Stroke(3f, cap = StrokeCap.Round))
+    val m = androidx.compose.ui.graphics.PathMeasure().apply { setPath(cable, false) }
+    for (i in 0 until 3) {
+        val p = m.getPosition(m.length * ((t / 1400.0 + i / 3.0) % 1.0).toFloat())
+        drawCircle(glow, 9f, p, alpha = 0.22f * core + 0.08f)
+        drawCircle(Color.White, 2.6f, p, alpha = 0.5f + 0.5f * core)
+    }
+    // coil packs either side of the capsule
+    for (x in listOf(694f, 816f)) {
+        drawRoundRect(metal, Offset(x, 670f), Size(20f, 78f), CornerRadius(5f))
+        for (j in 0 until 6) drawLine(Color(0xFFB98A4A), Offset(x + 3f, 676f + j * 12f), Offset(x + 17f, 676f + j * 12f), 4f, StrokeCap.Round, alpha = 0.85f)
+    }
+    // the capsule: dark glass, a halo of Cherenkov light round the core, the core itself and its orbits
+    val glass = RoundRect(Rect(714f, 650f, 816f, 764f), CornerRadius(26f))
+    drawPath(Path().apply { addRoundRect(glass) }, Brush.verticalGradient(listOf(Color(0xFF07201E), Color(0xFF0B2E2B)), 650f, 764f))
+    clipPath(Path().apply { addRoundRect(glass) }) {
+        drawCircle(Brush.radialGradient(listOf(glow.copy(alpha = (0.35f + 0.45f * core) * pulse), Color.Transparent), c, 70f), 70f, c)
+        val rings = 1 + lv / 3
+        val spin = ((t / 17000.0) % 1.0 * 360).toFloat() // in doubles: frame times are too large for floats
+        for (k in 0 until rings) {
+            val tilt = k * 180f / rings + 30f + spin
+            rotate(tilt, c) {
+                drawOval(glow, c - Offset(40f, 13f), Size(80f, 26f), alpha = 0.45f + 0.35f * core, style = Stroke(2f))
+                val a = ((t / (900.0 + 230 * k)) % 1.0 + k * 0.27) * 2 * PI
+                val e = c + Offset(40f * cos(a).toFloat(), 13f * sin(a).toFloat())
+                drawCircle(glow, 7f, e, alpha = 0.3f)
+                drawCircle(Color.White, 3f, e)
+            }
+        }
+        val r = (11f + 9f * core) * (0.94f + 0.06f * pulse)
+        drawCircle(Brush.radialGradient(listOf(Color.White, glow, glow.copy(alpha = 0f)), c, r * 1.9f), r * 1.9f, c)
+        drawCircle(Color.White, r * 0.45f, c, alpha = 0.9f)
+        drawLine(Color.White.copy(alpha = 0.16f), Offset(730f, 676f), Offset(730f, 740f), 6f, StrokeCap.Round) // reflection
+    }
+    drawPath(Path().apply { addRoundRect(glass) }, W.steel, alpha = 0.5f, style = Stroke(3f))
+    // bolted flanges top and bottom, and the conduit up into the bench
+    drawRect(W.joint, Offset(758f, 622f), Size(14f, 20f))
+    drawRect(glow, Offset(762f, 622f), Size(6f, 20f), alpha = 0.3f + 0.6f * core * pulse)
+    for (y in listOf(638f, 760f)) {
+        drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF9DC2B8), Color(0xFF557F75)), y, y + 14f), Offset(704f, y), Size(122f, 14f), CornerRadius(4f))
+        for (i in 0 until 9) drawCircle(Color(0xFF223F39), 2.2f, Offset(712f + i * 13.3f, y + 7f))
+    }
+    // the pressure gauge on the left coil pack, its needle reading Core
+    val g = Offset(682f, 700f)
+    drawCircle(Color(0xFFE6F2EE), 15f, g)
+    drawCircle(W.joint, 15f, g, style = Stroke(3f))
+    drawArc(W.coral, 300f, 60f, false, g - Offset(10f, 10f), Size(20f, 20f), style = Stroke(2.5f))
     val a = (150.0 + 240.0 * core) * PI / 180
-    drawLine(Color(0xFF1A2233), g, g + Offset(12f * cos(a).toFloat(), 12f * sin(a).toFloat()), 2.5f, StrokeCap.Round)
-    drawCircle(Color(0xFF1A2233), 3f, g)
+    drawLine(Color(0xFF16302C), g, g + Offset(11f * cos(a).toFloat(), 11f * sin(a).toFloat()), 2.5f, StrokeCap.Round)
+    drawCircle(Color(0xFF16302C), 2.5f, g)
 }
 
 // Charging Bay: panelled walls and the charging station Rivet's platform is plugged into; its screen shows the

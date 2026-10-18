@@ -8,6 +8,11 @@ import androidx.compose.ui.semantics.Role
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -73,7 +78,7 @@ class Ui(val scope: CoroutineScope) {
 
     fun tell(msg: String, undo: (() -> Unit)? = null) = scope.launch {
         snack.currentSnackbarData?.dismiss()
-        if (snack.showSnackbar(msg, if (undo != null) "Undo" else null, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) undo?.invoke()
+        if (snack.showSnackbar(msg, if (undo != null) "Undo" else null, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) { Sfx.play("undo"); undo?.invoke() }
     }
 }
 
@@ -84,9 +89,12 @@ private val TABS = listOf("today" to "Today", "shop" to "Shop", "habits" to "Hab
 private val TAB_ICON = mapOf("today" to "base", "shop" to "shop", "habits" to "habits", "diary" to "diary")
 
 @Composable
-fun App(store: Store) {
+fun App(store: Store, go: androidx.compose.runtime.MutableState<String?> = remember { mutableStateOf(null) }) {
     val scope = rememberCoroutineScope()
     val ui = remember { Ui(scope) }
+    androidx.compose.runtime.LaunchedEffect(go.value) {
+        go.value?.let { ui.tab = it; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
+    }
     store.tick // every change recomposes the screens
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
         val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
@@ -143,7 +151,7 @@ fun Header(title: String, sub: String?, store: Store, ui: Ui, lay: Lay, modifier
             if (sub != null) Text(sub, Modifier.padding(start = 16.dp).weight(1f, fill = false), style = MaterialTheme.typography.bodyLarge, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Wallet(store.s)
-        IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = W.dim) }
+        IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = if (ui.settings) W.act else W.dim) }
     }
 }
 
@@ -172,6 +180,7 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: String) {
     store.change { m = mark(this, h, d, kind) }
     val k = m ?: return
     val after = level(store.s.stats.getValue(h.stat))
+    Sfx.play(if (after > before) "level" else kind)
     when (kind) { "done" -> { store.fresh = h.id to now(); store.react("cheer") }; "fail" -> store.react("sad") }
     // crossing a level is the news; the points come second
     ui.tell(when {
@@ -194,48 +203,84 @@ fun meta(s: Data, h: Habit, d: LocalDate): String {
 }
 val DOW = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-// One habit: name, its slots, one clear Done, and the quieter Skip and Fail. In a narrow column the buttons take a second line.
+// One habit as a card: name and meta, a progress counter (slots logged of the target over a segment per slot), one
+// clear primary button that logs the next slot, and a menu for the rest: Skip, Fail, taking the last mark back, Edit
+// and Delete. select: the card picks the habit for the side panel (split Habits); otherwise the name opens the form.
 @Composable
-fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false) = BoxWithConstraints {
-    val stacked = big || maxWidth < 560.dp
+fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false, selected: Boolean = false, select: (() -> Unit)? = null) = BoxWithConstraints {
+    val stacked = big || maxWidth < 480.dp
     val s = store.s
-    val full = periodMarks(s, h, d).size >= h.target || d > LocalDate.now()
+    val sl = slots(s, h, d)
+    val logged = sl.count { it.s != "" }
+    val ahead = d > LocalDate.now()
+    val full = logged >= h.target || ahead
     val label = BTN.getValue(h.kind)
-    val marks = @Composable {
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            slots(s, h, d).forEachIndexed { i, sl ->
-                val own = sl.s != "" && !sl.other
-                SlotMark(sl, 22.dp, modifier = if (own) Modifier.clickable(onClickLabel = "undo") {
-                    // the newest mark of the day is the one that comes off
-                    var m: Mark? = null
-                    store.change { m = undo(this, h, d) }
-                    m?.let { ui.tell("${mapOf("done" to "Done", "skip" to "Skipped", "fail" to "Failed").getValue(it.s)} mark removed") }
-                }.semantics { contentDescription = "${sl.s}, tap to undo" } else Modifier.semantics { contentDescription = if (sl.s == "") "open slot" else sl.s + if (sl.other) ", logged another day" else "" })
+    val mine = !s.marks[d]?.get(h.id).isNullOrEmpty() // a mark made on this day, which can be taken back here
+    var menu by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    val counter = @Composable { m: Modifier ->
+        Column(m.semantics(mergeDescendants = true) {
+            contentDescription = "$logged of ${plural(h.target, "slot")} logged" + sl.count { it.s == "fail" }.let { if (it > 0) ", $it failed" else "" }
+        }) {
+            Text("$logged / ${plural(h.target, "slot")}", style = Numeral.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize), color = if (logged >= h.target) W.text else W.dim)
+            Tracker(sl, Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp))
+        }
+    }
+    val actions = @Composable { m: Modifier ->
+        Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier.widthIn(min = 112.dp)).height(if (big) 52.dp else 44.dp),
+                shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) {
+                // a greyed button says why it is greyed
+                Text(if (ahead) "Not yet" else if (full) "Logged" else label[0])
+            }
+            Box {
+                OutlinedIconButton(onClick = { menu = true }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
+                    colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), "More for ${h.name}") }
+                DropdownMenu(menu, { menu = false }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) {
+                    val item = @Composable { text: String, icon: String, tint: androidx.compose.ui.graphics.Color, on: Boolean, go: () -> Unit ->
+                        DropdownMenuItem({ Text(text, color = if (on) tint else W.edge) }, { menu = false; go() }, enabled = on,
+                            leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.edge) })
+                    }
+                    item(label[1], "minus", W.text, !full) { log(store, ui, h, d, "skip") }
+                    item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, "fail") }
+                    item("Take back the last mark", "undo", W.text, mine) {
+                        var m: Mark? = null
+                        store.change { m = undo(this, h, d) }
+                        m?.let { Sfx.play("undo"); ui.tell("${mapOf("done" to "Done", "skip" to "Skipped", "fail" to "Failed").getValue(it.s)} mark removed") }
+                    }
+                    androidx.compose.material3.HorizontalDivider(color = W.line)
+                    item("Edit habit", "diary", W.text, true) { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }
+                    item("Delete habit", "trash", W.coral, true) { deleting = true }
+                }
             }
         }
     }
-    val buttons = @Composable { m: Modifier ->
-        Row(m, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { log(store, ui, h, d, "done") }, enabled = !full, modifier = (if (stacked) Modifier.weight(1f) else Modifier).height(if (big) 52.dp else 40.dp),
-                shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(label[0]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "skip") }, modifier = Modifier.size(40.dp), enabled = !full, border = BorderStroke(1.dp, W.edge),
-                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel, disabledContentColor = W.edge)) { Icon(ICONS.getValue("minus"), label[1]) }
-            OutlinedIconButton(onClick = { log(store, ui, h, d, "fail") }, modifier = Modifier.size(40.dp), enabled = !full, border = BorderStroke(1.dp, if (full) W.edge else W.coral.copy(alpha = 0.45f)),
-                colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.coral, disabledContentColor = W.edge)) { Icon(ICONS.getValue("fail"), label[2]) }
-        }
+    val pick = Modifier.clickable(onClickLabel = if (select != null) "show details" else "edit") {
+        if (select != null) select() else { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }
     }
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f).clickable(onClickLabel = "edit") { ui.edit = h.id; ui.tab = "habits"; ui.settings = false }) {
-                Text(h.name, style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Card(Modifier.fillMaxWidth(), selected = selected) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).then(pick)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(h.name, Modifier.weight(1f, fill = false), style = if (big) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (select == null) Icon(ICONS.getValue("next"), null, Modifier.padding(start = 4.dp).size(16.dp), tint = W.dim) // the name opens the form
+                }
                 Text(meta(s, h, d), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 2)
             }
-            Box(Modifier.padding(horizontal = 12.dp)) { marks() }
-            if (!stacked) buttons(Modifier)
+            if (!stacked) {
+                counter(Modifier.padding(horizontal = 16.dp).width(120.dp))
+                actions(Modifier)
+            }
         }
-        if (stacked) buttons(Modifier.fillMaxWidth().padding(bottom = 9.dp))
-        HorizontalDivider(color = W.line)
+        if (stacked) {
+            counter(Modifier.fillMaxWidth().padding(top = 12.dp))
+            actions(Modifier.fillMaxWidth().padding(top = 12.dp))
+        }
     }
+    if (deleting) androidx.compose.material3.AlertDialog(onDismissRequest = { deleting = false },
+        title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
+        confirmButton = { TextButton({ store.change { habits.remove(h) }; deleting = false }) { Text("Delete", color = W.coral) } },
+        dismissButton = { TextButton({ deleting = false }) { Text("Keep it", color = W.text) } })
 }
 
 @Composable

@@ -86,4 +86,15 @@ class LogicTest {
         assertEquals(listOf(62, 0, 2), listOf(s.stats["core"], again.l, s.nuts)) // level 3 again pays nothing
         assertEquals(listOf(1, 2, 3, 10, 10), listOf(level(0), level(20), level(60), level(900), level(5000)))
     }
+
+    @Test fun nextUpPicksFewestDones() {
+        val s = fresh(); val t = d("2026-10-12")
+        assertNull(nextUp(s, t))
+        s.stats["battery"] = 50; s.stats["chassis"] = 40 // battery needs 10 points, chassis 20
+        s.habits += daily; s.habits += weekly // medium is 2 a Done, heavy 4
+        val n = nextUp(s, t)!!
+        assertEquals(listOf("battery", 5), listOf(n.stat, n.dones)) // both need 5 Dones; a tie keeps the first habit
+        s.stats["chassis"] = 50
+        assertEquals(listOf("chassis", 3), nextUp(s, t)!!.let { listOf(it.stat, it.dones) }) // 10 points at 4 a Done
+    }
 }

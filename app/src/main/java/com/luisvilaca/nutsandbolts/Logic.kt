@@ -21,7 +21,14 @@ val STATS = linkedMapOf(
 val LEVEL_AT = List(10) { 10 * it * (it + 1) }
 fun level(p: Int) = LEVEL_AT.indexOfLast { p >= it } + 1
 fun levelShare(p: Int): Float = level(p).let { l -> if (l == LEVEL_AT.size) 1f else (p - LEVEL_AT[l - 1]).toFloat() / (LEVEL_AT[l] - LEVEL_AT[l - 1]) }
-const val LEVEL_NUTS = 2 // for each level an attribute reaches for the first time
+const val LEVEL_NUTS = 2
+
+// The level-up closest in Dones: the attribute, the habit that gets it there fastest, and how many Dones that takes.
+class NextUp(val stat: String, val habit: Habit, val dones: Int)
+fun nextUp(s: Data, t: LocalDate): NextUp? = s.habits.filter { it.kind == "good" && (it.end == null || it.end!! >= t) && level(s.stats.getValue(it.stat)) < LEVEL_AT.size }
+    .map { h -> val p = s.stats.getValue(h.stat); val pts = WEIGHTS.getValue(h.weight).pts
+        NextUp(h.stat, h, (LEVEL_AT[level(p)] - p + pts - 1) / pts) }
+    .minByOrNull { it.dones } // for each level an attribute reaches for the first time
 val WEIGHTS = linkedMapOf(
     "light" to Weight("Light", 5, 1),
     "medium" to Weight("Medium", 10, 2),
@@ -63,6 +70,7 @@ class Data {
     val papers = PAPERS.toMutableList()
     var pen = Pen()
     var remind = Remind()
+    var sound = true // the effects in Sfx
     var backedUp: LocalDate? = null
 }
 

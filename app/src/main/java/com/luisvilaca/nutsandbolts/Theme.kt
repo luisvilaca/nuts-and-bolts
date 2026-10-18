@@ -15,24 +15,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
-// Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep graphite blue, Cherenkov blue
-// only as the reactor's light, ready green only where something can be pressed or is done, coral only for failed.
+// Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep greenhouse teal (the Grow Room's
+// tint), Cherenkov cyan only as the reactor's light, ready green only where something can be pressed or is done,
+// coral only for failed.
 object W {
-    val ground = Color(0xFF0C1320)
-    val rail = Color(0xFF070C15)
-    val raised = Color(0xFF17223A)
-    val line = Color(0xFF1B2638)
-    val edge = Color(0xFF2A3A55)
-    val text = Color(0xFFE8EEF7)
-    val dim = Color(0xFF94A3BA)
-    val steel = Color(0xFFD3DDEA)
+    val ground = Color(0xFF0D1615)
+    val rail = Color(0xFF081313)
+    val raised = Color(0xFF15302B)
+    val line = Color(0xFF1B3632)
+    val edge = Color(0xFF24443E)
+    val text = Color(0xFFE6F2EE)
+    val dim = Color(0xFF9EB3AC) // 8:1 on ground, 7:1 on a card
+    val steel = Color(0xFFCFE3DE)
     val act = Color(0xFF6EE787) // a ready lamp
     val onAct = Color(0xFF06281A)
     val gold = Color(0xFFF2C14E)
     val coral = Color(0xFFFF6B4A)
-    val joint = Color(0xFF6F809A)
-    val glass = Color(0xFF070C15)
-    val glow = Color(0xFF4CC9FF) // the reactor's Cherenkov light
+    val joint = Color(0xFF6C8F87)
+    val glass = Color(0xFF081313)
+    val card = Color(0xFF152220) // the surface of a card
+    val border = Color.White.copy(alpha = 0.08f) // a card's edge
+    val focus = Color(0xFF4AE3A1) // a focused field's outline
+    val glow = Color(0xFF45E3F5) // the reactor's Cherenkov light
 }
 
 private fun lexend(vararg w: Int) = FontFamily(w.map { Font(R.font.lexend, FontWeight(it), variationSettings = FontVariation.Settings(FontVariation.weight(it))) })
@@ -74,12 +78,12 @@ fun NbTheme(content: @Composable () -> Unit) = MaterialTheme(
 // How each drawing role in Parts.kt is painted.
 class Ink(val fill: Brush? = null, val stroke: Color? = null, val width: Float = 0f, val alpha: Float = 1f, val dash: FloatArray? = null, val butt: Boolean = false)
 
-private val shell = Brush.linearGradient(listOf(Color(0xFFF7FAFD), Color(0xFFBFCADB)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
+private val shell = Brush.linearGradient(listOf(Color(0xFFF7FCFA), Color(0xFFBFD9D1)), start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(150f, 500f))
 private fun f(c: Color, a: Float = 1f) = Ink(fill = SolidColor(c), alpha = a)
 private fun s(c: Color, w: Float, a: Float = 1f, dash: FloatArray? = null) = Ink(stroke = c, width = w, alpha = a, dash = dash)
 
 val ROLES: Map<String, Ink> = mapOf(
-    "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE3EAF3), width = 14f), "sh2" to f(Color(0xFFA9B7CB)),
+    "sh" to Ink(fill = shell), "shr" to Ink(stroke = Color(0xFFE2F0EB), width = 14f), "sh2" to f(Color(0xFFA9C9C1)),
     "gl" to f(W.glass), "space" to f(W.glass), "zn" to f(W.joint), "br" to f(W.gold), "ey" to f(W.act), "mt" to f(W.act),
     "cr" to f(W.coral), "ice" to f(Color(0xFF9FDCFF)), "moon" to f(W.steel), "leaf" to f(W.act), "core" to f(W.glow), "plasma" to s(W.glow, 5f, dash = floatArrayOf(14f, 10f)), "scarf" to f(W.coral),
     "ln" to s(W.dim, 3.5f), "hl" to s(Color.White, 5f, 0.28f), "claw" to s(W.joint, 8f), "spring" to s(W.joint, 8f),
@@ -90,9 +94,9 @@ val ROLES: Map<String, Ink> = mapOf(
     "chain" to s(W.gold, 2.5f), "orbit" to s(Color.White, 2f, 0.3f),
     // the bay (its floor is transparent: BayPanel lays the floor edge to edge)
     "wire" to s(W.glass, 3f), "stars" to s(Color.White, 4f, 0.4f), "pring" to s(W.steel, 5f), "cone" to f(W.glow, 0.05f),
-    "panel" to f(Color(0xFF15213A)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
-    "floor" to f(Color.Transparent), "tower" to Ink(SolidColor(Color(0xFF22304A)), W.glow.copy(alpha = 0.35f), 3f), "steam" to f(Color.White, 0.1f), "skirt" to f(W.steel, 0.1f), "orb" to s(W.glow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
-    "plat-side" to f(Color(0xFF0E1626)), "plat-top" to Ink(SolidColor(Color(0xFF22304A)), Color(0x38FFFFFF), 3f),
+    "panel" to f(Color(0xFF12302B)), "tool" to s(W.joint, 9f), "jar" to f(Color.White, 0.16f), "jarfill" to s(W.gold, 10f),
+    "floor" to f(Color.Transparent), "tower" to Ink(SolidColor(Color(0xFF1F4640)), W.glow.copy(alpha = 0.35f), 3f), "steam" to f(Color.White, 0.1f), "skirt" to f(W.steel, 0.1f), "orb" to s(W.glow, 2.5f, 0.5f), "cable" to s(W.glass, 9f),
+    "plat-side" to f(Color(0xFF0E2420)), "plat-top" to Ink(SolidColor(Color(0xFF1F4640)), Color(0x38FFFFFF), 3f),
     "plat-ring" to s(W.act, 4f, 0.85f, floatArrayOf(26f, 18f)),
 )
 

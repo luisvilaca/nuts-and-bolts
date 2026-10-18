@@ -2,20 +2,20 @@
 name: Nuts And Bolts
 description: A habit tracker and diary where a small robot bolts together a frame for every habit at a reactor-powered workbench.
 colors:
-  graphite: "#0C1320"
-  rail-graphite: "#070C15"
-  raised-graphite: "#17223A"
-  hairline: "#1B2638"
-  edge-graphite: "#2A3A55"
-  bay-sky: "#111A2C"
-  bay-floor: "#0F1828"
-  frost: "#E8EEF7"
-  dim-slate: "#94A3BA"
-  cool-steel: "#D3DDEA"
-  joint-slate: "#6F809A"
+  graphite: "#0B1A1A"
+  rail-graphite: "#081313"
+  raised-graphite: "#15302B"
+  hairline: "#1B3632"
+  edge-graphite: "#24443E"
+  bay-sky: "#13302B"
+  bay-floor: "#0E2420"
+  frost: "#E6F2EE"
+  dim-slate: "#8FB0A8"
+  cool-steel: "#CFE3DE"
+  joint-slate: "#6C8F87"
   ready-green: "#6EE787"
   on-ready: "#06281A"
-  cherenkov-blue: "#4CC9FF"
+  cherenkov-blue: "#45E3F5"
   nut-gold: "#F2C14E"
   shear-coral: "#FF6B4A"
   paper-matte-black: "#393939"
@@ -160,7 +160,7 @@ components:
 
 **Creative North Star: "Reactor Workshop"**
 
-A robot's workbench after dark. The app is a deep graphite-blue workshop in which the robot stands on its round platform beside a steel bench. Under the bench sits a small reactor that powers it all; its Cherenkov-blue core and the light rail it feeds hang over the bench and glow brighter as the Core attribute rises. Every habit running today is a steel frame clamped upright on the bench and every slot is a bolt hole in it: Done drives a bolt home, Skip leaves a dashed ring, Fail shears the bolt, and an open slot is an empty tapped hole. The week is seven small plates with three holes each, more bolted the better the day went. Cherenkov blue belongs to the reactor alone; the interface itself stays graphite, cool steel and frost, with ready green as the one live colour.
+A robot's workbench after dark. The app is a deep greenhouse-teal workshop (the Grow Room's tint, which the owner preferred, 2026-10-18) in which the robot stands on its round platform beside a steel bench. Under the bench sits a small reactor that powers it all; its Cherenkov-blue core and the light rail it feeds hang over the bench and glow brighter as the Core attribute rises. Every habit running today is a steel frame clamped upright on the bench and every slot is a bolt hole in it: Done drives a bolt home, Skip leaves a dashed ring, Fail shears the bolt, and an open slot is an empty tapped hole. The week is seven small plates with three holes each, more bolted the better the day went. Cherenkov blue belongs to the reactor alone; the interface itself stays graphite, cool steel and frost, with ready green as the one live colour.
 
 Hierarchy comes from type scale and hairlines, not boxes. Rows are separated by one-pixel graphite rules, sections are announced by small tracked caps, and the only filled surfaces are controls, shop part tiles and the framed bay. The bolt is the single ornament and always carries meaning: the slot, the day, the five hex holes of the diary page's gauge and the bolt emblem printed on every page.
 
@@ -175,12 +175,26 @@ Density is compact and calm: 40dp controls, 28dp gutters on wide windows, one cl
 - Hairline rows, no cards around sections.
 - Robot-grammar line icons: 24dp, 1.8 stroke, square caps, pivot-joint circles.
 
+## Cards, split views and fields (2026-10-18)
+
+- **Tokens:** ground #0D1615, card surface #152220 with a 1dp white-8% edge (steel, 1.5dp, when selected), secondary text #9EB3AC, focus mint #4AE3A1.
+- **Cards** (12dp corners, 16dp inside) hold every form group, every habit row, the history items and both calendars. This replaces the earlier hairline rows.
+- **Habit row:** name and meta; a counter ("2 / 3 slots" in Numeral over a segmented tracker: done charged cyan to steel with a faint halo, failed coral, skipped dashed, open edge graphite); one Done pill (44dp, 52dp lead) that reads Logged or Not yet when it cannot log; a 44dp menu button with Skip, Fail, Take back the last mark, Edit and Delete.
+- **Split above 720dp:** Habits' day view puts the habit cards left (56%) and the picked habit right (44%): its done rate, current and best run, failures, a run gauge and its log newest first. The form puts Name, Type, Attribute and Schedule left, Weight, a Reward card (what a Done pays, what a fail takes, the period's most, its nuts, Dones to the attribute's next level) and the actions right.
+- **Segments** slide their selection on a spring (damping 0.8) and cross-fade label colour; four choices in a column under 420dp fall into a two-by-two chip grid. **Fields** sit on a white-5% fill, 12 by 16dp inside, with a mint outline when focused.
+
+## Reactor, gauges and sound (2026-10-18)
+
+- **The reactor** is a glass fusion capsule standing on the floor between the bench legs (the bench's lower shelf is gone). A plasma core burns inside with one orbit per three Core levels (one to four), electrons racing round them; copper-wound coil packs clamp it either side, a pressure gauge reads Core, ten lamps on a hazard-striped plinth light one per Core level, and pulses of Cherenkov light climb a cable up the right bench leg into the bench. All motion runs off the shared clock and holds still when animations are off.
+- **Attribute gauges** carry the reactor's light: an edge-graphite track, a fill running from Cherenkov cyan into cool steel, a soft cyan halo round the fill and a bright spark at its leading edge.
+- **Sound:** short synthesized effects (tools/sfx.py, into res/raw) for Done (a ratchet and a seated bolt), Skip (a tick), Fail (a shear), a level up (a rising bell arpeggio, in place of the Done sound), a purchase (two coin clinks) and Undo (a falling blip). A Sounds switch in Settings, on by default.
+
 ## Colors
 
 A dark workshop lit by one small reactor, where green means ready or pressable and every other colour holds a single job.
 
 ### Primary
-- **Ready Green** (ready-green): the Done pill, primary buttons and the FAB, and the place markers (selected bar icon, the shop tab indicator, today's ring on the calendar, the active diary tool's underline, the diary calendar's page mark). Also field focus, the reminder switch track, confirm text actions and the snackbar's Undo. In the robot it lights the eyes, the smile and the dashed platform ring. Text on it is **On-Ready** (on-ready), a near-black green.
+- **Ready Green** (ready-green): the Done pill, primary buttons and the FAB, and the place markers (selected bar icon, the shop tab indicator, today's ring on the calendars and the week strip, the chevron on Today's tally link, the active diary tool's underline, the diary calendar's page mark). Also field focus, the reminder switch track, confirm text actions and the snackbar's Undo. In the robot it lights the eyes, the smile and the dashed platform ring. Text on it is **On-Ready** (on-ready), a near-black green.
 
 ### Secondary
 - **Cool Steel** (cool-steel): bolts and their counts, a driven bolt's head, the frames' 70% rim and the bench's top edge, attribute icons and gauge fills, and every selected state that is not a place: the active segment's border, selected chips' border, the selection ring on a shop part, the robot's nameplate.
@@ -219,7 +233,7 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 **Character:** One rounded, open, highly legible face throughout; weight and tracking do the work a second family would.
 
 ### Hierarchy
-- **Display** (700, 28sp, 34sp, -0.01em): screen titles in the header; on a phone, the name of the next habit to log on Today.
+- **Display** (700, 28sp, 34sp, -0.01em): screen titles in the header.
 - **Headline** (600, 22sp, 28sp): the empty-state line ("The bench is empty").
 - **Title Large** (600, 21sp, 28sp): a shop part's name in its detail, the selected day's name on Habits.
 - **Title** (600, 18sp, 24sp): habit names in rows and history, the month and day stepper.
@@ -239,12 +253,11 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 
 Two window classes drive everything. A window is **wide** when it is landscape and at least 600dp wide: the Material navigation rail sits at the left and screens split into two panes. Otherwise the Material navigation bar sits at the foot and screens stack in one scroll. A window whose short side is under 600dp is a **phone**.
 
-- **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the list or catalogue 54% at right (8dp start, 32dp end padding). Shop's part detail sits under its bay.
+- **Wide Today and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right (8dp start, 32dp end padding). On Today the next level-up (headline-small, with a dim body-large line naming the habit and how many Dones) heads the side, and the tally, attributes (one per row when the side is at least 560dp tall) and week sit at the bottom, at the bay's floor line. Stacked, the next level-up follows the tally. Shop's part detail sits under its bay.
 - **Habits and Diary:** no bay at any size; no robot badge either; the day or month summary sits beside the title on wide windows (below it when stacked), and the planner or calendar takes the full width.
 - **Stacked:** 20dp side gutters; the bay sits under the header (600dp tall on a tablet in portrait, 400dp on a phone, the same on Today and Shop). Habits, Diary and the form have no robot at all.
 - **Forms and Settings:** one column capped at 720dp, 40dp gutters wide, 20dp stacked.
 - **Rows:** 12dp vertical padding, a hairline under each. A habit row whose column is under 560dp puts its buttons on a second line with Done filling the width.
-- **Phone Today:** the next habit still to log leads the list at display size with a 52dp Done; the rest follow at normal size.
 - **Section rhythm:** section labels sit 28dp below what precedes them and 10dp above what they label (22dp and 8dp in the form). Gaps between controls are 8dp or 12dp.
 - **Shop grid:** as many columns as fit at 156dp each (at least two), 12dp gaps.
 - **Calendars:** a hairline grid that always fills the space below its month stepper and never scrolls, on Habits and Diary, phone and tablet, either orientation: each week a ruled row of equal height, each day its number with its mark (a day plate, or the pen icon for a diary page) beneath, or beside the number when rows are under 60dp. Diary's "Write today" (or "Open today") is a quiet text action at the right of the month stepper.
@@ -267,7 +280,7 @@ Soft and machined against straight hairlines. Every pressable action is a pill o
 
 ### Buttons
 Confident on the primary, quiet on the rest.
-- **Shape:** full pill (rounded.pill), 40dp tall (44dp for form, shop and settings actions); the phone's lead habit uses 52dp.
+- **Shape:** full pill (rounded.pill), 40dp tall (44dp for form, shop and settings actions).
 - **Done / primary:** ready green with on-ready text in Label Large. Disabled when the period is full: raised graphite with dim text. Bad habits relabel the trio Resisted / Skip / Gave in.
 - **Skip:** a 40dp outlined circle, 1dp edge-graphite border, a cool-steel minus.
 - **Fail:** a 40dp outlined circle, coral cross, border coral at 45%; both fall to edge graphite when disabled.
@@ -374,6 +387,6 @@ The stages, in the robot's own terms:
 - **Chassis:** Tin Can, Aluminium, Steel, Titanium, Carbon Fibre, Tungsten, Graphene, Nanoweave, Diamond Lattice, Neutronium.
 - **Core:** Spark, Dynamo, Turbine, Fission Pile, Breeder, Tokamak, Fusion Heart, Stellarator, Star Core, Supernova.
 
-The levels stand on the bay's floor on Today and Shop, always in view: four rail-graphite tiles at 80%, each with the attribute's icon (and name when the bay is at least 520dp wide), "LV n" in Numeral, the stage name and a 4dp gauge of the way to the next level. The room answers too: the reactor's glow and gauge follow the Core level, and the Charging Bay's station lights a cell for every two Battery levels. Mood follows the average level (under 2 low power, 4 and up fully charged).
+On Today the attributes sit beside the bay, right above the week: each row has the attribute's icon, its name in body-large, the stage name in dim label-medium, an 8dp steel gauge on an edge-graphite track for the way to the next level, and "LV n" in Numeral. The room answers too: the reactor's glow and gauge follow the Core level, and the Charging Bay's station lights a cell for every two Battery levels. Mood follows the average level (under 2 low power, 4 and up fully charged).
 
 The diary page's emblem is an atom: three orbits round a nucleus.
