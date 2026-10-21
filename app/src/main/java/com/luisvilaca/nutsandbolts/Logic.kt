@@ -53,10 +53,11 @@ class Habit(
 class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0, var a: Attr? = null)
 
 // nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
-// palm: palm rejection; once a pen has written, only the pen writes and a finger scrolls the page.
+// palm: palm rejection; touches near the pen or as broad as a palm do nothing, and the pen's first stroke turns move on.
+// move: one finger moves the page instead of writing (two fingers always zoom and move it); the pen always writes.
 // b1, b2: what the pen's two side buttons do: "eraser" (pen and eraser in turn), "ink" (the next ink), "undo" or "none".
 class Pen(var color: String = PEN_COLORS[0].second, var nib: Float = 0.6f, var stab: Int = 50, var rub: Float = 4f, var paper: Int = 0, var seen: Boolean = false, var palm: Boolean = true,
-          var b1: String = "eraser", var b2: String = "ink")
+          var b1: String = "eraser", var b2: String = "ink", var move: Boolean = false)
 class Remind(var on: Boolean = false, var time: String = "21:00")
 
 class Data {

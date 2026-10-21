@@ -132,7 +132,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 Switch(s.pen.palm, { v -> store.change { pen.palm = v } }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
                 Text("Palm rejection", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
-            Text("On: once the pen has written, only the pen writes and a finger scrolls the page. While the pen is near the page, or for a contact as broad as a palm, touches do nothing at all, on the page and on its tools. Off: fingers write too.",
+            Text("On: while the pen is near the page, or for a contact as broad as a palm, touches do nothing at all, on the page and on its tools, and once the pen has written a finger moves the page instead of writing (the Move button on the page's rail switches it back). Off: touches always count.",
                 Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Pen buttons")

@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,10 +35,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,6 +55,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,6 +66,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -238,7 +244,20 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     val ctx = LocalContext.current
     val view = LocalView.current
     val mmPx = ctx.resources.displayMetrics.xdpi / 25.4f // screen pixels in a millimetre
-    val scroll = rememberScrollState()
+    // The view of the page: z is its zoom over the size it is laid out at, off where its top left corner sits in the
+    // space beside the rail (port), in pixels. Pinched out as far as it goes, the whole page shows.
+    var z by remember(date) { mutableFloatStateOf(1f) }
+    var off by remember(date) { mutableStateOf(Offset.Zero) }
+    var port by remember { mutableStateOf(IntSize.Zero) }
+    var moving by remember { mutableStateOf(false) }
+    fun look(zz: Float, o: Offset) {
+        if (px.width == 0 || port.width == 0) return
+        val k = zz.coerceIn(min(1f, min(port.width / px.width.toFloat(), port.height / px.height.toFloat())), 4f)
+        // an axis the page does not fill is centred; one it overfills stops at the page's edges
+        fun axis(o: Float, v: Int, p: Int) = (p * k).let { if (it <= v) (v - it) / 2 else o.coerceIn(v - it, 0f) }
+        z = k; off = Offset(axis(o.x, port.width, px.width), axis(o.y, port.height, px.height))
+    }
+    LaunchedEffect(port, px) { look(z, off) }
     // Android 14 and later predict the pen a few milliseconds ahead; the live stroke reaches for that point
     val predictor = remember { if (Build.VERSION.SDK_INT >= 34) MotionPredictor(ctx) else null }
     fun penNear() = SystemClock.uptimeMillis() - ps.near < 1500
@@ -292,15 +311,10 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     }
 
     Row(Modifier.fillMaxSize()) {
-        // The page fills what the rail leaves and scrolls. With palm rejection on (Settings), once a pen has been used a
-        // finger drags the page instead of drawing, and a palm near the pen does neither.
-        Box(Modifier.weight(1f).fillMaxHeight().verticalScroll(scroll)) {
-            Box(Modifier.fillMaxWidth().aspectRatio(PAGE_W / PAGE_H).background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
-                Template(date, pad.page.paper, s.name, pad.ver)
-                Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Diary page for ${date.format(dayFmt)}" }
-                    // A pen always writes; once a pen has been used, a finger scrolls (palm rejection). Every pointer is
-                    // consumed here while a stroke is live, before the scrolling page sees it, so a line drawn down the
-                    // page no longer drags the page and cuts the stroke, and a resting palm neither scrolls nor blocks the pen.
+        // The page covers what the rail leaves: as wide as it on a tablet, where it moves up and down, and as tall as it on a
+        // phone held upright, where it moves sideways. A pen always writes; one finger writes, or moves the page in Move
+        // mode; two fingers zoom and move it. Every pointer is taken here, in the space's own (unzoomed) coordinates.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().clipToBounds().onSizeChanged { port = it }
                     .pointerInput(pad) {
                         fun PointerType.pen() = this == PointerType.Stylus || this == PointerType.Eraser
                         awaitPointerEventScope {
@@ -310,7 +324,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                 val me = ev.motionEvent
                                 if (ev.changes.any { it.type.pen() }) {
                                     ps.near = SystemClock.uptimeMillis()
-                                    if (!s.pen.seen) store.change { pen.seen = true }
+                                    if (!s.pen.seen) store.change { pen.seen = true; if (pen.palm) pen.move = true }
                                     // a side button newly pressed, hovering or writing, does what Settings gives it
                                     val bs = me?.buttonState ?: 0
                                     val fresh = bs and ps.buttons.inv(); ps.buttons = bs
@@ -327,14 +341,33 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     if (palm) ev.changes.filter { it.type == PointerType.Touch }.forEach { it.consume() }
                                 }
                                 val sc = PAGE_W / max(1, px.width)
-                                fun mm(v: Float) = v * mmPx * sc
-                                fun pt(p: Offset, pr: Float) = floatArrayOf(p.x * sc, p.y * sc, if (ps.pen) max(pr, 0.1f) else 0.5f)
+                                fun local(p: Offset) = (p - off) / z // from the space beside the rail to the laid-out page
+                                // nib and eraser are millimetres on the screen, so zoomed in they write finer on the page
+                                fun mm(v: Float) = v * mmPx * sc / z
+                                fun pt(p: Offset, pr: Float) = local(p).let { floatArrayOf(it.x * sc, it.y * sc, if (ps.pen) max(pr, 0.1f) else 0.5f) }
+                                // fingers moving the page: two at any time, or one in Move mode; a second finger on a
+                                // finger's stroke takes the stroke back, since it was the start of a pinch
+                                val fingers = ev.changes.filter { it.type == PointerType.Touch && it.pressed && !it.isConsumed }
+                                val fingerInk = pad.cur != null && !ps.pen
+                                if (fingers.isEmpty()) moving = false
+                                else if ((pad.cur == null || fingerInk) && ev.changes.none { it.type.pen() && it.pressed } && (fingers.size >= 2 || moving || (s.pen.move && !fingerInk && fingers.any { it.changedToDown() }))) {
+                                    if (fingerInk) { pad.cur = null; pad.n = 0; live++ }
+                                    moving = true
+                                    val c = ev.calculateCentroid()
+                                    if (c.isSpecified) {
+                                        val nz = (z * ev.calculateZoom()).coerceIn(0.1f, 4f)
+                                        val was = c - ev.calculatePan() // the point under the fingers stays under them
+                                        look(nz, c - (was - off) * (nz / z))
+                                    }
+                                    ev.changes.forEach { it.consume() }
+                                    continue
+                                }
                                 if (pad.cur == null) {
                                     // a hovering pen shows the eraser's outline before it touches, when the eraser is in hand
                                     ev.changes.firstOrNull { it.type.pen() && !it.pressed }?.let { h ->
-                                        ring = if ((erase || h.type == PointerType.Eraser) && ev.type != PointerEventType.Exit) h.position else null
+                                        ring = if ((erase || h.type == PointerType.Eraser) && ev.type != PointerEventType.Exit) local(h.position) else null
                                     }
-                                    val d = ev.changes.firstOrNull { it.changedToDown() && !it.isConsumed && (it.type.pen() || !(s.pen.palm && s.pen.seen)) } ?: continue
+                                    val d = ev.changes.firstOrNull { it.changedToDown() && !it.isConsumed && (it.type.pen() || !s.pen.move) } ?: continue
                                     ev.changes.forEach { it.consume() }
                                     ps.pid = d.id; ps.pen = d.type.pen(); ps.pred = null
                                     // the pen's samples come as they happen instead of once a frame, which takes a frame off the lag
@@ -343,13 +376,13 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     pad.cur = InkStroke(s.pen.color, if (rubbing) mm(s.pen.rub) / 5 else mm(s.pen.nib), rubbing, FloatArray(0))
                                     ps.last = pt(d.position, d.pressure); ps.lastT = d.uptimeMillis; ps.sm = floatArrayOf(ps.last[0], ps.last[1])
                                     ps.nib = ps.last[2] * 0.3f // touch down closed, so the stroke tapers in
-                                    ring = if (rubbing) d.position else null
+                                    ring = if (rubbing) local(d.position) else null
                                     put(ps.sm[0], ps.sm[1], ps.nib)
                                     continue
                                 }
                                 val c = ev.changes.firstOrNull { it.id == ps.pid }
                                 ev.changes.forEach { it.consume() }
-                                if (c == null || !c.pressed) { ps.pred = null; finish(c != null, (c?.position?.x ?: 0f) * sc, (c?.position?.y ?: 0f) * sc); ring = null; continue }
+                                if (c == null || !c.pressed) { ps.pred = null; val e = c?.let { pt(it.position, 0f) }; finish(c != null, e?.get(0) ?: 0f, e?.get(1) ?: 0f); ring = null; continue }
                                 val k = follow(s.pen.stab)
                                 // past samples carry no pressure of their own, so it is eased from the last sample to this one
                                 val p0 = ps.last[2]; val hs = c.historical
@@ -366,24 +399,31 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                     ps.sm[0] += (raw[0] - ps.sm[0]) * kk; ps.sm[1] += (raw[1] - ps.sm[1]) * kk
                                     put(ps.sm[0], ps.sm[1], ps.nib)
                                 }
-                                if (pad.cur?.e == true) ring = c.position
+                                if (pad.cur?.e == true) ring = local(c.position)
                                 // where the pen will be next, from the platform's predictor, mapped from window to page units
                                 ps.pred = if (predictor == null || me == null || !ps.pen || !predictor.isPredictionAvailable(me.deviceId, me.source)) null else {
                                     val i = me.penIndex()
                                     val p = predictor.predict(System.nanoTime() + 12_000_000L)
                                     val j = p?.penIndex()
                                     if (i == null || p == null || j == null) null
-                                    else (c.position + Offset(p.getX(j) - me.getX(i), p.getY(j) - me.getY(i))).let { Offset(it.x * sc, it.y * sc) }
+                                    else local(c.position + Offset(p.getX(j) - me.getX(i), p.getY(j) - me.getY(i))).let { Offset(it.x * sc, it.y * sc) }
                                 }
                             }
                         }
                     }) {
+            val pw = if (maxWidth / maxHeight > PAGE_W / PAGE_H) maxWidth else maxHeight * (PAGE_W / PAGE_H)
+            // shortcut: zoom scales the ink bitmap drawn at the laid-out size, so past about 2x the ink softens; redraw it at the zoom if that shows
+            Box(Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).size(pw, pw * (PAGE_H / PAGE_W))
+                .graphicsLayer { transformOrigin = TransformOrigin(0f, 0f); scaleX = z; scaleY = z; translationX = off.x; translationY = off.y }
+                .clipToBounds().background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
+                Template(date, pad.page.paper, s.name, pad.ver)
+                Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Diary page for ${date.format(dayFmt)}" }) {
                     pad.ver; live // redraw when either changes
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
                     val st = pad.cur
                     if (st != null && !st.e) scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) { with(pad) { val c = n / 3; for (i in 0 until c) seg(st, pts, i) } }
                     // the eraser's true size under the pen, while it rubs and while it hovers
-                    ring?.let { eraserRing(it, s.pen.rub * mmPx / 2) }
+                    ring?.let { eraserRing(it, s.pen.rub * mmPx / 2 / z) }
                     // the stretch from the last point to where the pen is predicted to be, so the ink keeps up with the nib
                     val pr = ps.pred
                     if (st != null && !st.e && pr != null && pad.n >= 3) scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) {
@@ -421,6 +461,9 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                                 Canvas(Modifier.fillMaxWidth().height(100.dp)) { eraserRing(center, v * mmPx / 2) }
                             }
                         }
+                    }
+                    Tool("move", if (s.pen.move) "Move: a finger moves the page. Tap to write with a finger" else "Move: off, a finger writes. Tap to move the page with a finger", s.pen.move, touchOk) {
+                        store.change { pen.move = !pen.move }
                     }
                     Box(Modifier.padding(vertical = 6.dp).size(22.dp, 1.dp).background(W.line))
                     val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true, touchOk, faint = contrast(c, pad.page.paper) < 1.5f) { erase = false; pop = null; store.change { pen.color = c } } } }
