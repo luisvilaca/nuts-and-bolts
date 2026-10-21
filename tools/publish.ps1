@@ -2,7 +2,7 @@
 # (appDistributionTesters=...). Needs app/google-services.json and a `firebase login` on this PC (see SYNC.md).
 # .\tools\publish.ps1 "What changed in this build"
 param([string]$notes = "")
-$ErrorActionPreference = "Stop"
+# no $ErrorActionPreference = "Stop": PowerShell 5.1 would take Gradle's stderr warnings for errors; exit codes are checked
 $env:JAVA_HOME = "$env:USERPROFILE\.gradle\jdks\eclipse_adoptium-25-amd64-windows.2"
 Set-Location (Split-Path $PSScriptRoot)
 if (-not (Test-Path "app\google-services.json")) { throw "app\google-services.json is missing: see SYNC.md, step 2." }
