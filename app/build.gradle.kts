@@ -42,7 +42,7 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // no store key yet: signed with this PC's debug key, so the release build installs over Android Studio's
             // and App Distribution's alike; every update must come from this same key (see SYNC.md)
             signingConfig = signingConfigs.getByName("debug")

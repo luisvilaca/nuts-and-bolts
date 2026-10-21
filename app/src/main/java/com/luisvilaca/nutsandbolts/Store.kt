@@ -176,7 +176,7 @@ internal fun json(s: Data): JSONObject = JSONObject()
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
-    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2))
+    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2).put("move", s.pen.move))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("sound", s.sound)
     .put("backedUp", s.backedUp?.toString())
@@ -219,7 +219,8 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
     o.optJSONObject("pen")?.let { j ->
         val nib = j.optDouble("nib").toFloat(); val stab = j.optInt("stabPct"); val rub = j.optDouble("rub").toFloat()
         pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
-            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true), j.optString("b1", "eraser"), j.optString("b2", "ink"))
+            rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true), j.optString("b1", "eraser"), j.optString("b2", "ink"),
+            j.optBoolean("move", j.optBoolean("seen") && j.optBoolean("palm", true))) // before move, palm rejection made a finger move the page once a pen had written
     }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     sound = o.optBoolean("sound", true)

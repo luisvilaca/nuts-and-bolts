@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sync.signIn finds the Google sign-in client by name (it exists only in builds with google-services.json), so the
+     release build's resource shrinker sees no use of it and drops it; this keeps it. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/default_web_client_id" />

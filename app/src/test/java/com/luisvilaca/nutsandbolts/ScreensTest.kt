@@ -22,6 +22,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assertIsSelected
@@ -67,6 +70,7 @@ class ScreensTest {
             stats[Attr.Battery] = 62; stats[Attr.Processor] = 48; stats[Attr.Chassis] = 35; stats[Attr.Core] = 22
             diary += listOf(t.minusDays(1), t.minusDays(3), t.minusDays(4))
         }
+        st.writePage(t, Page(PAPERS[0], mutableListOf())); st.flush() // today blank, whatever an earlier test wrote on it
         // a written page, so the diary has one on disk
         if (!empty) st.writePage(t.minusDays(1), Page("#393939", mutableListOf(
             InkStroke("#00FF88", 3f, false, floatArrayOf(160f, 300f, .6f, 700f, 300f, .6f)),
@@ -246,5 +250,30 @@ class ScreensTest {
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
         rule.onNodeWithText("4 mm").assertExists()
+    }
+
+    // On a phone held upright the page fills the height. Two fingers zoom without leaving ink; one finger writes, or
+    // moves the page in Move mode.
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun fingersZoomMoveAndWrite() {
+        val st = seed()
+        st.change { pen.move = false }
+        rule.setContent { NbTheme { App(st) } }
+        tap("Diary"); openToday()
+        val page = rule.onNodeWithContentDescription("Diary page for", substring = true)
+        val today = LocalDate.now()
+        val tall = page.fetchSemanticsNode().size.height
+        page.performTouchInput { pinch(center - Offset(200f, 0f), center - Offset(40f, 0f), center + Offset(200f, 0f), center + Offset(40f, 0f)) }  // pinched out, so the whole page stays in reach
+        rule.waitForIdle()
+        org.junit.Assert.assertFalse("a pinch left ink", today in st.s.diary)
+        rule.onNodeWithContentDescription("Move: off, a finger writes. Tap to move the page with a finger").performClick(); rule.waitForIdle()
+        page.performTouchInput { swipe(center, center + Offset(-150f, 80f)) }
+        rule.waitForIdle()
+        org.junit.Assert.assertFalse("a finger in Move mode wrote", today in st.s.diary)
+        rule.onNodeWithContentDescription("Move: a finger moves the page. Tap to write with a finger").performClick(); rule.waitForIdle()
+        page.performTouchInput { swipe(center, center + Offset(120f, 60f)) }
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue("a finger did not write", today in st.s.diary)
+        org.junit.Assert.assertTrue("the page does not fill the height", tall > 0.85f * rule.onRoot().fetchSemanticsNode().size.height)
+        shot("phone-page-pinched-out")
     }
 }
