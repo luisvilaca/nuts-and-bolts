@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -93,9 +94,14 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
         Row(Modifier.fillMaxSize()) {
             BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 28.dp, top = 12.dp, bottom = 12.dp)) {
-                // the list takes the room there is and scrolls; the attributes stay at the bottom right (owner, 2026-10-18)
-                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
-                Attributes(s, Modifier.padding(top = 12.dp))
+                // the list takes the room there is and scrolls; the attributes stay at the bottom right (owner, 2026-10-18),
+                // except on a phone held sideways, where pinned they would leave no room for even one habit: there they
+                // follow the list and scroll with it
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    habits()
+                    if (lay.phone) Attributes(s, Modifier.padding(top = 2.dp))
+                }
+                if (!lay.phone) Attributes(s, Modifier.padding(top = 12.dp))
             }
         }
     } else if (!lay.phone) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
@@ -124,7 +130,8 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
             room(s, tm.value, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
         }
-        Column(Modifier.padding(20.dp).clickable(onClickLabel = "wave") { store.react("wave") }) {
+        // the robot's wave is the feedback; a press shade would only box the nameplate
+        Column(Modifier.padding(20.dp).clickable(remember { MutableInteractionSource() }, null, onClickLabel = "wave") { store.react("wave"); Sfx.play("chirp") }) {
             Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
             Text(MOOD[mood(s)], style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }
@@ -244,6 +251,7 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
             SuggestionChip(onClick = {
                 val id = newId()
                 store.change { addSuggested(this, h, id, LocalDate.now()) }
+                Sfx.play("add")
                 ui.tell("${h.name} added") { store.change { removeHabit(this, habits.first { it.id == id }) } }
             }, label = { Text("${h.name} · ${h.target} a ${h.per.id}") }, Modifier.height(40.dp),
                 icon = { Icon(ICONS.getValue(h.stat.id), null, Modifier.size(18.dp), tint = W.steel) },

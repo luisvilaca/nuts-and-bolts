@@ -1,6 +1,9 @@
 package com.luisvilaca.nutsandbolts
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -89,7 +92,6 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
     fun remind(on: Boolean, time: String = s.remind.time) {
         store.change { remind = Remind(on, time) }
         if (on && Build.VERSION.SDK_INT >= 33) notify.launch(Manifest.permission.POST_NOTIFICATIONS)
-        Reminder.schedule(ctx, store.s.remind)
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
@@ -97,6 +99,9 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         Column(Modifier.widthIn(max = 720.dp)) {
             SectionLabel("Robot")
             Field(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, "Rivet")
+
+            SectionLabel("Sync")
+            SyncRow(ui)
 
             SectionLabel("Backup")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
@@ -116,10 +121,10 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
 
             SectionLabel("Sounds")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(s.sound, { v -> store.change { sound = v } }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
+                Switch(s.sound, { v -> store.change { sound = v }; Sfx.on = v; Sfx.play("chirp") }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
                 Text("Sound effects", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
-            Text("A bolt driven home, a skip, a sheared bolt, a level up, a purchase and an undo each make a short sound.",
+            Text("The workshop's own sounds, at the media volume: a bolt driven home, a frame going critical, a sheared bolt, a level gained or lost, a nut, a purchase, a part fitted, a habit added or taken off the bench, and ${s.name} answering a tap.",
                 Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Diary")
@@ -144,7 +149,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 pending = null
                 ui.scope.launch {
                     val ok = withContext(Dispatchers.IO) { runCatching { store.restore(b) }.isSuccess }
-                    if (ok) { name = store.s.name; Reminder.schedule(ctx, store.s.remind); ui.tell("Backup restored") } else ui.tell("The backup could not be restored.")
+                    if (ok) { name = store.s.name; Sync.restored(); ui.tell("Backup restored") } else ui.tell("The backup could not be restored.")
                 }
             }) { Text("Replace", color = W.coral) } },
             dismissButton = { TextButton({ pending = null }) { Text("Keep what is here", color = W.text) } })
@@ -189,5 +194,33 @@ private fun PenButtons(store: Store) {
         Segments(PEN_ACTS, cur) { v -> store.change { if (b == 1) pen.b1 = v else pen.b2 = v } }
     }
     Text("A press works while the pen hovers over the page or writes on it. If a button does nothing here, the tablet may keep it for its own shortcut: turn that off in the tablet's pen settings.",
+        Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+}
+
+// Signing in with the same Google account on the tablet and the phone keeps one copy of everything on both.
+@Composable
+private fun SyncRow(ui: Ui) {
+    val ctx = LocalContext.current
+    var busy by remember { mutableStateOf(false) }
+    if (!Sync.ready(ctx)) {
+        Text("Sync is not set up in this build.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        return
+    }
+    val who = Sync.who
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+        if (who == null) Button({
+            busy = true
+            ui.scope.launch { Sync.signIn(ctx)?.let { if (it.isNotEmpty()) ui.tell(it) }; busy = false }
+        }, Modifier.height(44.dp), enabled = !busy, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text("Sign in with Google") }
+        else {
+            Column {
+                Text(who, style = MaterialTheme.typography.bodyLarge)
+                Text(Sync.state, style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            }
+            OutlinedButton({ ui.scope.launch { Sync.signOut(ctx) } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Sign out", color = W.text) }
+        }
+    }
+    Text(if (who == null) "Sign in with the same Google account on the tablet and the phone, and both keep the same habits, robot and diary pages. Changes made offline go across once the device is back online."
+        else "Every change goes to the other device as it is made. Signing out keeps everything on this device.",
         Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 }

@@ -13,8 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.border
+import androidx.compose.foundation.indication
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -88,6 +89,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalContext
 
 // What the screens share: where the owner is (kept across the system ending the app in the background, see saver) and
 // the message bar.
@@ -113,8 +115,9 @@ class Ui(val scope: CoroutineScope) {
     }
 }
 
-// wide: a landscape window with room for two panes side by side. phone: a narrow window.
-class Lay(val wide: Boolean, val phone: Boolean)
+// wide: a landscape window with room for two panes side by side. phone: a narrow window. A data class, so a screen
+// handed an equal layout skips recomposing when only the App above it changed.
+data class Lay(val wide: Boolean, val phone: Boolean)
 
 // The four sections on the bottom bar, each with its label and icon.
 enum class Tab(val label: String, val icon: String) { Lab("Lab", "base"), Shop("Shop", "shop"), Habits("Habits", "habits"), Diary("Diary", "diary") }
@@ -124,6 +127,13 @@ fun App(store: Store, go: MutableState<String?> = remember { mutableStateOf(null
     val scope = rememberCoroutineScope()
     val ui = rememberSaveable(saver = Ui.saver(scope)) { Ui(scope) }
     LaunchedEffect(store) { snapshotFlow { store.s.sound }.collect { Sfx.on = it } }
+    // every alarm is set again at launch and whenever a reminder could have moved: a habit added, deleted, rescheduled
+    // or given a time, the daily reminder changed, a backup restored or the other device's changes arriving
+    val ctx = LocalContext.current
+    LaunchedEffect(store) {
+        snapshotFlow { store.s.let { s -> s.remind.on to s.remind.time to s.habits.map { listOf(it.id, it.remind, it.start, it.end, it.days) } } }
+            .collect { Reminder.scheduleAll(ctx, store.s) }
+    }
     LaunchedEffect(go.value) {
         go.value?.let { g -> ui.tab = Tab.entries.firstOrNull { it.name.equals(g, ignoreCase = true) } ?: Tab.Lab; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
     }
@@ -167,9 +177,11 @@ private fun BottomBar(ui: Ui) {
     Row(Modifier.fillMaxWidth().background(W.rail).navigationBarsPadding().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
         Tab.entries.forEach { k ->
             val on = ui.tab == k && !ui.settings
-            Column(Modifier.weight(1f).fillMaxHeight().selectable(on, role = Role.Tab) { go(ui, k) },
+            // the whole column takes the tap, but the press shows only inside the pill, never as a box round the tab
+            val press = remember { MutableInteractionSource() }
+            Column(Modifier.weight(1f).fillMaxHeight().selectable(on, interactionSource = press, indication = null, role = Role.Tab) { if (ui.tab != k) Sfx.play("tab"); go(ui, k) },
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent).indication(press, ripple()), contentAlignment = Alignment.Center) {
                     Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
                 }
                 Text(k.label, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
@@ -224,7 +236,11 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: Outcome) {
     store.change { m = mark(this, h, d, kind) }
     val k = m ?: return
     val after = level(store.s.stats.getValue(h.stat))
-    Sfx.play(if (after > before) "level" else kind.id)
+    // the level is the news when it moves; otherwise the outcome, and a frame that just went critical hums up under its
+    // bolt, and a nut clinks on top
+    Sfx.play(if (after > before) "level" else if (after < before) "down" else kind.id)
+    if (kind == Outcome.Done && slots(store.s, h, d).all { it.s == Outcome.Done }) Sfx.play("critical")
+    if (k.n > 0) Sfx.play("nut")
     when (kind) { Outcome.Done -> { store.fresh = h.id to now(); store.react("cheer") }; Outcome.Fail -> store.react("sad"); else -> {} }
     // crossing a level is the news; the points come second
     ui.tell(when {
@@ -323,7 +339,8 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
             }
         }
     }
-    val pick = Modifier.clickable(onClickLabel = if (select != null) "show details" else "edit") { if (select != null) select() else ui.openForm(h.id) }
+    // no press shade over the words: the form opening, or the card taking the selection edge, is the answer to the tap
+    val pick = Modifier.clickable(remember { MutableInteractionSource() }, null, onClickLabel = if (select != null) "show details" else "edit") { if (select != null) select() else ui.openForm(h.id) }
     Card(Modifier.fillMaxWidth(), selected = selected, accent = if (complete) W.glow else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).then(pick)) {
@@ -355,6 +372,7 @@ fun ConfirmDeleteHabit(store: Store, ui: Ui, h: Habit, done: (Boolean) -> Unit) 
         TextButton({
             var at = -1
             store.change { at = removeHabit(this, h) }
+            Sfx.play("delete")
             ui.tell("“${h.name}” deleted") { store.change { restoreHabit(this, h, at) } }
             done(true)
         }) { Text("Delete", color = W.coral) }

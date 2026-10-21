@@ -45,10 +45,12 @@ class Habit(
     var start: LocalDate? = null,
     var end: LocalDate? = null,
     var days: Set<Int>? = null, // 0 is Monday; null is every day
+    var remind: String? = null, // "HH:mm": a notification at that time on the days it runs while it has open slots
 )
 
-// Each mark stores exactly what it changed (bolts, points, nuts, and l: new levels it reached), so undo is exact.
-class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0)
+// Each mark stores exactly what it changed (bolts, points, nuts, and l: new levels it reached) and a, the attribute its
+// points went to, so undo is exact and the wallet can be counted again from the marks alone (see recount).
+class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0, var a: Attr? = null)
 
 // nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
 // palm: palm rejection; once a pen has written, only the pen writes and a finger scrolls the page.
@@ -73,6 +75,37 @@ class Data {
     var remind = Remind()
     var sound = true // the effects in Sfx
     var backedUp: LocalDate? = null
+    var adj = Wallet() // what the marks and parts do not account for: the start (30 points, level 2), and older history
+}
+
+// Bolts, nuts, points and peak levels, as a sum or as an offset.
+class Wallet(var bolts: Int = 0, var nuts: Int = 0, val stats: MutableMap<Attr, Int> = Attr.entries.associateWith { 30 }.toMutableMap(),
+             val peak: MutableMap<Attr, Int> = Attr.entries.associateWith { level(30) }.toMutableMap())
+
+// What the marks and the parts owned add up to on their own.
+fun sums(s: Data) = Wallet(0, 0, Attr.entries.associateWith { 0 }.toMutableMap(), Attr.entries.associateWith { 0 }.toMutableMap()).apply {
+    for (ms in s.marks.values) for (l in ms.values) for (m in l) {
+        bolts += m.b; nuts += m.n + LEVEL_NUTS * m.l
+        m.a?.let { stats[it] = stats.getValue(it) + m.p; peak[it] = peak.getValue(it) + m.l }
+    }
+    for (id in s.owned) PART[id]?.let { bolts -= it.bolts; nuts -= it.nuts }
+}
+
+// The offset that makes the marks and parts add up to the wallet as it stands (once, for a state from before adj).
+fun adjFor(s: Data): Wallet = sums(s).let { x ->
+    Wallet(s.bolts - x.bolts, s.nuts - x.nuts, Attr.entries.associateWith { s.stats.getValue(it) - x.stats.getValue(it) }.toMutableMap(),
+        Attr.entries.associateWith { s.peak.getValue(it) - x.peak.getValue(it) }.toMutableMap())
+}
+
+// The wallet counted again from the marks and parts. Two devices that log offline each change their own marks; once
+// the marks meet, both count the same wallet, where adding up each device's balance would count one of them twice.
+fun recount(s: Data) {
+    val x = sums(s)
+    s.bolts = (s.adj.bolts + x.bolts).coerceAtLeast(0); s.nuts = (s.adj.nuts + x.nuts).coerceAtLeast(0)
+    Attr.entries.forEach { a ->
+        s.stats[a] = (s.adj.stats.getValue(a) + x.stats.getValue(a)).coerceAtLeast(0)
+        s.peak[a] = (s.adj.peak.getValue(a) + x.peak.getValue(a)).coerceAtLeast(1)
+    }
 }
 
 // A habit comes off the list at its place, which comes back so undo puts it where it was. Its marks stay.
@@ -87,6 +120,8 @@ fun periodMarks(s: Data, h: Habit, d: LocalDate) = periodDates(h, d).flatMap { x
 fun maxTarget(per: Per) = if (per == Per.Week) 7 else 12
 
 fun active(h: Habit, d: LocalDate) = (h.start == null || h.start!! <= d) && (h.end == null || d <= h.end!!) && (h.days == null || (d.dayOfWeek.value - 1) in h.days!!)
+// Every slot of the period logged, whatever the outcome: nothing left to remind about.
+fun logged(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).size >= h.target
 fun locked(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).count { it.second.s == Outcome.Done } >= h.target
 
 fun streak(s: Data, h: Habit, d: LocalDate): Int {
@@ -133,7 +168,7 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
 fun mark(s: Data, h: Habit, d: LocalDate, kind: Outcome): Mark? {
     if (periodMarks(s, h, d).size >= h.target) return null
     val w = h.weight
-    val m = Mark(kind)
+    val m = Mark(kind, a = h.stat)
     if (kind == Outcome.Done) { m.b = w.bolts; m.p = w.pts }
     if (kind == Outcome.Fail) { m.b = -min(w.bolts, s.bolts); m.p = -min(w.pts, s.stats.getValue(h.stat)) }
     s.marks.getOrPut(d) { mutableMapOf() }.getOrPut(h.id) { mutableListOf() }.add(m)

@@ -2,6 +2,8 @@
 .gradle/
 build/
 local.properties
+# Firebase project settings (see SYNC.md); the app builds without them, with sync off
+app/google-services.json
 .idea/
 *.iml
 .kotlin/
