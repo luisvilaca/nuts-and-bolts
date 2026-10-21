@@ -15,8 +15,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val store = Store.get(this)
-        Reminder.schedule(this, store.s.remind) // re-arm after an update or a cleared alarm
         Sfx.load(this)
+        Sync.start(this, store)
         go.value = intent.getStringExtra(Reminder.TAB)
         setContent { NbTheme { App(store, go) } }
     }

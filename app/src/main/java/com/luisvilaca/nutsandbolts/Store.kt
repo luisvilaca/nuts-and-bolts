@@ -5,7 +5,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +30,13 @@ class Store private constructor(private val dir: File) {
     private var data: Data = load()
     val s: Data get() { tick; return data }
 
-    fun change(block: Data.() -> Unit) { data.block(); tick++; save() }
+    fun change(block: Data.() -> Unit) { data.block(); tick++; save(); onChange?.invoke() }
+
+    // Sync's hooks: every change made here, and every page written here, goes to the cloud copy as it happens.
+    var onChange: (() -> Unit)? = null
+    var onPage: ((LocalDate, Page) -> Unit)? = null
+    // the other device's changes, already merged by the cloud; nothing to send back
+    fun replace(d: Data) { data = d; tick++; save() }
 
     // the robot's current reaction; not saved
     var react by mutableStateOf<Reaction?>(null)
@@ -55,11 +66,24 @@ class Store private constructor(private val dir: File) {
         waiting.set(json(data).toString())
         writer.launch { waiting.getAndSet(null)?.let { writeAtomic(stateFile, it) } }
     }
-    fun flush() = runBlocking(disk) { waiting.getAndSet(null)?.let { writeAtomic(stateFile, it) } }
+    fun flush() = runBlocking(disk) {
+        waiting.getAndSet(null)?.let { writeAtomic(stateFile, it) }
+        pagesWaiting.keys.toList().forEach { d -> pagesWaiting.remove(d)?.let { putPage(d, it) } }
+    }
 
     fun page(d: LocalDate): Page? = File(pagesDir, "$d.json").takeIf { it.exists() }?.let { pageFrom(JSONObject(it.readText())) }
-    // runs off the main thread; the caller marks the day in diary afterwards
-    fun writePage(d: LocalDate, p: Page) {
+    // A page is saved after every stroke. Like the state, it goes to the one writer thread (two writes of the same page
+    // at once would share its .tmp file), and strokes that come faster than the disk collapse into the newest copy.
+    // The caller marks the day in diary.
+    private val pagesWaiting = java.util.concurrent.ConcurrentHashMap<LocalDate, Page>()
+    // mine: written here, so it goes to the cloud too; a page that came from the cloud does not go back
+    fun writePage(d: LocalDate, p: Page, mine: Boolean = true) {
+        pagesWaiting[d] = p
+        writer.launch { pagesWaiting.remove(d)?.let { putPage(d, it) } }
+        if (mine) onPage?.invoke(d, p)
+    }
+    fun pageDays(): List<LocalDate> = pagesDir.listFiles()?.mapNotNull { runCatching { LocalDate.parse(it.nameWithoutExtension) }.getOrNull() }.orEmpty()
+    private fun putPage(d: LocalDate, p: Page) {
         val f = File(pagesDir, "$d.json")
         if (p.strokes.isEmpty()) f.delete() else writeAtomic(f, pageJson(p).toString())
     }
@@ -115,8 +139,8 @@ class Page(var paper: String, val strokes: MutableList<InkStroke>)
 private fun JSONObject.str(k: String) = if (has(k) && !isNull(k)) getString(k) else null
 private fun JSONObject.date(k: String) = str(k)?.let(LocalDate::parse)
 
-// The saved state's shape; files without "v" are version 1.
-const val SCHEMA = 2
+// The saved state's shape; files without "v" are version 1. 3: marks name their attribute, and the wallet keeps adj.
+const val SCHEMA = 3
 
 // Brings a saved state of any earlier shape up to this one, so dataFrom reads only the current shape. Each step looks
 // for what it fixes rather than trusting the version, so a partly old file is mended too.
@@ -145,10 +169,10 @@ internal fun json(s: Data): JSONObject = JSONObject()
     .put("habits", JSONArray(s.habits.map { h ->
         JSONObject().put("id", h.id).put("name", h.name).put("kind", h.kind.id).put("per", h.per.id).put("target", h.target)
             .put("stat", h.stat.id).put("weight", h.weight.id).put("start", h.start?.toString()).put("end", h.end?.toString())
-            .put("days", h.days?.let { JSONArray(it.sorted()) })
+            .put("days", h.days?.let { JSONArray(it.sorted()) }).put("remind", h.remind)
     }))
     .put("marks", JSONObject().apply {
-        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s.id, it.b, it.p, it.n, it.l)) })) } }) }
+        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "")) })) } }) }
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("papers", JSONArray(s.papers))
@@ -156,6 +180,12 @@ internal fun json(s: Data): JSONObject = JSONObject()
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("sound", s.sound)
     .put("backedUp", s.backedUp?.toString())
+    .put("adj", walletJson(s.adj))
+
+private fun walletJson(w: Wallet) = JSONObject().put("bolts", w.bolts).put("nuts", w.nuts)
+    .put("stats", JSONObject().apply { w.stats.forEach { (a, v) -> put(a.id, v) } }).put("peak", JSONObject().apply { w.peak.forEach { (a, v) -> put(a.id, v) } })
+private fun walletFrom(o: JSONObject) = Wallet(o.getInt("bolts"), o.getInt("nuts"),
+    Attr.entries.associateWith { o.getJSONObject("stats").getInt(it.id) }.toMutableMap(), Attr.entries.associateWith { o.getJSONObject("peak").getInt(it.id) }.toMutableMap())
 
 internal fun dataFrom(raw: JSONObject) = Data().apply {
     val o = migrate(raw)
@@ -172,13 +202,15 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
             val per = byId<Per>(j.getString("per"))
             habits += Habit(j.getString("id"), j.getString("name"), byId<Kind>(j.getString("kind")), per, j.getInt("target").coerceIn(1, maxTarget(per)),
                 byId<Attr>(j.getString("stat")), byId<Heft>(j.getString("weight")),
-                j.date("start"), j.date("end"), j.optJSONArray("days")?.let { d -> (0 until d.length()).map(d::getInt).toSet() })
+                j.date("start"), j.date("end"), j.optJSONArray("days")?.let { d -> (0 until d.length()).map(d::getInt).toSet() }, j.str("remind"))
         }
     }
     o.optJSONObject("marks")?.let { m ->
         for (d in m.keys()) m.getJSONObject(d).let { hs ->
             marks[LocalDate.parse(d)] = hs.keys().asSequence().associateWith { id ->
-                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(byId<Outcome>(x.getString(0)), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4)) } }.toMutableList() }
+                hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(byId<Outcome>(x.getString(0)), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4),
+                    // marks from before a carry their habit's attribute; adj below absorbs any that moved since
+                    x.optString(5).takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) } ?: habits.find { it.id == id }?.stat) } }.toMutableList() }
             }.toMutableMap()
         }
     }
@@ -192,6 +224,7 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     sound = o.optBoolean("sound", true)
     backedUp = o.date("backedUp")
+    adj = o.optJSONObject("adj")?.let(::walletFrom) ?: adjFor(this)
 }
 
 private fun pageJson(p: Page) = JSONObject().put("paper", p.paper).put("strokes", JSONArray(p.strokes.map { st ->
@@ -203,3 +236,105 @@ private fun pageFrom(o: JSONObject) = Page(o.getString("paper"), o.getJSONArray(
         a.getJSONObject(i).let { j -> j.getJSONArray("p").let { p -> InkStroke(j.getString("c"), j.getDouble("w").toFloat(), j.getBoolean("e"), FloatArray(p.length()) { p.getDouble(it).toFloat() }) } }
     }.toMutableList()
 })
+
+// ---------- the cloud copy (Sync.kt) ----------
+
+// The state as the cloud keeps it: one field per thing two devices could change apart (a habit, a day's bolts for
+// a habit, a part owned, a slot's part), so their changes merge field by field instead of one overwriting the other.
+// Keys are dotted paths into the document. Left out: the wallet (each device counts it from the marks, see recount),
+// the diary days (they follow the pages), and what belongs to this device (pen, sounds, last backup).
+internal fun flat(s: Data): Map<String, Any?> = buildMap {
+    put("name", s.name); put("papers", s.papers.toList())
+    put("remind", mapOf("on" to s.remind.on, "time" to s.remind.time))
+    put("adj", mapOf("bolts" to s.adj.bolts, "nuts" to s.adj.nuts, "stats" to s.adj.stats.mapKeys { it.key.id }, "peak" to s.adj.peak.mapKeys { it.key.id }))
+    s.equip.forEach { (k, v) -> put("equip.$k", v) }
+    s.owned.forEach { put("owned.$it", true) }
+    s.habits.forEachIndexed { i, h ->
+        put("habits.${h.id}", mapOf("name" to h.name, "kind" to h.kind.id, "per" to h.per.id, "target" to h.target, "stat" to h.stat.id, "weight" to h.weight.id,
+            "start" to h.start?.toString(), "end" to h.end?.toString(), "days" to h.days?.sorted(), "remind" to h.remind, "o" to i))
+    }
+    s.marks.forEach { (d, hs) -> hs.forEach { (id, ms) -> if (ms.isNotEmpty()) put("marks.$d.$id", ms.map { listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "").joinToString(",") }) } }
+}.mapValues { norm(it.value) }
+
+// Numbers as the cloud hands them back (Long), so a field read back compares equal to the one sent.
+private fun norm(v: Any?): Any? = when (v) {
+    is Number -> v.toLong(); is Map<*, *> -> v.entries.associate { it.key as String to norm(it.value) }; is List<*> -> v.map(::norm); else -> v
+}
+
+// A cloud document flattened to the same paths; a day left with no bolts for a habit is no field at all.
+internal fun flatOf(o: Map<String, Any?>): Map<String, Any?> = buildMap {
+    for ((k, v) in o) when (k) {
+        "equip", "owned", "habits" -> (v as? Map<*, *>)?.forEach { (id, x) -> put("$k.$id", norm(x)) }
+        "marks" -> (v as? Map<*, *>)?.forEach { (d, hs) -> (hs as? Map<*, *>)?.forEach { (id, x) -> if ((x as? List<*>)?.isNotEmpty() == true) put("marks.$d.$id", norm(x)) } }
+        else -> put(k, norm(v))
+    }
+}
+
+// What to send for the cloud to go from old to new: changed and new fields, and gone (the delete marker) for the rest.
+internal fun diff(old: Map<String, Any?>, new: Map<String, Any?>, gone: Any): Map<String, Any?> =
+    new.filter { (k, v) -> !old.containsKey(k) || old[k] != v } + (old.keys - new.keys).associateWith { gone }
+
+// Dotted paths back into nested maps, the shape a merging write takes.
+@Suppress("UNCHECKED_CAST")
+internal fun nest(m: Map<String, Any?>): Map<String, Any?> = mutableMapOf<String, Any?>().also { root ->
+    for ((k, v) in m) {
+        val ps = k.split(".")
+        var cur = root
+        for (p in ps.dropLast(1)) cur = cur.getOrPut(p) { mutableMapOf<String, Any?>() } as MutableMap<String, Any?>
+        cur[ps.last()] = v
+    }
+}
+
+// The state from its cloud fields, keeping what belongs to this device; the wallet is counted from the marks.
+// An unknown code (a newer app on the other device) throws, and the copy here stays as it was.
+internal fun fromFlat(m: Map<String, Any?>, here: Data) = Data().apply {
+    name = m["name"] as? String ?: name
+    (m["papers"] as? List<*>)?.takeIf { it.size == 3 }?.forEachIndexed { i, c -> papers[i] = c as String }
+    (m["remind"] as? Map<*, *>)?.let { remind = Remind(it["on"] == true, it["time"] as? String ?: "21:00") }
+    (m["adj"] as? Map<*, *>)?.let { w ->
+        fun ints(k: String) = Attr.entries.associateWith { ((w[k] as Map<*, *>)[it.id] as Number).toInt() }.toMutableMap()
+        adj = Wallet((w["bolts"] as Number).toInt(), (w["nuts"] as Number).toInt(), ints("stats"), ints("peak"))
+    }
+    if (m.keys.any { it.startsWith("owned.") }) owned.clear()
+    val hs = mutableListOf<Pair<Long, Habit>>()
+    for ((k, v) in m) {
+        val p = k.split(".")
+        when (p[0]) {
+            "owned" -> owned += p[1]
+            "habits" -> (v as Map<*, *>).let { j ->
+                fun str(x: String) = j[x] as String?
+                val per = byId<Per>(str("per")!!)
+                hs += (j["o"] as Number).toLong() to Habit(p[1], str("name")!!, byId(str("kind")!!), per, (j["target"] as Number).toInt().coerceIn(1, maxTarget(per)),
+                    byId(str("stat")!!), byId(str("weight")!!), str("start")?.let(LocalDate::parse), str("end")?.let(LocalDate::parse),
+                    (j["days"] as List<*>?)?.map { (it as Number).toInt() }?.toSet(), str("remind"))
+            }
+            "marks" -> marks.getOrPut(LocalDate.parse(p[1])) { mutableMapOf() }[p[2]] = (v as List<*>).map { x ->
+                (x as String).split(",").let { f -> Mark(byId(f[0]), f[1].toInt(), f[2].toInt(), f[3].toInt(), f[4].toInt(), f.getOrNull(5)?.takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) }) }
+            }.toMutableList()
+        }
+    }
+    habits += hs.sortedWith(compareBy({ it.first }, { it.second.id })).map { it.second }
+    for ((k, v) in m) if (k.startsWith("equip.")) k.removePrefix("equip.").let { slot -> if (slot in equip && (v == null || v in owned)) equip[slot] = v as String? }
+    diary += here.diary; pen = here.pen; sound = here.sound; backedUp = here.backedUp
+    recount(this)
+}
+
+// A page for the cloud: a compact binary of its strokes, gzipped. Points are kept to a tenth of a page unit and
+// pressure to a hundredth already (see put in Diary.kt), so short integers hold them exactly.
+internal fun pageBytes(p: Page): ByteArray = ByteArrayOutputStream().also { bo ->
+    DataOutputStream(GZIPOutputStream(bo)).use { o ->
+        o.writeUTF(p.paper); o.writeInt(p.strokes.size)
+        p.strokes.forEach { st ->
+            o.writeUTF(st.c); o.writeFloat(st.w); o.writeBoolean(st.e); o.writeInt(st.p.size)
+            st.p.forEachIndexed { i, v -> o.writeShort(Math.round(v * if (i % 3 == 2) 100 else 10).coerceIn(-32768, 32767)) }
+        }
+    }
+}.toByteArray()
+
+internal fun pageOf(b: ByteArray): Page = DataInputStream(GZIPInputStream(b.inputStream())).use { i ->
+    val paper = i.readUTF()
+    Page(paper, MutableList(i.readInt()) {
+        val c = i.readUTF(); val w = i.readFloat(); val e = i.readBoolean()
+        InkStroke(c, w, e, FloatArray(i.readInt()) { k -> i.readShort() / if (k % 3 == 2) 100f else 10f })
+    })
+}

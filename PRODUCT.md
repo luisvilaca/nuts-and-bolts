@@ -8,7 +8,7 @@ android
 
 ## Stack
 
-Native Android app in Kotlin and Jetpack Compose, one app module, built with Gradle on the Windows PC and run from Android Studio. Chosen by the owner on 2026-10-17 to replace the earlier PWA; the web code is retired and nothing is imported from it (the owner starts fresh). Data stays on the device.
+Native Android app in Kotlin and Jetpack Compose, one app module, built with Gradle on the Windows PC and run from Android Studio. Chosen by the owner on 2026-10-17 to replace the earlier PWA; the web code is retired and nothing is imported from it (the owner starts fresh). Data lives on each device and, once the owner signs in with Google in Settings, syncs between the tablet and the phone through Firebase (Firestore), offline first (2026-10-21). Builds reach both devices through Firebase App Distribution (tools/publish.ps1, SYNC.md).
 
 ## Users
 
@@ -29,7 +29,7 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Lab (home, called Today until 2026-10-18): the robot on its platform with an evolving background; beside it today's habits, logged right there, in a list that scrolls on its own when long; the four attributes pinned at the bottom right (name, what it means, level, a slim gauge; no stage names), always in view; currency balances. No week strip, tally or next-level line (owner, 2026-10-18).
 - Shop: item shop to evolve the character; categories Head, Body, Arms, Legs, Accessories, Base.
 - Habits: planning and managing: calendar and history (each habit's share of slots done, fails, best and current run); add and edit habits. Every date, past and future, opens to show the habits that run on it and can be logged there.
-- Settings, from the top bar: backup and restore, the daily reminder, the robot's name.
+- Settings, from the top bar: sync (Google sign-in), backup and restore, the daily reminder, sounds, the robot's name.
 - The robot is big where it matters: on tablet landscape a bay on Today and Shop, and no robot on Habits, Diary or the habit form, so the planner and calendar get the full screen (2026-10-17 streamlining); on a phone the full robot on Today and Shop only, a small robot badge elsewhere.
 - Each habit is a card with a progress counter (slots logged of the target, a segment per slot) and one clear Done; Skip, Fail, taking the last mark back, Edit and Delete sit in its menu (owner, 2026-10-18; Skip and Fail were one tap before). Logging a habit or buying a part shows a message with Undo; tapping a filled nut also undoes.
 - Diary: calendar view; pen entry on a printed diary page (dated header, ruled lines).
@@ -51,6 +51,9 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Writing latency: the pen's samples are delivered unbuffered, the live stroke reaches ahead to the platform's motion prediction (Android 14+), and the stabilizer lets go on fast strokes.
 - Settings holds this device's tools: a backup file (all state and every diary page) to save and restore, and a daily reminder at a set time. A restore replaces everything after confirming; a file that does not check out changes nothing.
 - The reminder is a native Android notification at the set time, skipped when the day already has a logged habit or a diary page. Tapping it opens Habits on today.
+- Each habit can have its own reminder (habit form, 2026-10-21): a notification at its time on the days it runs, only while its period has open slots, with a Done (Resisted) button that logs it without opening the app. Alarms are exact and local to each device, so they work offline; notifications play the robot's own call.
+- Sync (2026-10-21): the same Google account on both devices. Every change is written to the cloud at once (queued while offline), field by field, so changes made apart on the two devices merge; the wallet is counted from the marks and parts on each device, so it never counts a Done twice. Pen, sounds and the last-backup date stay per device. The first sign-in on a device with an existing cloud copy takes the cloud copy and keeps what was on the device in a backup file.
+- Sound effects (2026-10-21) play at the media volume, in the workshop's own sounds: servos, ratchets, relays, metal, Geiger ticks and reactor hum, for Done, a frame going critical, Skip, Fail, a level gained or lost, a nut, a purchase, a part fitted, a habit added or deleted, the robot answering a tap, a tab change and a binned page.
 - Interface language: English.
 
 ## Brand Commitments

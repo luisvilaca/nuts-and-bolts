@@ -1,5 +1,8 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.indication
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.translate
 import android.view.MotionEvent
@@ -56,7 +59,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -102,9 +104,6 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.min
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -228,7 +227,6 @@ private fun MotionEvent.penIndex() = (0 until pointerCount).firstOrNull { getToo
 private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     val s = store.s
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
     val pad = remember(date) { Pad(store.page(date) ?: Page(s.papers.getOrElse(s.pen.paper) { PAPERS[0] }, mutableListOf())) }
     var erase by remember { mutableStateOf(false) }
     var pop by remember { mutableStateOf<String?>(null) }
@@ -249,10 +247,11 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
 
     fun persist() {
         val p = Page(pad.page.paper, pad.page.strokes.toMutableList())
-        scope.launch {
-            withContext(Dispatchers.IO) { store.writePage(date, p) }
-            store.change { if (p.strokes.isEmpty()) diary -= date else diary += date }
-        }
+        store.writePage(date, p)
+        // the day's mark changes only when the page goes from blank to written or back; a change on every stroke
+        // would redraw every screen and write the whole state each time
+        val has = p.strokes.isNotEmpty()
+        if (has != (date in store.s.diary)) store.change { if (has) diary += date else diary -= date }
     }
     // keep the ink readable: light paper takes the black ink, dark paper the ice blue
     fun setPaper(c: String) {
@@ -449,7 +448,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     }
     if (bin) AlertDialog(onDismissRequest = { bin = false }, title = { Text("Bin this page?") },
         text = { Text("Everything written on it is erased and cannot be brought back.") },
-        confirmButton = { TextButton({ pad.page.strokes.clear(); pad.redo.clear(); pad.redraw(density); persist(); bin = false }) { Text("Bin it", color = W.coral) } },
+        confirmButton = { TextButton({ Sfx.play("bin"); pad.page.strokes.clear(); pad.redo.clear(); pad.redraw(density); persist(); bin = false }) { Text("Bin it", color = W.coral) } },
         dismissButton = { TextButton({ bin = false }) { Text("Keep it", color = W.text) } })
 }
 
@@ -480,8 +479,10 @@ private fun Tool(icon: String, label: String, on: Boolean, touchOk: () -> Boolea
 private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, touchOk: () -> Boolean = { true }, faint: Boolean = false, onClick: () -> Unit) {
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
     val kind = remember { arrayOfNulls<PointerType>(1) }
-    Box(Modifier.size(40.dp, 36.dp).clip(RoundedCornerShape(10.dp)).lastPointer(kind).clickable(onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = if (faint) "$label, hard to see on this paper" else label; selected = on }, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(if (on) 26.dp else 22.dp).alpha(if (faint) 0.4f else 1f).clip(shape).background(hex(c))
+    // the press shows on the swatch itself, round or square like it, not as a box round it
+    val press = remember { MutableInteractionSource() }
+    Box(Modifier.size(40.dp, 36.dp).lastPointer(kind).clickable(press, null, onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = if (faint) "$label, hard to see on this paper" else label; selected = on }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(if (on) 26.dp else 22.dp).alpha(if (faint) 0.4f else 1f).clip(shape).background(hex(c)).indication(press, ripple())
             .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
         if (faint) Canvas(Modifier.size(26.dp)) { drawLine(W.dim, Offset(size.width * 0.15f, size.height * 0.85f), Offset(size.width * 0.85f, size.height * 0.15f), 1.5.dp.toPx(), StrokeCap.Round) }
     }

@@ -68,7 +68,8 @@ fun Segments(opts: List<Pair<String, String>>, cur: String, modifier: Modifier =
         }.selectableGroup(), verticalAlignment = Alignment.CenterVertically) {
         opts.forEach { (k, v) ->
             val c by animateColorAsState(if (k == cur) W.text else W.dim, label = "segment label")
-            Text(v, Modifier.weight(1f).selectable(k == cur, role = Role.RadioButton) { set(k) }.padding(horizontal = 8.dp, vertical = 10.dp),
+            // the press is clipped to the sliding pill's own shape, so it never shows as a square inside the bar
+            Text(v, Modifier.weight(1f).padding(3.dp).clip(RoundedCornerShape(19.dp)).selectable(k == cur, role = Role.RadioButton) { set(k) }.padding(horizontal = 5.dp, vertical = 7.dp),
                 style = MaterialTheme.typography.labelLarge, color = c, textAlign = TextAlign.Center, maxLines = 3) // room for large text
         }
     }

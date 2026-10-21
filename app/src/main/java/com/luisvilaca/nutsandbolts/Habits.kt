@@ -1,6 +1,18 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.indication
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Switch
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.os.Build
+import android.Manifest
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -174,10 +186,12 @@ fun Month(m: YearMonth, mark: @Composable (LocalDate, Int) -> Unit, ahead: Boole
                         if (n < 1 || n > m.lengthOfMonth()) Spacer(Modifier.weight(1f)) else {
                             val d = m.atDay(n)
                             val off = d > t && !ahead
-                            val cell = Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(10.dp))
-                                .clickable(enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) + say(d).let { if (it.isEmpty()) "" else ", $it" } }.padding(4.dp)
+                            // the whole cell takes the tap; the press lights the day's number ring, the cell has no shape of its own
+                            val press = remember { MutableInteractionSource() }
+                            val cell = Modifier.weight(1f).fillMaxHeight()
+                                .clickable(press, null, enabled = !off) { open(d) }.semantics { contentDescription = d.format(dayFmt) + say(d).let { if (it.isEmpty()) "" else ", $it" } }.padding(4.dp)
                             val num = @Composable {
-                                Box(Modifier.size(28.dp).border(2.dp, if (d == t) W.act else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
+                                Box(Modifier.size(28.dp).clip(CircleShape).indication(press, ripple()).border(2.dp, if (d == t) W.act else Color.Transparent, CircleShape), contentAlignment = Alignment.Center) {
                                     Text("$n", style = MaterialTheme.typography.labelLarge, color = if (off) W.edge else W.text)
                                 }
                             }
@@ -296,7 +310,7 @@ private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = C
             TextButton({ ui.openForm(h.id) }) { Text("Edit", color = W.act) }
         }
         Text(meta(s, h, t), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-        Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf("bolts in" to "${if (r.slots > 0) r.done * 100 / r.slots else 0}%", "running now" to unit(r.now), "best run" to unit(r.best), "sheared" to "${r.fail}")
                 .forEach { (k, v) ->
                     Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
@@ -372,6 +386,11 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
     var end by rememberSaveable { mutableStateOf(h?.end) }
     var ends by rememberSaveable { mutableStateOf(h?.end != null) }
     var days by rememberSaveable { mutableStateOf(HashSet(h?.days ?: (0..6).toSet())) }
+    var remind by rememberSaveable { mutableStateOf(h?.remind) }
+    var clock by rememberSaveable { mutableStateOf(false) }
+    val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (!ok) ui.tell("Notifications are off for Nuts And Bolts, so the reminder cannot show.")
+    }
     var picking by rememberSaveable { mutableStateOf<String?>(null) }
     var confirm by rememberSaveable { mutableStateOf(false) }
     val problem = when {
@@ -382,10 +401,11 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         else -> null
     }
     val save = {
+        Sfx.play(if (h == null) "add" else "equip")
         store.change {
             val x = h ?: Habit(newId(), "").also { habits += it }
             x.name = name.trim(); x.kind = kind; x.per = per; x.target = target; x.weight = weight; x.stat = stat
-            x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }?.toSet()
+            x.start = start; x.end = if (ends) end else null; x.days = days.takeIf { it.size < 7 }?.toSet(); x.remind = remind
         }
         ui.edit = null
     }
@@ -448,6 +468,17 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
                 }
             }
         }
+        group("Reminder") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(remind != null, { on ->
+                    remind = if (on) remind ?: "09:00" else null
+                    if (on && Build.VERSION.SDK_INT >= 33) notify.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
+                Text(if (remind != null) "At" else "Off", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                OutlinedButton({ clock = true }, enabled = remind != null, border = BorderStroke(1.dp, W.edge)) { Text(remind ?: "09:00", style = Numeral, color = if (remind != null) W.text else W.dim) }
+            }
+            hint("A notification at this time on the days it runs, while it still has open bolts. Its ${if (kind == Kind.Break) "Resisted" else "Done"} button logs it without opening the app.")
+        }
     }
     val actions = @Composable { m: Modifier ->
         Row(m.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -495,6 +526,14 @@ fun HabitForm(store: Store, ui: Ui, lay: Lay, h: Habit?) {
         DatePickerDialog(onDismissRequest = { picking = null }, confirmButton = {
             TextButton({ st.selectedDateMillis?.date()?.let { if (which == "start") start = it else end = it }; picking = null }) { Text("OK", color = W.act) }
         }, dismissButton = { TextButton({ picking = null }) { Text("Cancel", color = W.text) } }) { DatePicker(st) }
+    }
+    if (clock) {
+        val (hh, mm) = (remind ?: "09:00").split(":").map { it.toInt() }
+        val st = rememberTimePickerState(hh, mm, is24Hour = true)
+        AlertDialog(onDismissRequest = { clock = false }, text = {
+            TimePicker(st, colors = TimePickerDefaults.colors(selectorColor = W.act, timeSelectorSelectedContainerColor = W.raised, clockDialColor = W.rail))
+        }, confirmButton = { TextButton({ remind = "%02d:%02d".format(st.hour, st.minute); clock = false }) { Text("OK", color = W.act) } },
+            dismissButton = { TextButton({ clock = false }) { Text("Cancel", color = W.text) } })
     }
     if (confirm && h != null) ConfirmDeleteHabit(store, ui, h) { gone -> confirm = false; if (gone) ui.edit = null }
 }

@@ -4,24 +4,33 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 
-// Short effects for the moments that change something: a bolt driven home, a skip, a sheared bolt, a level up, a
-// purchase, an undo. Synthesized by tools/sfx.py. Silent when the Sounds switch in Settings is off (App keeps on in
-// step with it), and before load.
+// Short effects for the moments that change something, in the workshop's own sounds (servos, ratchets, relays, metal,
+// Geiger ticks, reactor hum): a bolt driven home, a frame going critical, a skip, a sheared bolt, a level gained or
+// lost, a nut, a purchase, a part equipped, an undo, a habit added or deleted, the robot answering a tap, a tab, a
+// page binned. Synthesized by tools/sfx.py. Silent when the Sounds switch in Settings is off (App keeps on in step
+// with it), and before load.
 object Sfx {
     private var pool: SoundPool? = null
     var on = true
     private val ids = mutableMapOf<String, Int>()
+    private val RAW = mapOf(
+        "done" to R.raw.sfx_done, "critical" to R.raw.sfx_critical, "skip" to R.raw.sfx_skip, "fail" to R.raw.sfx_fail,
+        "level" to R.raw.sfx_level, "down" to R.raw.sfx_down, "nut" to R.raw.sfx_nut, "buy" to R.raw.sfx_buy,
+        "equip" to R.raw.sfx_equip, "undo" to R.raw.sfx_undo, "add" to R.raw.sfx_add, "delete" to R.raw.sfx_delete,
+        "chirp" to R.raw.sfx_chirp, "tab" to R.raw.sfx_tab, "bin" to R.raw.sfx_bin,
+    )
 
     fun load(c: Context) {
         if (pool != null) return
-        pool = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build().also { p ->
-            mapOf("done" to R.raw.sfx_done, "skip" to R.raw.sfx_skip, "fail" to R.raw.sfx_fail, "level" to R.raw.sfx_level, "buy" to R.raw.sfx_buy, "undo" to R.raw.sfx_undo)
-                .forEach { (k, r) -> ids[k] = p.load(c.applicationContext, r, 1) }
+        // played as media, at the media volume: system sonification is muted by the tablet's silent and vibrate modes
+        // (HyperOS mutes it outright), which is why the effects were never heard there
+        pool = SoundPool.Builder().setMaxStreams(4).setAudioAttributes(AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build().also { p ->
+            RAW.forEach { (k, r) -> ids[k] = p.load(c.applicationContext, r, 1) }
         }
     }
 
-    fun play(name: String) {
-        if (on) ids[name]?.let { pool?.play(it, 1f, 1f, 1, 0, 1f) }
+    fun play(name: String, volume: Float = 1f) {
+        if (on) ids[name]?.let { pool?.play(it, volume, volume, 1, 0, 1f) }
     }
 }

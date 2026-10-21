@@ -1,5 +1,8 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.size
@@ -83,7 +86,8 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     val tabs = @Composable {
         SecondaryScrollableTabRow(SLOTS.keys.indexOf(cat), containerColor = W.ground, contentColor = W.text, edgePadding = 0.dp, divider = {},
             indicator = { TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(SLOTS.keys.indexOf(cat)), color = W.act) }) {
-            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k }, text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
+            // the tab's press is a rounded tile, not the bare rectangle a Material tab ripples in
+            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k }, Modifier.padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)), text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
         }
     }
     val grid = @Composable {
@@ -155,8 +159,8 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                     if (p.nuts > 0) { Icon(ICONS.getValue("nuts"), null, Modifier.padding(start = 6.dp).size(16.dp)); Text("${p.nuts}", Modifier.padding(start = 2.dp)) }
                 }
             }
-            !on -> Button(onClick = { store.change { equip[p.slot] = p.id } }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
-            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
+            !on -> Button(onClick = { store.change { equip[p.slot] = p.id }; Sfx.play("equip") }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
+            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null }; Sfx.play("undo") }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
             else -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
                 Text(words.second, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge, color = W.steel)
@@ -190,15 +194,16 @@ private fun lack(s: Data, p: Part) = (p.bolts - s.bolts).coerceAtLeast(0) to (p.
 private fun Tile(store: Store, p: Part, sel: Boolean, orbits: List<Orbit>, modifier: Modifier, onClick: () -> Unit) {
     val s = store.s
     val eq = s.equip[p.slot] == p.id
-    // one panel per part; the selection ring sits on the panel itself
-    Column(modifier.clip(RoundedCornerShape(12.dp)).selectable(sel, role = Role.RadioButton, onClick = onClick).padding(bottom = 6.dp)) {
+    // one panel per part; the selection ring and the press both sit on the panel itself, not on the words under it
+    val press = remember { MutableInteractionSource() }
+    Column(modifier.clip(RoundedCornerShape(12.dp)).selectable(sel, interactionSource = press, indication = null, role = Role.RadioButton, onClick = onClick).padding(bottom = 6.dp)) {
         val owned = p.id in s.owned && !eq
         // a base tile draws its whole room once and reuses the picture until the base, the robot or today's bolts change
         val key = if (p.slot == "base") listOf(p.id, s.equip.toMap(), orbits.map { o -> o.h.id to o.slots.map { it.s } }).hashCode() else 0
         val cache = remember { arrayOfNulls<Any>(2) }
         Box {
             Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(12.dp)).background(W.raised)
-                .background(if (sel) W.selFill else Color.Transparent).border(if (sel) 1.5.dp else 0.dp, if (sel) W.sel else Color.Transparent, RoundedCornerShape(12.dp))) {
+                .background(if (sel) W.selFill else Color.Transparent).border(if (sel) 1.5.dp else 0.dp, if (sel) W.sel else Color.Transparent, RoundedCornerShape(12.dp)).indication(press, ripple())) {
                 if (p.slot != "base") thumb(p)
                 else {
                     val k = key to size

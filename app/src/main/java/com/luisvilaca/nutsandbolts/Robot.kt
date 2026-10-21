@@ -63,7 +63,9 @@ fun clock(run: Boolean = true): State<Long> {
     val ctx = LocalContext.current
     val off = remember { Settings.Global.getFloat(ctx.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
     val t = remember { mutableLongStateOf(0L) }
-    if (!off && run) LaunchedEffect(Unit) { while (true) withFrameMillis { t.longValue = it } }
+    // about 60 to 72 redraws a second: the tablet's 144Hz panel would otherwise paint the whole room 144 times a second,
+    // and nothing in it moves fast enough to need that
+    if (!off && run) LaunchedEffect(Unit) { while (true) withFrameMillis { if (it - t.longValue >= 13) t.longValue = it } }
     return t
 }
 
