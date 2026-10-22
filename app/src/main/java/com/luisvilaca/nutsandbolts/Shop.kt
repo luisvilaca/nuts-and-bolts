@@ -78,8 +78,8 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         Column(m) {
             Detail(store, ui, sel, Modifier)
             if (tried.isNotEmpty()) Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Trying on: ${tried.joinToString()}", Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                TextButton({ trying.clear() }) { Text("Reset", color = W.text) }
+                Text(t("Trying on: {0}", tried.joinToString()), Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                TextButton({ trying.clear() }) { Text(t("Reset"), color = W.text) }
             }
         }
     }
@@ -87,7 +87,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         SecondaryScrollableTabRow(SLOTS.keys.indexOf(cat), containerColor = W.ground, contentColor = W.text, edgePadding = 0.dp, divider = {},
             indicator = { TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(SLOTS.keys.indexOf(cat)), color = W.act) }) {
             // the tab's press is a rounded tile, not the bare rectangle a Material tab ripples in
-            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k }, Modifier.padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)), text = { Text(v, style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
+            SLOTS.forEach { (k, v) -> Tab(cat == k, { cat = k }, Modifier.padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)), text = { Text(t(v), style = MaterialTheme.typography.labelLarge) }, unselectedContentColor = W.dim) }
         }
     }
     val grid = @Composable {
@@ -119,7 +119,8 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
         Header("Shop", store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits, wear)
+        // on a phone the bay is shorter here than on the Lab, so the parts start on the first screen
+        BayPanel(store, Modifier.padding(vertical = 8.dp).fillMaxWidth().height(if (lay.phone) 260.dp else bayHeight(lay)), orbits, wear, inset = 0.dp)
         detail(Modifier.padding(vertical = 12.dp))
         tabs()
         grid()
@@ -131,9 +132,8 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
     val s = store.s
     val has = p.id in s.owned
     val on = s.equip[p.slot] == p.id
-    val need = listOf("bolts" to p.bolts - s.bolts, "nuts" to p.nuts - s.nuts).filter { it.second > 0 }
-        .joinToString(" and ") { (k, n) -> "$n more ${if (n == 1) k.dropLast(1) else k}" }
-    val words = if (p.slot == "base") "Move in" to "Living here" else "Equip" to "Equipped"
+    val need = listOf("bolt" to p.bolts - s.bolts, "nut" to p.nuts - s.nuts).filter { it.second > 0 }
+    val words = if (p.slot == "base") "Move in" else "Equip"
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.titleLarge)
@@ -149,22 +149,20 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
                 if (ok) {
                     store.react("cheer")
                     Sfx.play("buy")
-                    ui.tell("${p.name} is yours") { store.change { unbuy(this, p, before) } }
+                    ui.tell(t("{0} is yours", p.name)) { store.change { unbuy(this, p, before) } }
                 }
             }, enabled = need.isEmpty(), modifier = Modifier.height(44.dp), shape = CircleShape, colors = btn) {
-                Text("Buy")
+                Text(t("Buy"))
                 if (need.isEmpty()) {
                     Text(" · ", color = W.onAct)
                     if (p.bolts > 0) { Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp)); Text("${p.bolts}", Modifier.padding(start = 2.dp)) }
                     if (p.nuts > 0) { Icon(ICONS.getValue("nuts"), null, Modifier.padding(start = 6.dp).size(16.dp)); Text("${p.nuts}", Modifier.padding(start = 2.dp)) }
                 }
             }
-            !on -> Button(onClick = { store.change { equip[p.slot] = p.id }; Sfx.play("equip") }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(words.first) }
-            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null }; Sfx.play("undo") }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Take off", color = W.text) }
-            else -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
-                Text(words.second, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge, color = W.steel)
-            }
+            !on -> Button(onClick = { store.change { equip[p.slot] = p.id }; Sfx.play("equip") }, Modifier.height(44.dp), shape = CircleShape, colors = btn) { Text(t(words)) }
+            p.slot == "acc" -> OutlinedButton(onClick = { store.change { equip["acc"] = null }; Sfx.play("undo") }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Take off"), color = W.text) }
+            // worn: the tile under it already says Equipped (or Living here), so the panel does not say it twice
+            else -> {}
         }
     }
 }
@@ -174,15 +172,15 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
 // reason is in words, not only in a fainter colour
 private fun Price(p: Part, owned: Boolean, short: Pair<Int, Int> = 0 to 0) {
     when {
-        owned -> Text("Owned", style = MaterialTheme.typography.bodyMedium, color = W.dim)
-        p.bolts == 0 && p.nuts == 0 -> Text("Free", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        owned -> Text(t("Owned"), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        p.bolts == 0 && p.nuts == 0 -> Text(t("Free"), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         else -> Column {
             val lack = short.first > 0 || short.second > 0
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p.bolts > 0) Coin("bolts", p.bolts, small = true, short = lack); if (p.nuts > 0) Coin("nuts", p.nuts, small = true, short = lack)
             }
-            if (lack) Text(listOfNotNull(short.first.takeIf { it > 0 }?.let { "$it more ${if (it == 1) "bolt" else "bolts"}" },
-                short.second.takeIf { it > 0 }?.let { "$it more ${if (it == 1) "nut" else "nuts"}" }).joinToString(" · "),
+            if (lack) Text(listOfNotNull(short.first.takeIf { it > 0 }?.let { t("{0} more", plural(it, "bolt")) },
+                short.second.takeIf { it > 0 }?.let { t("{0} more", plural(it, "nut")) }).joinToString(" · "),
                 Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -218,7 +216,7 @@ private fun Tile(store: Store, p: Part, sel: Boolean, orbits: List<Orbit>, modif
                 }
             }
             if (owned) Box(Modifier.align(Alignment.TopEnd).padding(8.dp).size(24.dp).clip(CircleShape).background(W.card).border(1.dp, W.sel, CircleShape)
-                .semantics { contentDescription = "Owned" }, contentAlignment = Alignment.Center) {
+                .semantics { contentDescription = t("Owned") }, contentAlignment = Alignment.Center) {
                 Icon(ICONS.getValue("check"), null, Modifier.size(14.dp), tint = W.steel)
             }
         }
@@ -226,7 +224,7 @@ private fun Tile(store: Store, p: Part, sel: Boolean, orbits: List<Orbit>, modif
         Row(Modifier.padding(top = 4.dp).heightIn(min = 22.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (eq) {
                 Icon(ICONS.getValue("check"), null, Modifier.size(16.dp), tint = W.steel)
-                Text(if (p.slot == "base") "Living here" else "Equipped", style = MaterialTheme.typography.bodyMedium, color = W.steel)
+                Text(t(if (p.slot == "base") "Living here" else "Equipped"), style = MaterialTheme.typography.bodyMedium, color = W.steel)
             } else Price(p, p.id in s.owned, short = lack(s, p))
         }
     }

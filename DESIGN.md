@@ -237,6 +237,10 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 - **Label** (500, 13sp, 0.14em tracking, uppercase, dim): form group labels, the detail pane's LOG, calendar weekday heads, the robot's nameplate (at body-large size in cool steel).
 - **Numeral** (600, 18sp, tabular figures): wallet balances, levels, the card counter (at 14sp), stats, the target stepper, the reminder time.
 
+**Russian** is set in Manrope (bundled, OFL, licenses/), the nearest open geometric face with Cyrillic, at the same weights; Lexend has no Cyrillic and the system fallback dropped the weights (2026-10-22).
+
+**The skin** (Skin.kt) holds every interface colour (W) and the two faces; a second look for the same app is that file written again as its own build flavour.
+
 ### Named Rules
 **The One Face Rule.** Lexend sets everything, including the printed diary template. Contrast comes from weight (400 to 700), size and tracked caps, never from a second family.
 
@@ -244,14 +248,14 @@ The diary page keeps the owner's own materials, separate from the app palette (o
 
 ## Layout
 
-A window is **wide** when it is landscape and at least 600dp wide; otherwise it **stacks**. A window whose short side is under 600dp is a **phone**. The bottom bar sits at the foot of every window at every size; there is no side rail.
+A window is **wide** when it is landscape and at least 600dp wide; otherwise it **stacks**. A window whose short side is under 600dp is a **phone**. The bottom bar sits at the foot of every window, except a phone held sideways, where the same four tabs stand in a 72dp rail at the left so the screens keep their height (2026-10-22, from the owner's phone screenshots).
 
 - **Wide Lab and Shop:** header across the top with 28dp side gutters; the bay takes 46% at left, the side or catalogue 54% at right. On the Lab the side holds today's habit cards, which scroll on their own, and the attribute panel pinned at the bottom right (owner, 2026-10-18).
-- **Stacked Lab:** on a tablet held upright the bay sits under the header, the habits scrolling below it and the attribute panel pinned at the foot; on a phone the page scrolls, attributes under the bay and habits after.
-- **Habits:** no bay. Day / Calendar / History in a sliding segmented control. Wider than 720dp the Day view splits: habit cards left (56%), the picked habit's detail right (44%). The calendar fills the space below its stepper and never scrolls, with a one-line legend under it. Add habit floats over every view and starts a new habit on the day picked last.
+- **Stacked Lab:** on a tablet held upright the bay sits under the header, the habits scrolling below it and the attribute panel pinned at the foot; on a phone the page scrolls, attributes under the bay and habits after. Where the bay stacks above cards it takes their full width (no inset of its own), and on a canvas narrower than the scene the empty wall at its sides is cropped (scene x 60..940) and no band is held back for the nameplate, which sits over the wall above Rivet, so the robot draws as big as the width allows.
+- **Habits:** no bay. Day / Calendar / History in a sliding segmented control. Wider than 720dp the Day view splits: habit cards left (56%), the picked habit's detail right (44%). The calendar fills the space below its stepper and never scrolls, with a one-line legend under it. Add habit floats over Day and History (round, icon only, on a phone held sideways) and starts a new habit on the day picked last; it stays off the calendar, whose last week it covered, and off the empty bench, which has its own Add your first habit.
 - **Diary:** a calendar card that fills the screen. Each written day shows the pen icon in steel, nothing more (owner, 2026-10-18: a mark, not a picture of the page). Any day opens its page from its cell, today included; there is no separate Write today action (owner, 2026-10-18). An open page covers the window beside a 56dp tool rail on the right edge, never leaving bare ground: as wide as the space on a tablet (it moves up and down) and as tall as it on a phone held upright (it moves sideways; owner, 2026-10-21). Two fingers zoom it, up to 4x and out to the whole page centred on the ground, and move it; the bottom bar hides.
 - **Form:** opens over whichever tab asked for it (the Lab, Habits) and returns there on Cancel or Save. Its own bar replaces the header: a back arrow, "New habit" or "Edit habit" in Display, and a Save text action at the right. Cards, one group each. Wider than 720dp, two columns that scroll on their own: Name, Type, Attribute, Schedule and Reminder (a switch and its time, like the daily reminder in Settings) left; Weight, Reward and the actions right, which stay in view while the schedule is edited. On a phone Cancel and Save are pinned in a bar above the keyboard. Every field survives the system ending the app in the background. A habit can ask for up to 12 a day or 7 a week; the selected weekday chips carry a check.
-- **Settings:** one column capped at 720dp: Robot, Sync (Sign in with Google, then the account, its state and Sign out), Backup, Daily reminder, Sounds, Diary, Pen buttons.
+- **Settings:** one column capped at 720dp (on a wide window two columns: Robot, Sync, Backup and Daily reminder left; Sounds, Diary and Pen buttons right): Robot, Sync (Sign in with Google, then the account, its state and Sign out), Backup, Daily reminder, Sounds, Diary, Pen buttons.
 - **Rhythm:** 10dp to 12dp between cards, 16dp inside them; group labels 10dp above their content.
 - **Shop grid:** as many columns as fit at 156dp each (at least two), 12dp gaps.
 
@@ -292,6 +296,9 @@ Every screen is rendered at 1.3x font scale on the tablet and the phone (Screens
 ### Segments
 A pill outlined in edge whose selection, a selection-fill pill with a 1.5dp selection edge, slides between options on a spring (damping 0.8) while the label colours cross-fade. Labels run to two lines. Four options in a column narrower than 420dp fall into a two-by-two grid of filter chips.
 
+### History extras
+History opens with the week in review (a card: THIS WEEK label, the share in Numeral and "12 of 24 bolts in", a gauge, then Best, Needs care and the pages written) and the achievements (a card: a steel check or a lock per achievement, its name, and the part it gives at the right). The week card also heads the Lab's list on Sundays. A day off reads "off" in dim on the calendar, and Habits' day view ends with a dim text action, Take this day off or Back on.
+
 ### Words
 One word for a slot on screen: the bolt. "Slot" and "mark" are code names only. A count reads "4 of 9 bolts in", with ", 1 sheared" for fails, or "9 bolts planned" for a day ahead; Done says "+5 bolts · +1 Battery", Fail "Sheared · −5 bolts · −1 Battery", the menu "Take back the last bolt". A break habit's metadata leads with "Break it".
 
@@ -315,7 +322,7 @@ One card pinned at the bottom right of the Lab, holding all four attributes (on 
 "The bench is empty" in Headline, one dim line ("Each habit becomes a frame on Rivet's bench. Every time you do it, a bolt goes in."), the Add your first habit button, and the starter chips, each led by the icon of the attribute it trains; a chip adds its habit with an Undo.
 
 ### History
-A card per habit: its icon, name and bolts-in rate; a line of bolts, best run and current run; the run bar; and its last twelve weeks. The run bar spans the habit's whole life, one step per day or week since it began, labelled "31 days ago" and "today": the best run in steel at 55% and the current run in uranium glow, both reaching to today. The twelve weeks are a block of day pips (14dp cells, seven to a week, oldest at the left: steel when full, half steel when partly done, coral when sheared, an empty ring when nothing went in, blank when the habit did not run) or, for a weekly habit, twelve week plates.
+A card per habit: its icon, name and bolts-in rate; a line of bolts, best run and current run; the run bar; and its recent days. The run bar spans the habit's whole life, one step per day or week since it began, labelled "31 days ago" and "today": the best run in steel at 55% and the current run in uranium glow, both reaching to today. The recent days are one row of day pips under the run bar, ending at today on the right and as many as the card is wide (14dp cells: steel when full, half steel when partly done, coral when sheared, an empty ring when nothing went in, blank when the habit did not run), or, for a weekly habit, its last twelve week plates. (A twelve-week block drew a lone column of dots in an empty card for a young habit; 2026-10-22.)
 
 ### Habit detail (split Habits)
 The picked habit: its name in Headline with Edit, its metadata, four stats in Numeral over dim captions (bolts-in rate, running now, best run, sheared in coral when any), the run bar, and a LOG card listing every day it was logged, newest first, with that day's bolt marks and a count; a day opens that date.

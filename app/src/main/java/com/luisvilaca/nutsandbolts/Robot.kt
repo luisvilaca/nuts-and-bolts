@@ -44,10 +44,10 @@ class Shape(val roles: List<String>, val d: String, val m: FloatArray? = null, v
 }
 
 class Part(
-    val id: String, val slot: String, val name: String, val no: String,
+    val id: String, val slot: String, val en: String, val no: String,
     val bolts: Int = 0, val nuts: Int = 0, val box: FloatArray? = null, val at: String? = null, val tier: Int = 0,
     val pivots: Map<String, Offset> = emptyMap(), val shapes: List<Shape> = emptyList(), val pal: Map<String, Ink> = emptyMap(),
-)
+) { val name get() = t(en) }
 
 val PART = PARTS.associateBy { it.id }
 val SLOTS = linkedMapOf("head" to "Head", "body" to "Body", "arms" to "Arms", "legs" to "Legs", "acc" to "Accessories", "base" to "Base")

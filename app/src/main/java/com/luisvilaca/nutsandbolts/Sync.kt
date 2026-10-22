@@ -74,16 +74,16 @@ object Sync {
     // null when signed in, or what went wrong
     suspend fun signIn(c: Context): String? = try {
         val client = c.resources.getIdentifier("default_web_client_id", "string", c.packageName).takeIf { it != 0 }?.let(c::getString)
-            ?: return "This build has no Google sign-in set up (see SYNC.md)."
+            ?: return t("This build has no Google sign-in set up (see SYNC.md).")
         val cred = CredentialManager.create(c).getCredential(c, GetCredentialRequest.Builder().addCredentialOption(GetSignInWithGoogleOption.Builder(client).build()).build()).credential
-        if (cred !is CustomCredential || cred.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) "That sign-in is not a Google account."
+        if (cred !is CustomCredential || cred.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) t("That sign-in is not a Google account.")
         else {
             val token = GoogleIdTokenCredential.createFrom(cred.data).idToken
             val u = FirebaseAuth.getInstance().signInWithCredential(GoogleAuthProvider.getCredential(token, null)).done().user!!
             attach(u)
             null
         }
-    } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) { "" } catch (e: Exception) { e.message ?: "Sign-in failed." }
+    } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) { "" } catch (e: Exception) { e.message ?: t("Sign-in failed.") }
 
     // This device keeps everything it has; it only stops following the cloud.
     suspend fun signOut(c: Context) {
@@ -102,7 +102,7 @@ object Sync {
 
     private fun attach(u: FirebaseUser) {
         val s = store ?: return
-        who = u.email ?: u.displayName ?: "your account"
+        who = u.email ?: u.displayName ?: t("your account")
         uid = u.uid
         val d = FirebaseFirestore.getInstance().collection("users").document(u.uid)
         doc = d
@@ -118,7 +118,7 @@ object Sync {
         } else {
             // the first time on this device: an existing cloud copy wins, and what this device had is kept in a backup
             // file in Downloads first (Settings > Restore can bring it back); with no cloud copy yet, this device's goes up
-            state = "Joining…"
+            state = t("Joining…")
             d.get().addOnSuccessListener { snap ->
                 if (doc !== d) return@addOnSuccessListener
                 if (snap.exists()) {
@@ -128,14 +128,14 @@ object Sync {
                 } else push()
                 pagesAt = 0; keep()
                 listen(d, first = true)
-            }.addOnFailureListener { state = "Sync could not start: ${it.message}" }
+            }.addOnFailureListener { state = t("Sync could not start: {0}", it.message) }
         }
     }
 
     private fun listen(d: DocumentReference, first: Boolean) {
         var join = first
         regs = listOf(
-            d.addSnapshotListener(MetadataChanges.INCLUDE) { snap, e -> if (e != null) state = "Sync stopped: ${e.message}" else if (snap != null) arrived(snap) },
+            d.addSnapshotListener(MetadataChanges.INCLUDE) { snap, e -> if (e != null) state = t("Sync stopped: {0}", e.message) else if (snap != null) arrived(snap) },
             d.collection("pages").whereGreaterThan("at", pagesAt).addSnapshotListener { q, e ->
                 if (e != null || q == null) return@addSnapshotListener
                 if (join) {
@@ -163,16 +163,16 @@ object Sync {
     private fun arrived(snap: DocumentSnapshot) {
         val s = store ?: return
         state = when {
-            snap.metadata.hasPendingWrites() -> "Sending…"
-            snap.metadata.isFromCache -> "Offline: changes wait on this device"
-            else -> "Up to date"
+            snap.metadata.hasPendingWrites() -> t("Sending…")
+            snap.metadata.isFromCache -> t("Offline: changes wait on this device")
+            else -> t("Up to date")
         }
         if (snap.metadata.hasPendingWrites() || !snap.exists()) return
         val remote = flatOf(snap.data.orEmpty())
         if (remote == last) return
         runCatching { fromFlat(remote, s.s) }
             .onSuccess { last = remote; keep(); s.replace(it) }
-            .onFailure { state = "The other device has a newer app: update this one to keep syncing" }
+            .onFailure { state = t("The other device has a newer app: update this one to keep syncing") }
     }
 
     // shortcut: a page open in the editor while the other device changes it keeps showing (and later saves) this device's copy; reopen it to see the other
@@ -190,7 +190,7 @@ object Sync {
         val cur = flat(s.s)
         val ch = diff(last, cur, FieldValue.delete())
         if (ch.isEmpty()) return
-        d.set(nest(ch), SetOptions.merge()).addOnFailureListener { state = "Not sent: ${it.message}" }
+        d.set(nest(ch), SetOptions.merge()).addOnFailureListener { state = t("Not sent: {0}", it.message) }
         last = cur
         keep()
     }
@@ -210,10 +210,10 @@ object Sync {
             // a blank page stays in the cloud as an empty one, so a device that asks for pages since a time sees it go
             val b = if (p.strokes.isEmpty()) null else pageBytes(p)
             // shortcut: a Firestore document holds 1 MiB, about 150,000 points of ink; a page past that stays on this device only, split it into parts if that ever happens
-            if (b != null && b.size > 1_000_000) { main.post { state = "The page of $day is too full to sync" }; return@execute }
+            if (b != null && b.size > 1_000_000) { main.post { state = t("The page of {0} is too full to sync", day) }; return@execute }
             ref.set(mapOf("z" to b?.let { Blob.fromBytes(it) }, "at" to at))
                 .addOnSuccessListener { if (day !in waiting && dirty.remove(day.toString())) keep() }
-                .addOnFailureListener { state = "Page not sent: ${it.message}" }
+                .addOnFailureListener { state = t("Page not sent: {0}", it.message) }
         }
     }
 

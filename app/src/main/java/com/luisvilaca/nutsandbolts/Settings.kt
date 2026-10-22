@@ -74,7 +74,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         // every diary page is read for the file, so the work runs off the main thread
         ui.scope.launch {
             val ok = withContext(Dispatchers.IO) { runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(store.backup().toByteArray()) } }.isSuccess }
-            if (ok) { store.change { backedUp = LocalDate.now() }; ui.tell("Backup saved") } else ui.tell("The backup could not be made.")
+            if (ok) { store.change { backedUp = LocalDate.now() }; ui.tell(t("Backup saved")) } else ui.tell(t("The backup could not be made."))
         }
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -82,12 +82,12 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
         ui.scope.launch {
             val text = withContext(Dispatchers.IO) { runCatching { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() } }.getOrNull() }
             val b = text?.let { withContext(Dispatchers.Default) { store.checkBackup(it) } }
-            if (b == null) ui.tell("That file is not a Nuts And Bolts backup.")
+            if (b == null) ui.tell(t("That file is not a Nuts And Bolts backup."))
             else { pending = b; pendingDate = Regex("\"saved\":\"([0-9-]+)\"").find(text)?.groupValues?.get(1) }
         }
     }
     val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (!ok) ui.tell("Notifications are off for Nuts And Bolts, so the reminder cannot show.")
+        if (!ok) ui.tell(t("Notifications are off for Nuts And Bolts, so the reminder cannot show."))
     }
     fun remind(on: Boolean, time: String = s.remind.time) {
         store.change { remind = Remind(on, time) }
@@ -95,72 +95,82 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (lay.wide) 40.dp else 20.dp).padding(bottom = 32.dp)) {
-        Header("Settings", store, ui, lay)
-        Column(Modifier.widthIn(max = 720.dp)) {
+        Header(t("Settings"), store, ui, lay)
+        // wide: the device and account on the left, sounds and the pen on the right, so half the screen is not bare
+        val left = @Composable {
             SectionLabel("Robot")
-            Field(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, "Rivet")
+            Field(name, { name = it.take(14); store.change { this.name = name.trim().ifEmpty { "Rivet" } } }, t("Rivet"))
+
+            SectionLabel("Language")
+            // each language named in itself; System follows the phone (and Android's own per-app language setting)
+            Segments(Lang.CHOICES.map { (k, v) -> k to if (k.isEmpty()) t(v) else v }, s.lang) { v -> store.change { lang = v } }
 
             SectionLabel("Sync")
             SyncRow(ui)
 
             SectionLabel("Backup")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton({ save.launch("nuts-and-bolts-${LocalDate.now()}.json") }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Save a backup", color = W.text) }
-                OutlinedButton({ open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore a backup", color = W.text) }
-                Text(s.backedUp?.let { "Last backup " + it.format(DateTimeFormatter.ofPattern("d MMMM", Locale.UK)) } ?: "Never backed up", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+                OutlinedButton({ save.launch("nuts-and-bolts-${LocalDate.now()}.json") }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Save a backup"), color = W.text) }
+                OutlinedButton({ open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Restore a backup"), color = W.text) }
+                Text(s.backedUp?.let { t("Last backup {0}", fmt(it, "d MMMM")) } ?: t("Never backed up"), style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
-            Text("One file with every habit, bolt, part and diary page. Keep a copy off this device, in Drive for example.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Text(t("One file with every habit, bolt, part and diary page. Keep a copy off this device, in Drive for example."), Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Daily reminder")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(s.remind.on, { remind(it) }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
-                Text(if (s.remind.on) "On at" else "Off", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(t(if (s.remind.on) "On at" else "Off"), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
                 OutlinedButton({ clock = true }, enabled = s.remind.on, border = BorderStroke(1.dp, W.edge)) { Text(s.remind.time, style = Numeral, color = if (s.remind.on) W.text else W.dim) }
             }
-            Text("A notification at this time, only on days with nothing logged yet.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
-
+            Text(t("A notification at this time, only on days with nothing logged yet."), Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        }
+        val right = @Composable {
             SectionLabel("Sounds")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(s.sound, { v -> store.change { sound = v }; Sfx.on = v; Sfx.play("chirp") }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
-                Text("Sound effects", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(t("Sound effects"), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
-            Text("The workshop's own sounds, at the media volume: a bolt driven home, a frame going critical, a sheared bolt, a level gained or lost, a nut, a purchase, a part fitted, a habit added or taken off the bench, and ${s.name} answering a tap.",
+            Text(t("The workshop's own sounds, at the media volume: a bolt driven home, a frame going critical, a sheared bolt, a level gained or lost, a nut, a purchase, a part fitted, a habit added or taken off the bench, and {0} answering a tap.", s.robot),
                 Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Diary")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(s.pen.palm, { v -> store.change { pen.palm = v } }, colors = SwitchDefaults.colors(checkedTrackColor = W.act, checkedThumbColor = W.onAct, uncheckedTrackColor = W.rail, uncheckedBorderColor = W.edge))
-                Text("Palm rejection", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(t("Palm rejection"), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
-            Text("On: while the pen is near the page, or for a contact as broad as a palm, touches do nothing at all, on the page and on its tools, and once the pen has written a finger moves the page instead of writing (the Move button on the page's rail switches it back). Off: touches always count.",
+            Text(t("On: while the pen is near the page, or for a contact as broad as a palm, touches do nothing at all, on the page and on its tools, and once the pen has written a finger moves the page instead of writing (the Move button on the page's rail switches it back). Off: touches always count."),
                 Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 
             SectionLabel("Pen buttons")
             PenButtons(store)
             Spacer(Modifier.height(24.dp))
         }
+        if (lay.wide) Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+            Column(Modifier.weight(1f)) { left() }
+            Column(Modifier.weight(1f)) { right() }
+        } else Column(Modifier.widthIn(max = 720.dp)) { left(); right() }
     }
 
     pending?.let { b ->
-        val when_ = pendingDate?.let { " from " + LocalDate.parse(it).format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)) } ?: ""
-        AlertDialog(onDismissRequest = { pending = null }, title = { Text("Replace everything?") },
-            text = { Text("Everything on this device is replaced with the backup$when_. Habits, robot and diary pages written since then are lost.") },
+        val when_ = pendingDate?.let { t(" from {0}", fmt(LocalDate.parse(it), "d MMMM yyyy")) } ?: ""
+        AlertDialog(onDismissRequest = { pending = null }, title = { Text(t("Replace everything?")) },
+            text = { Text(t("Everything on this device is replaced with the backup{0}. Habits, robot and diary pages written since then are lost.", when_)) },
             confirmButton = { TextButton({
                 pending = null
                 ui.scope.launch {
                     val ok = withContext(Dispatchers.IO) { runCatching { store.restore(b) }.isSuccess }
-                    if (ok) { name = store.s.name; Sync.restored(); ui.tell("Backup restored") } else ui.tell("The backup could not be restored.")
+                    if (ok) { name = store.s.name; Sync.restored(); ui.tell(t("Backup restored")) } else ui.tell(t("The backup could not be restored."))
                 }
-            }) { Text("Replace", color = W.coral) } },
-            dismissButton = { TextButton({ pending = null }) { Text("Keep what is here", color = W.text) } })
+            }) { Text(t("Replace"), color = W.coral) } },
+            dismissButton = { TextButton({ pending = null }) { Text(t("Keep what is here"), color = W.text) } })
     }
     if (clock) {
         val (h, m) = s.remind.time.split(":").map { it.toInt() }
         val st = rememberTimePickerState(h, m, is24Hour = true)
         AlertDialog(onDismissRequest = { clock = false }, text = {
             TimePicker(st, colors = TimePickerDefaults.colors(selectorColor = W.act, timeSelectorSelectedContainerColor = W.raised, clockDialColor = W.rail))
-        }, confirmButton = { TextButton({ remind(true, "%02d:%02d".format(st.hour, st.minute)); clock = false }) { Text("OK", color = W.act) } },
-            dismissButton = { TextButton({ clock = false }) { Text("Cancel", color = W.text) } })
+        }, confirmButton = { TextButton({ remind(true, "%02d:%02d".format(st.hour, st.minute)); clock = false }) { Text(t("OK"), color = W.act) } },
+            dismissButton = { TextButton({ clock = false }) { Text(t("Cancel"), color = W.text) } })
     }
 }
 
@@ -186,14 +196,14 @@ private fun PenButtons(store: Store) {
                 }
             }
         }, contentAlignment = Alignment.Center) {
-        Text(if (lit > 0) "Button ${lit}" else "Press a pen button (hovering over this pad, or anywhere) to see which is which",
+        Text(if (lit > 0) t("Button {0}", lit) else t("Press a pen button (hovering over this pad, or anywhere) to see which is which"),
             Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyMedium, color = if (lit > 0) W.text else W.dim)
     }
     listOf(1 to s.pen.b1, 2 to s.pen.b2).forEach { (b, cur) ->
-        Text("BUTTON $b", Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label.copy(color = if (lit == b) W.text else W.dim))
-        Segments(PEN_ACTS, cur) { v -> store.change { if (b == 1) pen.b1 = v else pen.b2 = v } }
+        Text(t("BUTTON {0}", b), Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label.copy(color = if (lit == b) W.text else W.dim))
+        Segments(PEN_ACTS.map { (k, v) -> k to t(v) }, cur) { v -> store.change { if (b == 1) pen.b1 = v else pen.b2 = v } }
     }
-    Text("A press works while the pen hovers over the page or writes on it. If a button does nothing here, the tablet may keep it for its own shortcut: turn that off in the tablet's pen settings.",
+    Text(t("A press works while the pen hovers over the page or writes on it. If a button does nothing here, the tablet may keep it for its own shortcut: turn that off in the tablet's pen settings."),
         Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 }
 
@@ -203,7 +213,7 @@ private fun SyncRow(ui: Ui) {
     val ctx = LocalContext.current
     var busy by remember { mutableStateOf(false) }
     if (!Sync.ready(ctx)) {
-        Text("Sync is not set up in this build.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        Text(t("Sync is not set up in this build."), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         return
     }
     val who = Sync.who
@@ -211,16 +221,16 @@ private fun SyncRow(ui: Ui) {
         if (who == null) Button({
             busy = true
             ui.scope.launch { Sync.signIn(ctx)?.let { if (it.isNotEmpty()) ui.tell(it) }; busy = false }
-        }, Modifier.height(44.dp), enabled = !busy, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text("Sign in with Google") }
+        }, Modifier.height(44.dp), enabled = !busy, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(t("Sign in with Google")) }
         else {
             Column {
                 Text(who, style = MaterialTheme.typography.bodyLarge)
                 Text(Sync.state, style = MaterialTheme.typography.bodyMedium, color = W.dim)
             }
-            OutlinedButton({ ui.scope.launch { Sync.signOut(ctx) } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text("Sign out", color = W.text) }
+            OutlinedButton({ ui.scope.launch { Sync.signOut(ctx) } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Sign out"), color = W.text) }
         }
     }
-    Text(if (who == null) "Sign in with the same Google account on the tablet and the phone, and both keep the same habits, robot and diary pages. Changes made offline go across once the device is back online."
-        else "Every change goes to the other device as it is made. Signing out keeps everything on this device.",
+    Text(t(if (who == null) "Sign in with the same Google account on the tablet and the phone, and both keep the same habits, robot and diary pages. Changes made offline go across once the device is back online."
+        else "Every change goes to the other device as it is made. Signing out keeps everything on this device."),
         Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
 }

@@ -8,7 +8,7 @@ related_targets: []
 # Android app (Jetpack Compose)
 Scope: the whole native app: Lab, Shop, Habits, Diary, Settings, and the diary page editor. Visitor mode: Operate.
 Audience and job: the owner, on a Xiaomi Pad 7 mostly in landscape, evenings, lights low, Xiaomi Focus Pen in hand; also tablet portrait and a phone in both orientations. Log today's habits in one tap each beside the robot, spend earnings in the shop, plan habits, handwrite a diary page.
-Constraints: Material 3 structure with a bottom bar at every size (never a side rail; hidden under an open diary page), system Back, edge-to-edge insets, snackbars with Undo, Material date and time pickers; 44dp controls (52dp lead Done); sp type; works offline. Brief pins: clean and futuristic, robot theme, animated WALL-E/EVE-style robot from the owner's sketch, robot-themed icons, space or nuclear backgrounds, a true diary template on the owner's papers and inks with the atom emblem, no grid paper, no plants.
+Constraints: Material 3 structure with a bottom bar (a side rail only on a phone held sideways; hidden under an open diary page), system Back, edge-to-edge insets, snackbars with Undo, Material date and time pickers; 44dp controls (52dp lead Done); sp type; works offline. Brief pins: clean and futuristic, robot theme, animated WALL-E/EVE-style robot from the owner's sketch, robot-themed icons, space or nuclear backgrounds, a true diary template on the owner's papers and inks with the atom emblem, no grid paper, no plants.
 Build path: code-led (Operate surface, no image generation).
 Unresolved: robot name "Rivet" is a renamable placeholder.
 ## Direction contract
