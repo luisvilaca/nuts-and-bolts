@@ -79,18 +79,20 @@ private val MOOD = listOf("Low power", "Running steady", "Fully charged")
 fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     val t = LocalDate.now()
-    val run = s.habits.filter { active(it, t) }
+    val run = s.habits.filter { active(it, t, s.off) }
     val orbits = derived(store) { orbitsFor(s, t) }
     val habits = @Composable {
+        // Sunday, the week's last day: the week in review heads the list
+        if (t.dayOfWeek == java.time.DayOfWeek.SUNDAY && s.habits.isNotEmpty()) WeekCard(s, t)
         when {
             s.habits.isEmpty() -> Empty(store, ui)
-            run.isEmpty() -> Note("No habits run today.")
+            run.isEmpty() -> Note(t("No habits run today."))
             else -> run.forEach { HabitRow(store, ui, it, t, cue = false) }
         }
     }
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
-        Header("Lab", store, ui, lay, Modifier.padding(horizontal = 28.dp))
+        Header(t("Lab"), store, ui, lay, Modifier.padding(horizontal = 28.dp))
         Row(Modifier.fillMaxSize()) {
             BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits)
             Column(Modifier.weight(0.54f).fillMaxHeight().padding(start = 8.dp, end = 28.dp, top = 12.dp, bottom = 12.dp)) {
@@ -106,34 +108,36 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
         }
     } else if (!lay.phone) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
         // a tablet held upright has the height to keep the attributes pinned too
-        Header("Lab", store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
+        Header(t("Lab"), store, ui, lay)
+        BayPanel(store, Modifier.padding(vertical = 8.dp).fillMaxWidth().height(bayHeight(lay)), orbits, inset = 0.dp)
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
         Attributes(s, Modifier.padding(top = 12.dp))
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Lab", store, ui, lay)
-        BayPanel(store, Modifier.fillMaxWidth().height(bayHeight(lay)), orbits)
+        Header(t("Lab"), store, ui, lay)
+        BayPanel(store, Modifier.padding(vertical = 8.dp).fillMaxWidth().height(bayHeight(lay)), orbits, inset = 0.dp)
         Attributes(s, Modifier.padding(vertical = 8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { habits() }
     }
 }
 
 // The bay is the same picture on the Lab and Shop: same height, same framing, the nameplate in its top corner.
-fun bayHeight(lay: Lay) = if (lay.phone) 400.dp else 600.dp
+fun bayHeight(lay: Lay) = if (lay.phone) 360.dp else 600.dp
 
 @Composable
-fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip) {
+// inset: the bay's own margin; 0 where it stacks above cards, so its edges line up with theirs
+fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<String, String?> = store.s.equip, inset: Dp = 12.dp) {
     val s = store.s
     var shown by remember { mutableStateOf(true) }
     val tm = clock(shown)
-    Box(modifier.padding(12.dp).clip(RoundedCornerShape(20.dp)).onGloballyPositioned { shown = it.boundsInWindow().height > 0f }) {
-        Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.name}, ${MOOD[mood(s)].lowercase()}" }) {
-            room(s, tm.value, store.react, orbits, store.fresh, equip, band = 72.dp.toPx())
+    Box(modifier.padding(inset).clip(RoundedCornerShape(20.dp)).onGloballyPositioned { shown = it.boundsInWindow().height > 0f }) {
+        Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.robot}, ${t(MOOD[mood(s)]).lowercase()}" }) {
+            // the nameplate sits over the empty wall above Rivet, so no band is held back for it
+            room(s, tm.value, store.react, orbits, store.fresh, equip)
         }
         // the robot's wave is the feedback; a press shade would only box the nameplate
         Column(Modifier.padding(20.dp).clickable(remember { MutableInteractionSource() }, null, onClickLabel = "wave") { store.react("wave"); Sfx.play("chirp") }) {
-            Text(s.name.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
-            Text(MOOD[mood(s)], style = MaterialTheme.typography.bodyMedium, color = W.dim)
+            Text(s.robot.uppercase(), style = Label.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize, color = W.steel))
+            Text(t(MOOD[mood(s)]), style = MaterialTheme.typography.bodyMedium, color = W.dim)
         }
     }
 }
@@ -160,7 +164,7 @@ fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modi
 
 private fun say(s: Data, st: Attr): String {
     val p = s.stats.getValue(st); val l = level(p)
-    return "${st.title}, ${st.gloss}, level $l of 10" + if (l < 10) ", ${(levelShare(p) * 100).toInt()} percent to level ${l + 1}" else ""
+    return t("{0}, {1}, level {2} of 10", st.title, st.gloss, l) + if (l < 10) t(", {0} percent to level {1}", (levelShare(p) * 100).toInt(), l + 1) else ""
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -211,7 +215,7 @@ private fun AttrLine(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().heightIn(m
     Text(st.title, Modifier.padding(start = 8.dp).width(86.dp * k), style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp), color = W.text, maxLines = 1, softWrap = false)
     Text(st.gloss.replaceFirstChar { it.uppercase() }, Modifier.width(56.dp * k), style = MaterialTheme.typography.labelMedium, color = W.dim, maxLines = 1, softWrap = false)
     Gauge(levelShare(p), Modifier.weight(1f).padding(horizontal = 8.dp), 5.dp)
-    Text("LV $l", style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text, maxLines = 1, softWrap = false)
+    Text(t("LV {0}", l), style = Numeral.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize), color = W.text, maxLines = 1, softWrap = false)
 }
 
 // A bar charged with the reactor's light: a green-to-steel fill on an edge track, a soft halo round the fill and a
@@ -240,20 +244,20 @@ fun newId() = "h" + System.currentTimeMillis().toString(36) + (0..999).random()
 
 @Composable
 fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
-    Text("The bench is empty", style = MaterialTheme.typography.headlineSmall)
-    Text("Each habit becomes a frame on ${store.s.name}'s bench. Every time you do it, a bolt goes in.",
+    Text(t("The bench is empty"), style = MaterialTheme.typography.headlineSmall)
+    Text(t("Each habit becomes a frame on {0}'s bench. Every time you do it, a bolt goes in.", store.s.robot),
         Modifier.padding(top = 8.dp, bottom = 16.dp), style = MaterialTheme.typography.bodyLarge, color = W.dim)
     Button(onClick = { ui.openForm("") }, Modifier.height(44.dp), shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct)) {
-        Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text("Add your first habit", Modifier.padding(start = 8.dp))
+        Icon(ICONS.getValue("plus"), null, Modifier.size(20.dp)); Text(t("Add your first habit"), Modifier.padding(start = 8.dp))
     }
     FlowRow(Modifier.padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SUGGEST.forEach { h ->
             SuggestionChip(onClick = {
                 val id = newId()
-                store.change { addSuggested(this, h, id, LocalDate.now()) }
+                store.change { addSuggested(this, Habit("", t(h.name), h.kind, h.per, h.target, h.stat, h.weight), id, LocalDate.now()) }
                 Sfx.play("add")
-                ui.tell("${h.name} added") { store.change { removeHabit(this, habits.first { it.id == id }) } }
-            }, label = { Text("${h.name} · ${h.target} a ${h.per.id}") }, Modifier.height(40.dp),
+                ui.tell(t("{0} added", t(h.name))) { store.change { removeHabit(this, habits.first { it.id == id }) } }
+            }, label = { Text("${t(h.name)} · ${often(h.target, h.per)}") }, Modifier.height(40.dp),
                 icon = { Icon(ICONS.getValue(h.stat.id), null, Modifier.size(18.dp), tint = W.steel) },
                 border = SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
                 colors = SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))

@@ -87,6 +87,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import androidx.glance.appwidget.updateAll
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
@@ -104,7 +106,7 @@ class Ui(val scope: CoroutineScope) {
 
     fun tell(msg: String, undo: (() -> Unit)? = null) = scope.launch {
         snack.currentSnackbarData?.dismiss()
-        if (snack.showSnackbar(msg, if (undo != null) "Undo" else null, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) { Sfx.play("undo"); undo?.invoke() }
+        if (snack.showSnackbar(msg, if (undo != null) t("Undo") else null, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) { Sfx.play("undo"); undo?.invoke() }
     }
 
     companion object {
@@ -134,11 +136,24 @@ fun App(store: Store, go: MutableState<String?> = remember { mutableStateOf(null
         snapshotFlow { store.s.let { s -> s.remind.on to s.remind.time to s.habits.map { listOf(it.id, it.remind, it.start, it.end, it.days) } } }
             .collect { Reminder.scheduleAll(ctx, store.s) }
     }
+    // an achievement reached gives its part at once, with the news
+    LaunchedEffect(store) {
+        snapshotFlow { store.tick }.collect {
+            newFeats(store.s, LocalDate.now()).forEach { f ->
+                store.change { give(this, f) }
+                Sfx.play("level")
+                ui.tell(t("Achievement: {0}. {1} is yours.", t(f.en), PART.getValue(f.part).name))
+            }
+        }
+    }
+    // the home-screen widget follows every change, a second after the last of a burst
+    LaunchedEffect(store) { snapshotFlow { store.tick }.collectLatest { kotlinx.coroutines.delay(1000); HabitWidget().updateAll(ctx) } }
     LaunchedEffect(go.value) {
         go.value?.let { g -> ui.tab = Tab.entries.firstOrNull { it.name.equals(g, ignoreCase = true) } ?: Tab.Lab; ui.date = LocalDate.now(); ui.page = null; ui.edit = null; ui.settings = false; go.value = null }
     }
     BoxWithConstraints(Modifier.fillMaxSize().background(W.ground)) {
         val lay = Lay(maxWidth > maxHeight && maxWidth >= 600.dp, minOf(maxWidth, maxHeight) < 600.dp)
+        val rail = lay.wide && lay.phone
         // system Back: close what is open, then return to the Lab, then leave
         BackHandler(enabled = ui.tab != Tab.Lab && !ui.settings && ui.edit == null && ui.page == null) { ui.tab = Tab.Lab }
         Scaffold(
@@ -147,23 +162,28 @@ fun App(store: Store, go: MutableState<String?> = remember { mutableStateOf(null
             // the attribute row it would otherwise cover just as a Done changes it
             snackbarHost = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = if (lay.wide) Alignment.BottomEnd else Alignment.BottomCenter) {
-                    SnackbarHost(ui.snack, if (!lay.wide) Modifier else Modifier.widthIn(max = 480.dp).padding(end = 16.dp, bottom = if (ui.tab == Tab.Lab && ui.edit == null && !ui.settings) 104.dp else 0.dp)) {
+                    // on Habits it rises above the Add habit button, which it would otherwise cover
+                    val over = ui.edit == null && !ui.settings
+                    val lift = if (over && ui.tab == Tab.Habits) 76.dp else if (over && ui.tab == Tab.Lab && lay.wide) 104.dp else 0.dp
+                    SnackbarHost(ui.snack, (if (!lay.wide) Modifier else Modifier.widthIn(max = 480.dp).padding(end = 16.dp)).padding(bottom = lift)) {
                         Snackbar(it, containerColor = W.raised, contentColor = W.text, actionColor = W.act)
                     }
                 }
             },
-            // the owner wants the tabs at the bottom at every size, except under an open diary page, which needs the height
-            bottomBar = { if (ui.page == null) BottomBar(ui) },
+            // the tabs sit at the bottom, except under an open diary page, which needs the height, and on a phone held
+            // sideways, where a bar would leave the screens a sliver: there they stand in a rail at the left
+            bottomBar = { if (ui.page == null && !rail) BottomBar(ui) },
         ) { pad ->
-            Box(Modifier.fillMaxSize().padding(pad)) {
-                when {
+            Row(Modifier.fillMaxSize().padding(pad)) {
+                if (rail && ui.page == null) SideRail(ui)
+                Box(Modifier.weight(1f).fillMaxHeight()) { when {
                     ui.settings -> SettingsScreen(store, ui, lay)
                     ui.edit != null -> { BackHandler { ui.edit = null }; HabitForm(store, ui, lay, store.s.habits.find { it.id == ui.edit }) }
                     ui.tab == Tab.Lab -> LabScreen(store, ui, lay)
                     ui.tab == Tab.Shop -> ShopScreen(store, ui, lay)
                     ui.tab == Tab.Habits -> HabitsScreen(store, ui, lay)
                     else -> DiaryScreen(store, ui, lay)
-                }
+                } }
             }
         }
     }
@@ -175,25 +195,34 @@ private fun go(ui: Ui, tab: Tab) { ui.tab = tab; ui.settings = false; ui.edit = 
 private fun BottomBar(ui: Ui) {
     // a compact bar: 60dp of tabs above the system's own navigation area
     Row(Modifier.fillMaxWidth().background(W.rail).navigationBarsPadding().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
-        Tab.entries.forEach { k ->
-            val on = ui.tab == k && !ui.settings
-            // the whole column takes the tap, but the press shows only inside the pill, never as a box round the tab
-            val press = remember { MutableInteractionSource() }
-            Column(Modifier.weight(1f).fillMaxHeight().selectable(on, interactionSource = press, indication = null, role = Role.Tab) { if (ui.tab != k) Sfx.play("tab"); go(ui, k) },
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent).indication(press, ripple()), contentAlignment = Alignment.Center) {
-                    Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
-                }
-                Text(k.label, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
-            }
+        Tab.entries.forEach { k -> TabItem(ui, k, Modifier.weight(1f).fillMaxHeight()) }
+    }
+}
+
+// The same four tabs standing in a 72dp rail down the left edge (a phone held sideways).
+@Composable
+private fun SideRail(ui: Ui) {
+    Column(Modifier.fillMaxHeight().width(72.dp).background(W.rail), verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+        Tab.entries.forEach { k -> TabItem(ui, k, Modifier.fillMaxWidth().height(60.dp)) }
+    }
+}
+
+@Composable
+private fun TabItem(ui: Ui, k: Tab, modifier: Modifier) {
+    val on = ui.tab == k && !ui.settings
+    // the whole column takes the tap, but the press shows only inside the pill, never as a box round the tab
+    val press = remember { MutableInteractionSource() }
+    Column(modifier.selectable(on, interactionSource = press, indication = null, role = Role.Tab) { if (ui.tab != k) Sfx.play("tab"); go(ui, k) },
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent).indication(press, ripple()), contentAlignment = Alignment.Center) {
+            Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
         }
+        Text(t(k.label), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
     }
 }
 
 // ---------- shared pieces ----------
 
-val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK)
-fun plural(n: Int, w: String) = "$n $w${if (n == 1) "" else "s"}"
 
 @Composable
 // A screen's title alone (no subtitle, owner 2026-10-18), the wallet and Settings.
@@ -201,7 +230,7 @@ fun Header(title: String, store: Store, ui: Ui, lay: Lay, modifier: Modifier = M
     Row(modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Wallet(store.s)
-        IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), "Settings", tint = if (ui.settings) W.act else W.dim) }
+        IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), t("Settings"), tint = if (ui.settings) W.act else W.dim) }
     }
 }
 
@@ -225,7 +254,7 @@ fun Coin(k: String, n: Int, small: Boolean = false, short: Boolean = false) = Ro
 }
 
 @Composable
-fun SectionLabel(text: String, modifier: Modifier = Modifier) = Text(text.uppercase(), modifier.padding(top = 28.dp, bottom = 10.dp), style = Label)
+fun SectionLabel(text: String, modifier: Modifier = Modifier) = Text(t(text).uppercase(), modifier.padding(top = 28.dp, bottom = 10.dp), style = Label)
 
 private val BTN = mapOf(Kind.Build to listOf("Done", "Skip", "Fail"), Kind.Break to listOf("Resisted", "Skip", "Gave in"))
 
@@ -244,24 +273,23 @@ fun log(store: Store, ui: Ui, h: Habit, d: LocalDate, kind: Outcome) {
     when (kind) { Outcome.Done -> { store.fresh = h.id to now(); store.react("cheer") }; Outcome.Fail -> store.react("sad"); else -> {} }
     // crossing a level is the news; the points come second
     ui.tell(when {
-        after > before -> "Level up! ${st.title} is now ${st.stages[after - 1]}, level $after" + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
-        after < before -> "${st.title} fell back to ${st.stages[after - 1]}, level $after. Lost ${plural(-k.b, "bolt")}."
-        kind == Outcome.Done -> "+${plural(k.b, "bolt")} · +${k.p} ${st.title}" + if (k.n > 0) " · +1 nut for the streak" else ""
-        kind == Outcome.Fail -> "Sheared · −${plural(-k.b, "bolt")} · −${-k.p} ${st.title}"
-        else -> "Skipped. Nothing gained, nothing lost."
+        after > before -> t("Level up! {0} is now {1}, level {2}", st.title, st.stages[after - 1], after) + if (k.l > 0) ", +${plural(LEVEL_NUTS * k.l, "nut")}" else ""
+        after < before -> t("{0} fell back to {1}, level {2}. Lost {3}.", st.title, st.stages[after - 1], after, plural(-k.b, "bolt"))
+        kind == Outcome.Done -> "+${plural(k.b, "bolt")} · +${k.p} ${st.title}" + if (k.n > 0) t(" · +1 nut for the streak") else ""
+        kind == Outcome.Fail -> t("Sheared") + " · −${plural(-k.b, "bolt")} · −${-k.p} ${st.title}"
+        else -> t("Skipped. Nothing gained, nothing lost.")
     }) { store.change { undo(this, h, d) } }
 }
 
 fun meta(s: Data, h: Habit, d: LocalDate): String {
     val st = streak(s, h, d)
     return listOfNotNull(
-        if (h.kind == Kind.Break) "Break it" else null, "${h.target} a ${h.per.id}", h.stat.title,
+        if (h.kind == Kind.Break) t("Break it") else null, often(h.target, h.per), h.stat.title,
         h.days?.let { ds -> ds.sorted().joinToString(" ") { DOW[it] } },
-        h.end?.let { "until ${it.format(DateTimeFormatter.ofPattern("d MMM", Locale.UK))}" },
-        if (st > 1) "$st ${h.per.id}s running" else null,
+        h.end?.let { t("until {0}", fmt(it, "d MMM")) },
+        if (st > 1) t("{0} running", plural(st, h.per.id)) else null,
     ).joinToString(" · ")
 }
-val DOW = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 // One habit as a card, read left to right: name and meta, the counter over its tracker, one clear Done, and a menu for
 // the rest (Skip, Fail, take back, Edit, Delete), which a long press on Done also opens. A period with every bolt in
@@ -280,30 +308,36 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
     val mine = !s.marks[d]?.get(h.id).isNullOrEmpty() // a mark made on this day, which can be taken back here
     var menu by remember { mutableStateOf<String?>(null) } // which anchor the menu opened from: "more" or "done"
     var deleting by remember { mutableStateOf(false) }
+    var noting by remember { mutableStateOf(false) }
     val items = @Composable {
         val item = @Composable { text: String, icon: String, tint: Color, on: Boolean, go: () -> Unit ->
             DropdownMenuItem({ Text(text, color = if (on) tint else W.dim.copy(alpha = 0.6f)) }, { menu = null; go() }, enabled = on,
                 leadingIcon = { Icon(ICONS.getValue(icon), null, Modifier.size(20.dp), tint = if (on) tint else W.dim.copy(alpha = 0.6f)) })
         }
-        item(label[1], "minus", W.text, !full) { log(store, ui, h, d, Outcome.Skip) }
-        item(label[2], "fail", W.coral, !full) { log(store, ui, h, d, Outcome.Fail) }
-        item("Take back the last bolt", "undo", W.text, mine) {
+        item(t(label[1]), "minus", W.text, !full) { log(store, ui, h, d, Outcome.Skip) }
+        item(t(label[2]), "fail", W.coral, !full) { log(store, ui, h, d, Outcome.Fail) }
+        item(t("Take back the last bolt"), "undo", W.text, mine) {
             var m: Mark? = null
             store.change { m = undo(this, h, d) }
-            m?.let { Sfx.play("undo"); ui.tell("Bolt taken back") }
+            m?.let { Sfx.play("undo"); ui.tell(t("Bolt taken back")) }
         }
+        item(t("Note on the last bolt"), "diary", W.text, mine) { noting = true }
         HorizontalDivider(color = W.line)
-        item("Edit habit", "diary", W.text, true) { ui.openForm(h.id) }
-        item("Delete habit", "trash", W.coral, true) { deleting = true }
+        item(t("Edit habit"), "diary", W.text, true) { ui.openForm(h.id) }
+        item(t("Delete habit"), "trash", W.coral, true) { deleting = true }
+    }
+    val said = Modifier.semantics(mergeDescendants = true) {
+        contentDescription = boltsIn(Progress(sl.count { it.s == Outcome.Done }, sl.count { it.s == Outcome.Fail }, h.target), false) + t(", {0} of {1} logged", logged, h.target)
+    }
+    val count = @Composable { m: Modifier ->
+        Row(m, verticalAlignment = Alignment.CenterVertically) {
+            Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp), tint = W.steel)
+            Text("$logged / ${h.target}", Modifier.padding(start = 6.dp), style = Numeral, color = W.text)
+        }
     }
     val counter = @Composable { m: Modifier ->
-        Column(m.semantics(mergeDescendants = true) {
-            contentDescription = boltsIn(Progress(sl.count { it.s == Outcome.Done }, sl.count { it.s == Outcome.Fail }, h.target), false) + ", $logged of ${h.target} logged"
-        }) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(ICONS.getValue("bolts"), null, Modifier.size(16.dp), tint = W.steel)
-                Text("$logged / ${h.target}", Modifier.padding(start = 6.dp), style = Numeral, color = W.text)
-            }
+        Column(m.then(said)) {
+            count(Modifier)
             Tracker(sl, Modifier.fillMaxWidth().padding(top = 6.dp).height(8.dp))
         }
     }
@@ -318,7 +352,7 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                     Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.steel else W.edge, CircleShape).longPress { menu = "done" }
                         .semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         if (complete) Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
-                        Text(if (!complete) "Closed" else if (h.kind == Kind.Break) "Held" else "All in", Modifier.padding(start = if (complete) 6.dp else 0.dp),
+                        Text(t(if (!complete) "Closed" else if (h.kind == Kind.Break) "Held" else "All in"), Modifier.padding(start = if (complete) 6.dp else 0.dp),
                             style = MaterialTheme.typography.labelLarge, color = if (complete) W.steel else W.dim)
                     }
                 } else {
@@ -327,20 +361,20 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
                     val k by animateFloatAsState(if (down) 0.96f else 1f, if (still) snap() else tween(150), label = "press")
                     Button(onClick = { log(store, ui, h, d, Outcome.Done) }, enabled = !full, modifier = Modifier.matchParentSize().graphicsLayer { scaleX = k; scaleY = k }.longPress { menu = "done" },
                         shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim), interactionSource = press) {
-                        Text(if (ahead) "Not yet" else label[0])
+                        Text(t(if (ahead) "Not yet" else label[0]))
                     }
                 }
                 DropdownMenu(menu == "done", { menu = null }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) { items() }
             } }
             Box {
                 OutlinedIconButton(onClick = { menu = "more" }, modifier = Modifier.size(44.dp), border = BorderStroke(1.dp, W.edge),
-                    colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), "More for ${h.name}") }
+                    colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = W.steel)) { Icon(ICONS.getValue("more"), t("More for {0}", h.name)) }
                 DropdownMenu(menu == "more", { menu = null }, containerColor = W.raised, shape = RoundedCornerShape(12.dp)) { items() }
             }
         }
     }
     // no press shade over the words: the form opening, or the card taking the selection edge, is the answer to the tap
-    val pick = Modifier.clickable(remember { MutableInteractionSource() }, null, onClickLabel = if (select != null) "show details" else "edit") { if (select != null) select() else ui.openForm(h.id) }
+    val pick = Modifier.clickable(remember { MutableInteractionSource() }, null, onClickLabel = t(if (select != null) "show details" else "edit")) { if (select != null) select() else ui.openForm(h.id) }
     Card(Modifier.fillMaxWidth(), selected = selected, accent = if (complete) W.glow else null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).then(pick)) {
@@ -353,31 +387,42 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
             if (!stacked) {
                 counter(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).width(120.dp))
                 actions(Modifier)
-            }
+            } else count(Modifier.padding(start = 12.dp).then(said)) // stacked: the count sits beside the name, saving a line
         }
         if (stacked) {
-            counter(Modifier.fillMaxWidth().padding(top = 12.dp))
+            Tracker(sl, Modifier.fillMaxWidth().padding(top = 10.dp).height(8.dp))
             actions(Modifier.fillMaxWidth().padding(top = 12.dp))
         }
     }
     if (deleting) ConfirmDeleteHabit(store, ui, h) { deleting = false }
+    if (noting) s.marks[d]?.get(h.id)?.lastOrNull()?.let { m -> NoteDialog(m.note.orEmpty(), { noting = false }) { v -> store.change { m.note = v.trim().ifEmpty { null } } } }
+}
+
+// A few words on a bolt ("8 glasses", "5 km"), shown in the habit's log. An empty note takes the note off.
+@Composable
+fun NoteDialog(start: String, close: () -> Unit, save: (String) -> Unit) {
+    var v by remember { mutableStateOf(start) }
+    AlertDialog(onDismissRequest = close, title = { Text(t("Note on the last bolt")) },
+        text = { Field(v, { v = it.take(60) }, t("8 glasses, 5 km…")) },
+        confirmButton = { TextButton({ save(v); close() }) { Text(t("Save"), color = W.act) } },
+        dismissButton = { TextButton(close) { Text(t("Cancel"), color = W.text) } })
 }
 
 // Deleting a habit, wherever it is asked for: a confirmation, then the habit comes off with an Undo that puts it back
 // where it was. Marks are kept by date and habit id, so they come back with it untouched.
 @Composable
 fun ConfirmDeleteHabit(store: Store, ui: Ui, h: Habit, done: (Boolean) -> Unit) = AlertDialog(onDismissRequest = { done(false) },
-    title = { Text("Delete “${h.name}”?") }, text = { Text("Its frame comes off the bench. What it already earned stays.") },
+    title = { Text(t("Delete “{0}”?", h.name)) }, text = { Text(t("Its frame comes off the bench. What it already earned stays.")) },
     confirmButton = {
         TextButton({
             var at = -1
             store.change { at = removeHabit(this, h) }
             Sfx.play("delete")
-            ui.tell("“${h.name}” deleted") { store.change { restoreHabit(this, h, at) } }
+            ui.tell(t("“{0}” deleted", h.name)) { store.change { restoreHabit(this, h, at) } }
             done(true)
-        }) { Text("Delete", color = W.coral) }
+        }) { Text(t("Delete"), color = W.coral) }
     },
-    dismissButton = { TextButton({ done(false) }) { Text("Keep it", color = W.text) } })
+    dismissButton = { TextButton({ done(false) }) { Text(t("Keep it"), color = W.text) } })
 
 // A long press, seen before the control's own click, so it opens a menu without also pressing the button.
 fun Modifier.longPress(go: () -> Unit) = pointerInput(go) {

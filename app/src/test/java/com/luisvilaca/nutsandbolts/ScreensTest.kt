@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -53,7 +55,7 @@ class ScreensTest {
         val st = Store.get(ctx)
         val t = LocalDate.now()
         st.change {
-            habits.clear(); marks.clear(); diary.clear()
+            habits.clear(); marks.clear(); diary.clear(); off.clear(); won.clear(); lang = "" // nothing left from an earlier test
             bolts = 0; nuts = 0; stats.keys.forEach { stats[it] = 30 }
             if (empty) return@change
             val water = Habit("w", "Drink water", per = Per.Day, target = 3, stat = Attr.Battery, weight = Heft.Light, start = t.minusDays(30))
@@ -85,20 +87,21 @@ class ScreensTest {
     }
 
     // today's cell in the diary calendar opens today's page
-    private fun openToday() { rule.onNodeWithContentDescription(LocalDate.now().format(dayFmt), substring = true).performClick(); rule.waitForIdle() }
+    private fun openToday() { rule.onNodeWithContentDescription(fmt(LocalDate.now(), "EEEE d MMMM"), substring = true).performClick(); rule.waitForIdle() }
 
     private fun tap(text: String) { rule.onAllNodesWithText(text, useUnmergedTree = true)[0].performClick(); rule.waitForIdle() }
 
     // font: the system font scale to render at; 1.3 checks large text clips nothing
-    private fun tour(prefix: String, font: Float = 1f) {
+    private fun tour(prefix: String, font: Float = 1f, lang: String = "") {
         val st = seed()
+        st.change { this.lang = lang }
         rule.setContent { NbTheme { CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, font)) { App(st) } } }
         shot("$prefix-today")
-        tap("Shop"); shot("$prefix-shop")
-        tap("Habits"); shot("$prefix-habits")
-        tap("Calendar"); shot("$prefix-habits-cal"); tap("History"); shot("$prefix-habits-hist"); tap("Day")
-        tap("Add habit"); shot("$prefix-form")
-        tap("Cancel"); tap("Diary")
+        tap(t("Shop")); shot("$prefix-shop")
+        tap(t("Habits")); shot("$prefix-habits")
+        tap(t("Calendar")); shot("$prefix-habits-cal"); tap(t("History")); shot("$prefix-habits-hist"); tap(t("Day"))
+        rule.onAllNodes(hasText(t("Add habit")) or hasContentDescription(t("Add habit")), useUnmergedTree = true)[0].performClick(); rule.waitForIdle(); shot("$prefix-form")
+        tap(t("Cancel")); tap(t("Diary"))
         shot("$prefix-diary")
         openToday(); shot("$prefix-page")
     }
@@ -109,6 +112,10 @@ class ScreensTest {
     @Test @Config(qualifiers = "w891dp-h411dp-land-hdpi") fun phoneLandscape() = tour("phone-landscape")
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tabletLargeText() = tour("large-tablet", 1.3f)
     @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun phoneLargeText() = tour("large-phone", 1.3f)
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun phoneRussian() = tour("ru-phone", lang = "ru")
+    @Test @Config(qualifiers = "w891dp-h411dp-land-hdpi") fun phoneLandscapeRussian() = tour("ru-phone-landscape", lang = "ru")
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tabletPortuguese() = tour("pt-tablet", lang = "pt")
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun phonePortugueseLargeText() = tour("pt-large-phone", 1.3f, "pt")
 
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun emptyAndSettings() {
         val st = seed(empty = true)

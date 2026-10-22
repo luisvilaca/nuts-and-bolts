@@ -30,9 +30,9 @@ class Reminder : BroadcastReceiver() {
         val t = LocalDate.now()
         val h = i.data?.lastPathSegment?.let { id -> s.habits.find { it.id == id } }
         when (i.action) {
-            FIRE -> if (s.remind.on && s.marks[t].isNullOrEmpty() && t !in s.diary) notify(c, 1, DAY, "${s.name} is waiting", "Nothing logged today yet.")
-            HABIT -> if (h?.remind != null && active(h, t) && !logged(s, h, t)) notifyHabit(c, s, h, t)
-            DONE -> if (h != null && active(h, t)) {
+            FIRE -> if (s.remind.on && t !in s.off && s.marks[t].isNullOrEmpty() && t !in s.diary) notify(c, 1, DAY, t("{0} is waiting", s.robot), t("Nothing logged today yet."))
+            HABIT -> if (h?.remind != null && active(h, t, s.off) && !logged(s, h, t)) notifyHabit(c, s, h, t)
+            DONE -> if (h != null && active(h, t, s.off)) {
                 store.change { mark(this, h, t, Outcome.Done) }
                 store.flush() // the app may not be running: the mark reaches the disk before this process can be ended
                 c.getSystemService(NotificationManager::class.java).cancel(h.id.hashCode())
@@ -51,11 +51,11 @@ class Reminder : BroadcastReceiver() {
 
         private fun notifyHabit(c: Context, s: Data, h: Habit, t: LocalDate) {
             val p = slots(s, h, t)
-            val word = if (h.kind == Kind.Break) "Resisted" else "Done"
+            val word = t(if (h.kind == Kind.Break) "Resisted" else "Done")
             val done = PendingIntent.getBroadcast(c, 0, Intent(c, Reminder::class.java).setAction(DONE).setData(uri(h)), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             val left = h.target - p.count { it.s != null }
             notify(c, h.id.hashCode(), HABITS, h.name,
-                (if (h.target == 1) "" else "${p.count { it.s == Outcome.Done }} of ${plural(h.target, "bolt")} in · ") + "${plural(left, "bolt")} still open " + (if (h.per == Per.Week) "this week" else "today"),
+                (if (h.target == 1) "" else t("{0} of {1} in", p.count { it.s == Outcome.Done }, plural(h.target, "bolt")) + " · ") + t(if (h.per == Per.Week) "{0} still open this week" else "{0} still open today", plural(left, "bolt")),
                 Notification.Action.Builder(Icon.createWithResource(c, R.drawable.ic_stat), word, done).build())
         }
 
@@ -65,8 +65,8 @@ class Reminder : BroadcastReceiver() {
             val sound = Uri.parse("android.resource://${c.packageName}/${R.raw.sfx_notify}")
             val att = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
             nm.deleteNotificationChannel("reminder") // the first build's channel, with the default sound
-            nm.createNotificationChannel(NotificationChannel(DAY, "Daily reminder", NotificationManager.IMPORTANCE_DEFAULT).apply { setSound(sound, att) })
-            nm.createNotificationChannel(NotificationChannel(HABITS, "Habit reminders", NotificationManager.IMPORTANCE_HIGH).apply { setSound(sound, att) })
+            nm.createNotificationChannel(NotificationChannel(DAY, t("Daily reminder"), NotificationManager.IMPORTANCE_DEFAULT).apply { setSound(sound, att) })
+            nm.createNotificationChannel(NotificationChannel(HABITS, t("Habit reminders"), NotificationManager.IMPORTANCE_HIGH).apply { setSound(sound, att) })
             val open = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java).putExtra(TAB, Tab.Habits.name)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             nm.notify(id, Notification.Builder(c, channel).setSmallIcon(R.drawable.ic_stat).setColor(W.act.toArgb())
@@ -85,7 +85,7 @@ class Reminder : BroadcastReceiver() {
             s.habits.forEach { h ->
                 val pi = PendingIntent.getBroadcast(c, 0, Intent(c, Reminder::class.java).setAction(HABIT).setData(uri(h)), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 am.cancel(pi)
-                h.remind?.let { r -> next(r) { active(h, it) }?.let { alarm(am, it, pi) } }
+                h.remind?.let { r -> next(r) { active(h, it, s.off) }?.let { alarm(am, it, pi) } }
             }
         }
 

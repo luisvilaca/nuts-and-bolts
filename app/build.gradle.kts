@@ -80,6 +80,8 @@ dependencies {
     implementation(libs.credentials)
     implementation(libs.credentials.play)
     implementation(libs.googleid)
+    // the home-screen widget: today's habits with a Done each
+    implementation(libs.glance)
     testImplementation(libs.junit)
     // screen captures on the JVM (ScreensTest), so the layouts can be checked without a device
     testImplementation(libs.robolectric)

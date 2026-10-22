@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.net.URLDecoder
+import java.net.URLEncoder
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import java.util.concurrent.atomic.AtomicReference
@@ -27,10 +29,12 @@ class Store private constructor(private val dir: File) {
     // even a part of a screen the rest of the screen would let Compose skip.
     var tick by mutableIntStateOf(0)
         private set
-    private var data: Data = load()
+    // the language follows the data, so a pick in Settings, a restore or a background reminder all speak it
+    private var data: Data = load().also { Lang.pick = it.lang }
+        set(v) { field = v; Lang.pick = v.lang }
     val s: Data get() { tick; return data }
 
-    fun change(block: Data.() -> Unit) { data.block(); tick++; save(); onChange?.invoke() }
+    fun change(block: Data.() -> Unit) { data.block(); Lang.pick = data.lang; tick++; save(); onChange?.invoke() }
 
     // Sync's hooks: every change made here, and every page written here, goes to the cloud copy as it happens.
     var onChange: (() -> Unit)? = null
@@ -172,13 +176,14 @@ internal fun json(s: Data): JSONObject = JSONObject()
             .put("days", h.days?.let { JSONArray(it.sorted()) }).put("remind", h.remind)
     }))
     .put("marks", JSONObject().apply {
-        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "")) })) } }) }
+        s.marks.forEach { (d, hs) -> put(d.toString(), JSONObject().apply { hs.forEach { (id, ms) -> put(id, JSONArray(ms.map { JSONArray(listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "", it.note ?: "")) })) } }) }
     })
     .put("diary", JSONArray(s.diary.map { it.toString() }))
+    .put("off", JSONArray(s.off.map { it.toString() })).put("won", JSONArray(s.won.toList()))
     .put("papers", JSONArray(s.papers))
     .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2).put("move", s.pen.move))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
-    .put("sound", s.sound)
+    .put("sound", s.sound).put("lang", s.lang)
     .put("backedUp", s.backedUp?.toString())
     .put("adj", walletJson(s.adj))
 
@@ -210,11 +215,13 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
             marks[LocalDate.parse(d)] = hs.keys().asSequence().associateWith { id ->
                 hs.getJSONArray(id).let { a -> (0 until a.length()).map { a.getJSONArray(it).let { x -> Mark(byId<Outcome>(x.getString(0)), x.getInt(1), x.getInt(2), x.getInt(3), x.optInt(4),
                     // marks from before a carry their habit's attribute; adj below absorbs any that moved since
-                    x.optString(5).takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) } ?: habits.find { it.id == id }?.stat) } }.toMutableList() }
+                    x.optString(5).takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) } ?: habits.find { it.id == id }?.stat, x.optString(6).ifEmpty { null }) } }.toMutableList() }
             }.toMutableMap()
         }
     }
     o.optJSONArray("diary")?.let { a -> for (i in 0 until a.length()) diary += LocalDate.parse(a.getString(i)) }
+    o.optJSONArray("off")?.let { a -> for (i in 0 until a.length()) off += LocalDate.parse(a.getString(i)) }
+    o.optJSONArray("won")?.let { a -> for (i in 0 until a.length()) won += a.getString(i) }
     o.optJSONArray("papers")?.let { a -> if (a.length() == 3) for (i in 0..2) papers[i] = a.getString(i) }
     o.optJSONObject("pen")?.let { j ->
         val nib = j.optDouble("nib").toFloat(); val stab = j.optInt("stabPct"); val rub = j.optDouble("rub").toFloat()
@@ -224,6 +231,7 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
     }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     sound = o.optBoolean("sound", true)
+    lang = o.optString("lang", "")
     backedUp = o.date("backedUp")
     adj = o.optJSONObject("adj")?.let(::walletFrom) ?: adjFor(this)
 }
@@ -243,7 +251,7 @@ private fun pageFrom(o: JSONObject) = Page(o.getString("paper"), o.getJSONArray(
 // The state as the cloud keeps it: one field per thing two devices could change apart (a habit, a day's bolts for
 // a habit, a part owned, a slot's part), so their changes merge field by field instead of one overwriting the other.
 // Keys are dotted paths into the document. Left out: the wallet (each device counts it from the marks, see recount),
-// the diary days (they follow the pages), and what belongs to this device (pen, sounds, last backup).
+// the diary days (they follow the pages), and what belongs to this device (pen, sounds, language, last backup).
 internal fun flat(s: Data): Map<String, Any?> = buildMap {
     put("name", s.name); put("papers", s.papers.toList())
     put("remind", mapOf("on" to s.remind.on, "time" to s.remind.time))
@@ -254,7 +262,9 @@ internal fun flat(s: Data): Map<String, Any?> = buildMap {
         put("habits.${h.id}", mapOf("name" to h.name, "kind" to h.kind.id, "per" to h.per.id, "target" to h.target, "stat" to h.stat.id, "weight" to h.weight.id,
             "start" to h.start?.toString(), "end" to h.end?.toString(), "days" to h.days?.sorted(), "remind" to h.remind, "o" to i))
     }
-    s.marks.forEach { (d, hs) -> hs.forEach { (id, ms) -> if (ms.isNotEmpty()) put("marks.$d.$id", ms.map { listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "").joinToString(",") }) } }
+    s.marks.forEach { (d, hs) -> hs.forEach { (id, ms) -> if (ms.isNotEmpty()) put("marks.$d.$id", ms.map { (listOf(it.s.id, it.b, it.p, it.n, it.l, it.a?.id ?: "") + listOfNotNull(it.note?.let { n -> URLEncoder.encode(n, "UTF-8") })).joinToString(",") }) } }
+    s.off.forEach { put("off.$it", true) }
+    s.won.forEach { put("won.$it", true) }
 }.mapValues { norm(it.value) }
 
 // Numbers as the cloud hands them back (Long), so a field read back compares equal to the one sent.
@@ -265,7 +275,7 @@ private fun norm(v: Any?): Any? = when (v) {
 // A cloud document flattened to the same paths; a day left with no bolts for a habit is no field at all.
 internal fun flatOf(o: Map<String, Any?>): Map<String, Any?> = buildMap {
     for ((k, v) in o) when (k) {
-        "equip", "owned", "habits" -> (v as? Map<*, *>)?.forEach { (id, x) -> put("$k.$id", norm(x)) }
+        "equip", "owned", "habits", "off", "won" -> (v as? Map<*, *>)?.forEach { (id, x) -> put("$k.$id", norm(x)) }
         "marks" -> (v as? Map<*, *>)?.forEach { (d, hs) -> (hs as? Map<*, *>)?.forEach { (id, x) -> if ((x as? List<*>)?.isNotEmpty() == true) put("marks.$d.$id", norm(x)) } }
         else -> put(k, norm(v))
     }
@@ -302,6 +312,8 @@ internal fun fromFlat(m: Map<String, Any?>, here: Data) = Data().apply {
         val p = k.split(".")
         when (p[0]) {
             "owned" -> owned += p[1]
+            "off" -> off += LocalDate.parse(p[1])
+            "won" -> won += p[1]
             "habits" -> (v as Map<*, *>).let { j ->
                 fun str(x: String) = j[x] as String?
                 val per = byId<Per>(str("per")!!)
@@ -310,13 +322,13 @@ internal fun fromFlat(m: Map<String, Any?>, here: Data) = Data().apply {
                     (j["days"] as List<*>?)?.map { (it as Number).toInt() }?.toSet(), str("remind"))
             }
             "marks" -> marks.getOrPut(LocalDate.parse(p[1])) { mutableMapOf() }[p[2]] = (v as List<*>).map { x ->
-                (x as String).split(",").let { f -> Mark(byId(f[0]), f[1].toInt(), f[2].toInt(), f[3].toInt(), f[4].toInt(), f.getOrNull(5)?.takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) }) }
+                (x as String).split(",").let { f -> Mark(byId(f[0]), f[1].toInt(), f[2].toInt(), f[3].toInt(), f[4].toInt(), f.getOrNull(5)?.takeIf { it.isNotEmpty() }?.let { byId<Attr>(it) }, f.getOrNull(6)?.let { URLDecoder.decode(it, "UTF-8") }) }
             }.toMutableList()
         }
     }
     habits += hs.sortedWith(compareBy({ it.first }, { it.second.id })).map { it.second }
     for ((k, v) in m) if (k.startsWith("equip.")) k.removePrefix("equip.").let { slot -> if (slot in equip && (v == null || v in owned)) equip[slot] = v as String? }
-    diary += here.diary; pen = here.pen; sound = here.sound; backedUp = here.backedUp
+    diary += here.diary; pen = here.pen; sound = here.sound; lang = here.lang; backedUp = here.backedUp
     recount(this)
 }
 

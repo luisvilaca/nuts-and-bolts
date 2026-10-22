@@ -16,16 +16,21 @@ enum class Per(override val id: String) : Coded { Day("day"), Week("week") }
 enum class Outcome(override val id: String) : Coded { Done("done"), Skip("skip"), Fail("fail") }
 
 // The four attributes. stages: the name of each of its ten levels, in the robot's own terms.
-enum class Attr(override val id: String, val title: String, val gloss: String, val stages: List<String>) : Coded {
+// title, gloss and stages read in the interface language (Lang.kt); en, enGloss and enStages are the keys.
+enum class Attr(override val id: String, val en: String, val enGloss: String, val enStages: List<String>) : Coded {
     Battery("battery", "Battery", "energy", listOf("AA Cell", "Nickel Pack", "Lithium Cell", "Li-ion Bank", "Solid-State", "Supercapacitor", "Graphene Cell", "Fusion Cell", "Zero-Point Cell", "Antimatter Cell")),
     Processor("processor", "Processor", "mind", listOf("4-bit", "8-bit", "16-bit", "32-bit", "64-bit", "Multicore", "Neural Engine", "Quantum Core", "Photonic Mind", "Singularity")),
     Chassis("chassis", "Chassis", "body", listOf("Tin Can", "Aluminium", "Steel", "Titanium", "Carbon Fibre", "Tungsten", "Graphene", "Nanoweave", "Diamond Lattice", "Neutronium")),
-    Core("core", "Core", "heart", listOf("Spark", "Dynamo", "Turbine", "Fission Pile", "Breeder", "Tokamak", "Fusion Heart", "Stellarator", "Star Core", "Supernova")),
+    Core("core", "Core", "heart", listOf("Spark", "Dynamo", "Turbine", "Fission Pile", "Breeder", "Tokamak", "Fusion Heart", "Stellarator", "Star Core", "Supernova"));
+    val title get() = t(en)
+    val gloss get() = t(enGloss)
+    val stages get() = enStages.map { t(it) }
 }
 
 // What a Done pays (and a fail takes back): bolts and attribute points.
-enum class Heft(override val id: String, val title: String, val bolts: Int, val pts: Int) : Coded {
-    Light("light", "Light", 5, 1), Medium("medium", "Medium", 10, 2), Heavy("heavy", "Heavy", 20, 4),
+enum class Heft(override val id: String, val en: String, val bolts: Int, val pts: Int) : Coded {
+    Light("light", "Light", 5, 1), Medium("medium", "Medium", 10, 2), Heavy("heavy", "Heavy", 20, 4);
+    val title get() = t(en)
 }
 
 // Ten levels per attribute: level n starts at 10 n (n - 1) points (0, 20, 60, 120 ... 900); points count on past the top.
@@ -50,7 +55,8 @@ class Habit(
 
 // Each mark stores exactly what it changed (bolts, points, nuts, and l: new levels it reached) and a, the attribute its
 // points went to, so undo is exact and the wallet can be counted again from the marks alone (see recount).
-class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0, var a: Attr? = null)
+// note: what the owner wrote on the bolt ("8 glasses", "5 km"), if anything.
+class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l: Int = 0, var a: Attr? = null, var note: String? = null)
 
 // nib and rub (the eraser) are widths in mm as drawn on this screen; stab is the stabilizer in percent, 0 to 100 by tens.
 // palm: palm rejection; touches near the pen or as broad as a palm do nothing, and the pen's first stroke turns move on.
@@ -71,10 +77,13 @@ class Data {
     val habits = mutableListOf<Habit>()
     val marks = mutableMapOf<LocalDate, MutableMap<String, MutableList<Mark>>>()
     val diary = mutableSetOf<LocalDate>()
+    val off = mutableSetOf<LocalDate>() // days off: nothing runs, and no streak breaks or grows
+    val won = mutableSetOf<String>() // achievements reached (FEATS), each with its part given
     val papers = PAPERS.toMutableList()
     var pen = Pen()
     var remind = Remind()
     var sound = true // the effects in Sfx
+    var lang = "" // this device's interface language: "" follows the system, else "en", "pt" or "ru" (Lang.kt)
     var backedUp: LocalDate? = null
     var adj = Wallet() // what the marks and parts do not account for: the start (30 points, level 2), and older history
 }
@@ -89,7 +98,9 @@ fun sums(s: Data) = Wallet(0, 0, Attr.entries.associateWith { 0 }.toMutableMap()
         bolts += m.b; nuts += m.n + LEVEL_NUTS * m.l
         m.a?.let { stats[it] = stats.getValue(it) + m.p; peak[it] = peak.getValue(it) + m.l }
     }
-    for (id in s.owned) PART[id]?.let { bolts -= it.bolts; nuts -= it.nuts }
+    // a part given for an achievement was never paid for
+    val given = FEATS.filter { it.id in s.won }.map { it.part }.toSet()
+    for (id in s.owned) if (id !in given) PART[id]?.let { bolts -= it.bolts; nuts -= it.nuts }
 }
 
 // The offset that makes the marks and parts add up to the wallet as it stands (once, for a state from before adj).
@@ -120,7 +131,8 @@ fun periodMarks(s: Data, h: Habit, d: LocalDate) = periodDates(h, d).flatMap { x
 // The most slots a period can hold: a dozen in a day, one a day in a week.
 fun maxTarget(per: Per) = if (per == Per.Week) 7 else 12
 
-fun active(h: Habit, d: LocalDate) = (h.start == null || h.start!! <= d) && (h.end == null || d <= h.end!!) && (h.days == null || (d.dayOfWeek.value - 1) in h.days!!)
+// off: the days off; a day off is like a day the habit is not scheduled.
+fun active(h: Habit, d: LocalDate, off: Set<LocalDate> = emptySet()) = d !in off && (h.start == null || h.start!! <= d) && (h.end == null || d <= h.end!!) && (h.days == null || (d.dayOfWeek.value - 1) in h.days!!)
 // Every slot of the period logged, whatever the outcome: nothing left to remind about.
 fun logged(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).size >= h.target
 fun locked(s: Data, h: Habit, d: LocalDate) = periodMarks(s, h, d).count { it.second.s == Outcome.Done } >= h.target
@@ -131,7 +143,7 @@ fun streak(s: Data, h: Habit, d: LocalDate): Int {
     var x = d
     repeat(2000) {
         if (h.start != null && x < h.start) return n
-        if (periodDates(h, x).any { active(h, it) }) { // a day off neither breaks nor extends the streak
+        if (periodDates(h, x).any { active(h, it, s.off) }) { // a day off neither breaks nor extends the streak
             if (!locked(s, h, x)) return n
             n++
         }
@@ -152,7 +164,7 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
     var slots = 0; var done = 0; var fail = 0; var best = 0; var run = 0; var periods = 0
     var d = if (h.per == Per.Week) weekStart(first) else first
     while (d <= last) {
-        if (periodDates(h, d).any { active(h, it) }) {
+        if (periodDates(h, d).any { active(h, it, s.off) }) {
             val ms = periodMarks(s, h, d)
             slots += h.target; periods++
             done += ms.count { it.second.s == Outcome.Done }
@@ -216,4 +228,46 @@ fun unbuy(s: Data, p: Part, before: String?) {
 fun mood(s: Data): Int { // 2 fully charged, 1 running steady, 0 low power
     val a = s.stats.values.sumOf { level(it) } / 4.0
     return if (a >= 4) 2 else if (a >= 2) 1 else 0
+}
+
+// ---------- achievements ----------
+
+// An achievement and the part it gives: reaching it puts the part in the owned list for free (sums knows not to
+// charge for it). en is the name's key for t().
+class Feat(val id: String, val en: String, val part: String, val reached: (Data, LocalDate) -> Boolean)
+
+val FEATS = listOf(
+    Feat("first", "First bolt", "acc-scarf") { s, _ -> s.marks.values.any { d -> d.values.any { ms -> ms.any { it.s == Outcome.Done } } } },
+    Feat("week", "Seven days running", "acc-bow") { s, t -> s.habits.any { it.per == Per.Day && record(s, it, t).best >= 7 } },
+    Feat("critical", "A whole day critical", "acc-halo") { s, t -> s.habits.any { active(it, t, s.off) } && s.habits.filter { active(it, t, s.off) }.all { locked(s, it, t) } },
+    Feat("bolts", "500 bolts earned", "acc-crown") { s, _ -> s.marks.values.sumOf { d -> d.values.sumOf { ms -> ms.sumOf { maxOf(0, it.b) } } } >= 500 },
+    Feat("pages", "Seven diary pages", "acc-moon") { s, _ -> s.diary.size >= 7 },
+    Feat("level", "An attribute at level 5", "acc-drone") { s, _ -> s.peak.values.any { it >= 5 } },
+)
+
+// The achievements reached now and not yet recorded; give records them and their parts.
+fun newFeats(s: Data, t: LocalDate) = FEATS.filter { it.id !in s.won && it.reached(s, t) }
+fun give(s: Data, f: Feat) { s.won += f.id; if (f.part !in s.owned) s.owned += f.part }
+
+// ---------- the week in review ----------
+
+// One week, Monday to Sunday up to today: bolts in of slots, nuts earned, pages written, and the habits that did best
+// and worst by share of their bolts in.
+class Review(val done: Int, val slots: Int, val nuts: Int, val pages: Int, val best: Habit?, val worst: Habit?)
+
+fun review(s: Data, t: LocalDate): Review {
+    val days = generateSequence(weekStart(t)) { it.plusDays(1) }.takeWhile { it <= t }.toList()
+    var done = 0; var slots = 0; var nuts = 0
+    val share = mutableMapOf<Habit, Pair<Int, Int>>()
+    for (h in s.habits) {
+        val ds = days.filter { active(h, it, s.off) }
+        if (ds.isEmpty()) continue
+        val ms = if (h.per == Per.Week) periodMarks(s, h, t).map { it.second } else ds.flatMap { s.marks[it]?.get(h.id).orEmpty() }
+        val n = if (h.per == Per.Week) h.target else h.target * ds.size
+        val d = ms.count { it.s == Outcome.Done }
+        done += d; slots += n; nuts += ms.sumOf { it.n + LEVEL_NUTS * it.l }
+        share[h] = d to n
+    }
+    val ranked = share.entries.sortedBy { it.value.first.toFloat() / it.value.second }
+    return Review(done, slots, nuts, s.diary.count { it in days }, ranked.lastOrNull()?.key, ranked.firstOrNull()?.takeIf { ranked.size > 1 && it.value.first < it.value.second }?.key)
 }

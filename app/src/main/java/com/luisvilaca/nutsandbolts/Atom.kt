@@ -127,12 +127,15 @@ val ROOMS = listOf(
 )
 
 // The whole bay, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
-// show, so Today, Shop and the base tiles all frame the same picture. band: room left at the top for the nameplate.
+// show, so Today, Shop and the base tiles all frame the same picture. On a canvas narrower than the scene (a phone held
+// upright) the empty wall at the sides is cropped to x 60..940, so Rivet and the bench draw bigger. band: room left
+// at the top for the nameplate.
 fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fresh: Pair<String, Long>?, equip: Map<String, String?>, band: Float = 0f) {
     val tier = (PART[equip["base"]]?.tier ?: 1).coerceIn(1, ROOMS.size)
     val r = ROOMS[tier - 1]
-    val k = min(size.width / 920f, (size.height - band) / 760f)
-    val ox = (size.width - 1000f * k) / 2; val oy = band + (size.height - band - 760f * k) / 2 - 120f * k
+    val tight = size.width / (size.height - band) < 920f / 760f
+    val k = min(size.width / (if (tight) 880f else 920f), (size.height - band) / 760f)
+    val ox = size.width / 2 - 500f * k; val oy = band + (size.height - band - 760f * k) / 2 - 120f * k
     val fy = oy + 700f * k
     drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
     drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
@@ -444,4 +447,4 @@ private fun DrawScope.reactorHall(t: Long) {
     drawCircle(ink, 7f, c)
 }
 
-fun orbitsFor(s: Data, d: LocalDate) = s.habits.filter { active(it, d) }.map { Orbit(it, slots(s, it, d)) }
+fun orbitsFor(s: Data, d: LocalDate) = s.habits.filter { active(it, d, s.off) }.map { Orbit(it, slots(s, it, d)) }

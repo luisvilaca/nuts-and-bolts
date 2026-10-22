@@ -40,6 +40,8 @@ private val PATHS = mapOf(
     "check" to "M5 12.5l4.5 4.5L19 7.5",
     "more" to "M10.6 5.5a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0zM10.6 12a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0zM10.6 18.5a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0z",
     "history" to "M4 18h4V12h4v-6h4v10h4M4 21h16",
+    "lock" to "M6 11h12v9.5H6zM8.5 11V7.5L10 6h4l1.5 1.5V11M10.6 15.5a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0z",
+    "export" to "M12 3.5v10M8.5 10l3.5 3.5 3.5-3.5M5 15v5h14v-5M10.7 3.3a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0 -2.6 0z",
 )
 
 val ICONS: Map<String, ImageVector> = PATHS.mapValues { (k, d) ->

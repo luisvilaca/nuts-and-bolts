@@ -1,5 +1,14 @@
 package com.luisvilaca.nutsandbolts
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.rememberDateRangePickerState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.material3.ripple
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.indication
@@ -98,6 +107,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -142,18 +154,53 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
     }
     val s = store.s
     var month by remember { mutableStateOf(YearMonth.now()) }
+    var range by remember { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) } // the pages to export, once picked
+    var picking by remember { mutableStateOf(false) }
+    val ctx = LocalContext.current
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+        val (a, b) = range ?: return@rememberLauncherForActivityResult
+        if (uri == null) return@rememberLauncherForActivityResult
+        // every page in the range is drawn whole, so the work runs off the main thread
+        ui.scope.launch {
+            val n = withContext(Dispatchers.IO) { runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { exportPdf(ctx, store, a, b, it) } }.getOrNull() }
+            ui.tell(if (n == null) t("The PDF could not be made.") else t("{0} in the PDF", plural(n, "page")))
+        }
+    }
     // like Habits: the calendar fills the screen below the header without scrolling, at any size; any day, today
     // included, opens its page from its cell
     Column(Modifier.fillMaxSize().padding(horizontal = if (lay.wide) 28.dp else 20.dp)) {
-        Header("Diary", store, ui, lay)
+        Header(t("Diary"), store, ui, lay)
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Stepper(month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.UK)), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
+            Stepper(fmt(month, "MMMM yyyy"), { month = month.minusMonths(1) }, if (month < YearMonth.now()) ({ month = month.plusMonths(1) }) else null)
+            Spacer(Modifier.weight(1f))
+            if (s.diary.isNotEmpty()) TextButton({ picking = true }) {
+                Icon(ICONS.getValue("export"), null, Modifier.size(18.dp), tint = W.act); Text(t("Export PDF"), Modifier.padding(start = 6.dp), color = W.act)
+            }
         }
         Card(Modifier.weight(1f).padding(bottom = 8.dp), pad = 12.dp) {
-            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), "has a page", Modifier.size(18.dp), tint = W.steel) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
+            Month(month, { it, _ -> if (it in s.diary) Icon(ICONS.getValue("diary"), t("has a page"), Modifier.size(18.dp), tint = W.steel) }, ahead = false, Modifier.weight(1f)) { ui.page = it }
         }
     }
+    if (picking) ExportRange(s, { picking = false }) { a, b -> range = a to b; picking = false; save.launch("nuts-and-bolts-diary-$a-$b.pdf") }
 }
+
+// Which pages to export: a range of days, this month's by default, with how many written pages it holds.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExportRange(s: Data, close: () -> Unit, go: (LocalDate, LocalDate) -> Unit) {
+    val m = YearMonth.now()
+    val st = rememberDateRangePickerState(m.atDay(1).millis(), LocalDate.now().millis())
+    val a = st.selectedStartDateMillis?.date(); val b = st.selectedEndDateMillis?.date() ?: a
+    val n = if (a == null || b == null) 0 else s.diary.count { it in a..b }
+    DatePickerDialog(onDismissRequest = close, confirmButton = {
+        TextButton({ if (a != null && b != null) go(a, b) }, enabled = n > 0) { Text(t("Export {0}", plural(n, "page")), color = if (n > 0) W.act else W.dim) }
+    }, dismissButton = { TextButton(close) { Text(t("Cancel"), color = W.text) } }) {
+        DateRangePicker(st, Modifier.weight(1f), title = { Text(t("Pages to export"), Modifier.padding(start = 24.dp, top = 16.dp)) })
+    }
+}
+
+private fun LocalDate.millis() = atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+private fun Long.date() = java.time.Instant.ofEpochMilli(this).atZone(java.time.ZoneOffset.UTC).toLocalDate()
 
 // How far apart an ink and a paper are in lightness, as a contrast ratio (1 is none, 21 is black on white).
 fun contrast(a: String, b: String): Float {
@@ -416,8 +463,8 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
             Box(Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).size(pw, pw * (PAGE_H / PAGE_W))
                 .graphicsLayer { transformOrigin = TransformOrigin(0f, 0f); scaleX = z; scaleY = z; translationX = off.x; translationY = off.y }
                 .clipToBounds().background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
-                Template(date, pad.page.paper, s.name, pad.ver)
-                Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Diary page for ${date.format(dayFmt)}" }) {
+                Template(date, pad.page.paper, s.robot, pad.ver)
+                Canvas(Modifier.fillMaxSize().semantics { contentDescription = t("Diary page for {0}", fmt(date, "EEEE d MMMM")) }) {
                     pad.ver; live // redraw when either changes
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
                     val st = pad.cur
@@ -444,20 +491,20 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                         // the first tap picks the pen back up from the eraser; a tap on the pen in hand opens its settings
                         Tool("diary", "Pen. Tap again for nib and stabilizer", !erase, touchOk, more = true) { if (erase) erase = false else pop = "pen" }
                         Menu(pop == "pen", { pop = null }) {
-                            Setting("Nib", s.pen.nib, NIB_MM, 17, { "%.1f mm".format(it) }, { v -> store.change { pen.nib = v } }) { v ->
+                            Setting(t("Nib"), s.pen.nib, NIB_MM, 17, { "%.1f mm".format(it) }, { v -> store.change { pen.nib = v } }) { v ->
                                 Canvas(Modifier.fillMaxWidth().height(28.dp)) {
                                     drawLine(hex(s.pen.color), Offset(12f, center.y), Offset(size.width - 12f, center.y), v * mmPx, StrokeCap.Round)
                                 }
                             }
                             Spacer(Modifier.height(8.dp))
-                            Setting("Stabilizer", s.pen.stab.toFloat(), 0f..100f, 9, { "${it.roundToInt()}%" }, { v -> store.change { pen.stab = v.roundToInt() } }, ticks = true)
-                            Text("At 0% the line follows the pen exactly; higher irons out shake on slow strokes. Fast strokes are never held back.", style = MaterialTheme.typography.bodyMedium, color = W.dim)
+                            Setting(t("Stabilizer"), s.pen.stab.toFloat(), 0f..100f, 9, { "${it.roundToInt()}%" }, { v -> store.change { pen.stab = v.roundToInt() } }, ticks = true)
+                            Text(t("At 0% the line follows the pen exactly; higher irons out shake on slow strokes. Fast strokes are never held back."), style = MaterialTheme.typography.bodyMedium, color = W.dim)
                         }
                     }
                     Box {
                         Tool("eraser", "Eraser. Tap again for its size", erase, touchOk, more = true, onLong = { erase = true; pop = "eraser" }) { if (erase) pop = "eraser" else { erase = true; pop = null } }
                         Menu(pop == "eraser", { pop = null }) {
-                            Setting("Eraser", s.pen.rub, RUB_MM, 13, { "${it.roundToInt()} mm" }, { v -> store.change { pen.rub = v.roundToInt().toFloat() } }) { v ->
+                            Setting(t("Eraser"), s.pen.rub, RUB_MM, 13, { "${it.roundToInt()} mm" }, { v -> store.change { pen.rub = v.roundToInt().toFloat() } }) { v ->
                                 Canvas(Modifier.fillMaxWidth().height(100.dp)) { eraserRing(center, v * mmPx / 2) }
                             }
                         }
@@ -479,7 +526,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                         Tool("paper", "Paper", false, touchOk) { pop = "paper" }
                         Menu(pop == "paper", { pop = null }) {
                             Row(Modifier.padding(bottom = 8.dp)) {
-                                s.papers.forEachIndexed { i, c -> Swatch(c, "Paper ${i + 1}", pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } }
+                                s.papers.forEachIndexed { i, c -> Swatch(c, t("Paper {0}", i + 1), pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } }
                             }
                             Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }
                         }
@@ -489,10 +536,10 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
             }
         }
     }
-    if (bin) AlertDialog(onDismissRequest = { bin = false }, title = { Text("Bin this page?") },
-        text = { Text("Everything written on it is erased and cannot be brought back.") },
-        confirmButton = { TextButton({ Sfx.play("bin"); pad.page.strokes.clear(); pad.redo.clear(); pad.redraw(density); persist(); bin = false }) { Text("Bin it", color = W.coral) } },
-        dismissButton = { TextButton({ bin = false }) { Text("Keep it", color = W.text) } })
+    if (bin) AlertDialog(onDismissRequest = { bin = false }, title = { Text(t("Bin this page?")) },
+        text = { Text(t("Everything written on it is erased and cannot be brought back.")) },
+        confirmButton = { TextButton({ Sfx.play("bin"); pad.page.strokes.clear(); pad.redo.clear(); pad.redraw(density); persist(); bin = false }) { Text(t("Bin it"), color = W.coral) } },
+        dismissButton = { TextButton({ bin = false }) { Text(t("Keep it"), color = W.text) } })
 }
 
 // Remembers what kind of pointer last pressed a control, so a palm on it can be told from the pen or a finger.
@@ -504,7 +551,8 @@ private fun Modifier.lastPointer(into: Array<PointerType?>) = pointerInput(Unit)
 // more: a corner tick for a button with settings behind a second tap or a long press.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Tool(icon: String, label: String, on: Boolean, touchOk: () -> Boolean = { true }, more: Boolean = false, onLong: (() -> Unit)? = null, onClick: () -> Unit) {
+private fun Tool(icon: String, en: String, on: Boolean, touchOk: () -> Boolean = { true }, more: Boolean = false, onLong: (() -> Unit)? = null, onClick: () -> Unit) {
+    val label = t(en)
     val kind = remember { arrayOfNulls<PointerType>(1) }
     val ok = { kind[0] != PointerType.Touch || touchOk() }
     Box(Modifier.size(44.dp, 40.dp).clip(RoundedCornerShape(10.dp)).background(if (on) W.raised else Color.Transparent).lastPointer(kind)
@@ -519,12 +567,13 @@ private fun Tool(icon: String, label: String, on: Boolean, touchOk: () -> Boolea
 
 @Composable
 // faint: the ink hardly shows on this page's paper, so the swatch is struck through at 40%; it can still be chosen.
-private fun Swatch(c: String, label: String, on: Boolean, round: Boolean, touchOk: () -> Boolean = { true }, faint: Boolean = false, onClick: () -> Unit) {
+private fun Swatch(c: String, en: String, on: Boolean, round: Boolean, touchOk: () -> Boolean = { true }, faint: Boolean = false, onClick: () -> Unit) {
+    val label = t(en)
     val shape = if (round) CircleShape else RoundedCornerShape(6.dp)
     val kind = remember { arrayOfNulls<PointerType>(1) }
     // the press shows on the swatch itself, round or square like it, not as a box round it
     val press = remember { MutableInteractionSource() }
-    Box(Modifier.size(40.dp, 36.dp).lastPointer(kind).clickable(press, null, onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = if (faint) "$label, hard to see on this paper" else label; selected = on }, contentAlignment = Alignment.Center) {
+    Box(Modifier.size(40.dp, 36.dp).lastPointer(kind).clickable(press, null, onClickLabel = label) { if (kind[0] != PointerType.Touch || touchOk()) onClick() }.semantics { contentDescription = if (faint) t("{0}, hard to see on this paper", label) else label; selected = on }, contentAlignment = Alignment.Center) {
         Box(Modifier.size(if (on) 26.dp else 22.dp).alpha(if (faint) 0.4f else 1f).clip(shape).background(hex(c)).indication(press, ripple())
             .border(if (on) 2.dp else 1.dp, if (on) W.text else W.edge, shape))
         if (faint) Canvas(Modifier.size(26.dp)) { drawLine(W.dim, Offset(size.width * 0.15f, size.height * 0.85f), Offset(size.width * 0.85f, size.height * 0.15f), 1.5.dp.toPx(), StrokeCap.Round) }
@@ -560,7 +609,7 @@ private fun DrawScope.eraserRing(c: Offset, r: Float) {
 // Typing a hex value into a paper slot; the page on screen follows when it uses that slot.
 @Composable
 private fun Papers(store: Store, changed: (Int, String) -> Unit) {
-    Text("PAPER COLOURS", Modifier.padding(bottom = 8.dp), style = Label)
+    Text(t("PAPER COLOURS"), Modifier.padding(bottom = 8.dp), style = Label)
     store.s.papers.forEachIndexed { i, c ->
         var txt by remember(c) { mutableStateOf(c) }
         Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -568,11 +617,11 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
             OutlinedTextField(txt, { v ->
                 txt = "#" + v.filter { it.isLetterOrDigit() }.uppercase().filter { it in "0123456789ABCDEF" }.take(6)
                 if (txt.length == 7) { changed(i, txt); store.change { papers[i] = txt } }
-            }, Modifier.padding(start = 12.dp).weight(1f), singleLine = true, label = { Text("Paper ${i + 1}") },
+            }, Modifier.padding(start = 12.dp).weight(1f), singleLine = true, label = { Text(t("Paper {0}", i + 1)) },
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = W.act, unfocusedBorderColor = W.edge, cursorColor = W.act))
         }
     }
-    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.edge)) { Text("Restore the originals", color = W.text) }
+    OutlinedButton({ store.change { PAPERS.forEachIndexed { i, c -> papers[i] = c } } }, Modifier.padding(top = 8.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Restore the originals"), color = W.text) }
 }
 
 // The printed page: weekday and date, a five-cell gauge to fill in by hand, the day number and this look's emblem,
@@ -580,38 +629,64 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
 @Composable
 private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
     val tm = rememberTextMeasurer()
+    Canvas(Modifier.fillMaxSize()) {
+        ver
+        withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) { printed(tm, date, paper, name, density * fontScale) }
+    }
+}
+
+// The template in page units; k: the screen's sp-to-pixel factor, which the page's own sizes are divided by.
+private fun DrawScope.printed(tm: TextMeasurer, date: LocalDate, paper: String, name: String, k: Float) {
     val light = lightPaper(paper)
     val head = if (light) Color(0xFF393939) else Color(0xFF00FF88)
     val sub = if (light) Color(0xBF393939) else Color(0xB8E0F7FA)
     val rule = if (light) Color(0x38393939) else Color(0x26FFFFFF)
     val art = if (light) Color(0x21393939) else Color(0x3300E5FF)
     val doy = date.dayOfYear
-    Canvas(Modifier.fillMaxSize()) {
-        ver
-        withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) {
-            // a bolt: the page's emblem; the gauge is five hex holes to fill in
-            fun shape(p: Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
-                withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
-            fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(EMBLEM, cx, cy + r * 0.6f, r / 14f, c, w)
-            fun cell(at: Offset, r: Float, c: Color) = shape(CELL, at.x, at.y + r, r / 9f, c, 2f)
-            emblem(1290f, PAGE_H - 330, 250f, art, 2f)
-            for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
-            drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
-            val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
-            val txt = { s: String, st: TextStyle, x: Float, base: Float, end: Boolean ->
-                // sizes are in page units; the canvas is already scaled to the page
-                val r = tm.measure(s, st.copy(fontSize = (st.fontSize.value / (density * fontScale)).sp))
-                drawText(r, topLeft = Offset(if (end) x - r.size.width else x, base - r.firstBaseline))
-            }
-            txt(date.format(DateTimeFormatter.ofPattern("EEEE", Locale.UK)), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
-            txt(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
-            txt("BOLTS", lbl, 1014f, 58f, false)
-            for (i in 0 until 5) cell(Offset(1028f + i * 46, 88f), 15f, sub)
-            txt("DAY $doy", lbl, 1392f, 96f, true)
-            emblem(1462f, 90f, 44f, head, 2f)
-            txt("${name.uppercase()}'S LOG", lbl, 90f, PAGE_H - 18, false)
-            txt("NB-D" + date.toString().replace("-", ""), lbl, 1510f, PAGE_H - 18, true)
-        }
+    // a bolt: the page's emblem; the gauge is five hex holes to fill in
+    fun shape(p: Path, cx: Float, cy: Float, k: Float, c: Color, w: Float) =
+        withTransform({ translate(cx, cy); scale(k, k, Offset.Zero); translate(-11f, -24f) }) { drawPath(p, c, style = Stroke(w / k)) }
+    fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(EMBLEM, cx, cy + r * 0.6f, r / 14f, c, w)
+    fun cell(at: Offset, r: Float, c: Color) = shape(CELL, at.x, at.y + r, r / 9f, c, 2f)
+    emblem(1290f, PAGE_H - 330, 250f, art, 2f)
+    for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
+    drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
+    val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
+    val txt = { s: String, st: TextStyle, x: Float, base: Float, end: Boolean ->
+        // sizes are in page units; the canvas is already scaled to the page
+        val r = tm.measure(s, st.copy(fontSize = (st.fontSize.value / k).sp))
+        drawText(r, topLeft = Offset(if (end) x - r.size.width else x, base - r.firstBaseline))
     }
+    txt(fmt(date, "EEEE"), TextStyle(fontFamily = display, fontSize = 50.sp, color = head), 88f, 100f, false)
+    txt(fmt(date, "d MMMM yyyy"), TextStyle(fontFamily = display, fontSize = 24.sp, color = sub), 90f, 138f, false)
+    txt(t("BOLTS"), lbl, 1014f, 58f, false)
+    for (i in 0 until 5) cell(Offset(1028f + i * 46, 88f), 15f, sub)
+    txt(t("DAY {0}", doy), lbl, 1392f, 96f, true)
+    emblem(1462f, 90f, 44f, head, 2f)
+    txt(t("{0}'s log", name).uppercase(), lbl, 90f, PAGE_H - 18, false)
+    txt("NB-D" + date.toString().replace("-", ""), lbl, 1510f, PAGE_H - 18, true)
+}
+
+// The written pages from a to b, oldest first, as one PDF of A4 pages: each page drawn whole (paper, the printed
+// template and the ink) at full page resolution, then placed on its sheet. Returns how many pages went in.
+fun exportPdf(ctx: android.content.Context, store: Store, a: LocalDate, b: LocalDate, out: java.io.OutputStream): Int {
+    val one = Density(1f)
+    val tm = TextMeasurer(createFontFamilyResolver(ctx), one, LayoutDirection.Ltr)
+    val doc = android.graphics.pdf.PdfDocument()
+    var n = 0
+    for (d in store.s.diary.filter { it in a..b }.sorted()) {
+        val page = store.page(d) ?: continue
+        val ink = Pad(page).apply { bmp = ImageBitmap(PAGE_W.toInt(), PAGE_H.toInt()); k = 1f; redraw(one) }.bmp!!
+        val whole = ImageBitmap(PAGE_W.toInt(), PAGE_H.toInt())
+        CanvasDrawScope().draw(one, LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(whole), Size(PAGE_W, PAGE_H)) {
+            drawRect(hex(page.paper)); printed(tm, d, page.paper, store.s.robot, 1f); drawImage(ink)
+        }
+        val sheet = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, ++n).create())
+        sheet.canvas.drawBitmap(whole.asAndroidBitmap(), null, android.graphics.RectF(0f, 0f, 595f, 842f), android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+        doc.finishPage(sheet)
+    }
+    if (n > 0) doc.writeTo(out)
+    doc.close()
+    return n
 }
 

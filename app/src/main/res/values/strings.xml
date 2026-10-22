@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Nuts And Bolts</string>
+    <string name="widget_description">Today\'s habits, with Done</string>
 </resources>

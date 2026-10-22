@@ -54,7 +54,13 @@ The robot is the readout of the owner's real life: its parts, attributes, and ba
 - Each habit can have its own reminder (habit form, 2026-10-21): a notification at its time on the days it runs, only while its period has open slots, with a Done (Resisted) button that logs it without opening the app. Alarms are exact and local to each device, so they work offline; notifications play the robot's own call.
 - Sync (2026-10-21): the same Google account on both devices. Every change is written to the cloud at once (queued while offline), field by field, so changes made apart on the two devices merge; the wallet is counted from the marks and parts on each device, so it never counts a Done twice. Pen, sounds and the last-backup date stay per device. The first sign-in on a device with an existing cloud copy takes the cloud copy and keeps what was on the device in a backup file.
 - Sound effects (2026-10-21) play at the media volume, in the workshop's own sounds: servos, ratchets, relays, metal, Geiger ticks and reactor hum, for Done, a frame going critical, Skip, Fail, a level gained or lost, a nut, a purchase, a part fitted, a habit added or deleted, the robot answering a tap, a tab change and a binned page.
-- Interface language: English.
+- Interface languages (2026-10-22): English, Portuguese (Portugal) and Russian. The phone's language by default (Android's per-app language setting included), or a pick in Settings; the choice stays on each device. Everything is translated, the robot's default name, parts, attributes and levels included; habit names and notes stay as written. Russian is set in Manrope, as Lexend has no Cyrillic.
+- Days off (2026-10-22): any day can be taken off from Habits; nothing runs, no streak breaks or grows, and the daily reminder stays quiet.
+- Notes on bolts (2026-10-22): a few words on the last bolt of a day ("8 glasses", "5 km"), from the card's menu, shown in the habit's log.
+- Achievements (2026-10-22): six, each giving a part for free when reached (Scarf, Bow Tie, Halo, Crown, Pet Moon, Sidekick Drone), listed in History.
+- The week in review (2026-10-22): bolts in, nuts, pages, the best habit and the one that needs care; at the top of History, and on the Lab on Sundays.
+- Diary export (2026-10-22): the written pages of a date range as one A4 PDF, each page whole with its paper and template.
+- Home-screen widget (2026-10-22): today's habits with Done, logging without opening the app.
 
 ## Brand Commitments
 

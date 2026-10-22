@@ -16,41 +16,11 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
 
-// Reactor Workshop: a robot's workbench after dark, powered by a small reactor. Deep greenhouse teal (the Grow Room's
-// tint), uranium green as every glow (the reactor, its light, the gauges, a completed habit), ready green only where
-// something can be pressed or is done, coral only for failed.
-object W {
-    // the surface ladder, each one visible step up: rail < ground < card < raised
-    val rail = Color(0xFF081313)
-    val ground = Color(0xFF0D1615)
-    val raised = Color(0xFF1C3A34) // a control on a card
-    val line = Color(0xFF1B3632)
-    val edge = Color(0xFF24443E)
-    val text = Color(0xFFE6F2EE)
-    val dim = Color(0xFF9EB3AC) // 8:1 on ground, 7:1 on a card
-    val steel = Color(0xFFCFE3DE)
-    val act = Color(0xFF6EE787) // a ready lamp
-    val onAct = Color(0xFF06281A)
-    val gold = Color(0xFFF2C14E)
-    val coral = Color(0xFFFF7457)
-    val joint = Color(0xFF6C8F87)
-    val glass = Color(0xFF081313)
-    val card = Color(0xFF152220) // the surface of a card
-    val border = Color.White.copy(alpha = 0.08f) // a card's edge
-    val sel = Color(0xFFCFE3DE).copy(alpha = 0.55f) // a selection's edge: steel, quietened
-    val selFill = Color(0xFFCFE3DE).copy(alpha = 0.06f) // and its faint fill
-    val glow = Color(0xFFA6FF4D) // every glow: the reactor, its light, the gauges, a habit gone critical
-}
-
-private fun lexend(vararg w: Int) = FontFamily(w.map { Font(R.font.lexend, FontWeight(it), variationSettings = FontVariation.Settings(FontVariation.weight(it))) })
-val display = lexend(600, 700)
-val body = lexend(400, 500, 600)
-
 // One rounded, open face (Lexend) for everything; labels are small spaced caps.
-val Label = TextStyle(fontFamily = body, fontWeight = FontWeight.Medium, fontSize = 13.sp, letterSpacing = 0.14.em, color = W.dim)
-val Numeral = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, fontFeatureSettings = "tnum")
+val Label get() = TextStyle(fontFamily = body, fontWeight = FontWeight.Medium, fontSize = 13.sp, letterSpacing = 0.14.em, color = W.dim)
+val Numeral get() = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, fontFeatureSettings = "tnum")
 
-private val type = Typography(
+private fun type() = Typography(
     displaySmall = TextStyle(fontFamily = display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.01).em),
     headlineSmall = TextStyle(fontFamily = display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp),
     titleLarge = TextStyle(fontFamily = body, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, lineHeight = 28.sp),
@@ -74,7 +44,7 @@ fun NbTheme(content: @Composable () -> Unit) = MaterialTheme(
         error = W.coral, onError = W.ground,
         outline = W.edge, outlineVariant = W.line,
     ),
-    typography = type,
+    typography = type(), // read again when the language, and with it the face, changes
     content = content,
 )
 
