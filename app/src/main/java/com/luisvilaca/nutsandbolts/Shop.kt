@@ -107,7 +107,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     }
 
     if (lay.wide) Column(Modifier.fillMaxSize()) {
-        Header("Shop", store, ui, lay, Modifier.padding(horizontal = 28.dp))
+        Header(t("Shop"), store, ui, lay, Modifier.padding(horizontal = 28.dp))
         // the same bay as the Lab, so trying a part on shows it exactly where it will live
         Row(Modifier.fillMaxSize()) {
             BayPanel(store, Modifier.weight(0.46f).fillMaxHeight(), orbits, wear)
@@ -118,7 +118,7 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
             }
         }
     } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-        Header("Shop", store, ui, lay)
+        Header(t("Shop"), store, ui, lay)
         // on a phone the bay is shorter here than on the Lab, so the parts start on the first screen
         BayPanel(store, Modifier.padding(vertical = 8.dp).fillMaxWidth().height(if (lay.phone) 260.dp else bayHeight(lay)), orbits, wear, inset = 0.dp)
         detail(Modifier.padding(vertical = 12.dp))

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A bear animatronic's head in the dark under a striped big-top scallop, its eyes the only light -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M18,24h12v10q-6,5 -12,0z" android:fillColor="#7A1426" />
+    <path android:pathData="M30,24h12v10q-6,5 -12,0z" android:fillColor="#D9C7B0" />
+    <path android:pathData="M42,24h12v10q-6,5 -12,0z" android:fillColor="#7A1426" />
+    <path android:pathData="M54,24h12v10q-6,5 -12,0z" android:fillColor="#D9C7B0" />
+    <path android:pathData="M66,24h12v10q-6,5 -12,0z" android:fillColor="#7A1426" />
+    <path android:pathData="M78,24h12v10q-6,5 -12,0z" android:fillColor="#D9C7B0" />
+    <path android:pathData="M38,47m-7,0a7,7 0 1,0 14,0a7,7 0 1,0 -14,0M70,47m-7,0a7,7 0 1,0 14,0a7,7 0 1,0 -14,0" android:fillColor="#6B4026" />
+    <path android:pathData="M42,44h24a12,12 0 0,1 12,12v8a12,12 0 0,1 -12,12h-24a12,12 0 0,1 -12,-12v-8a12,12 0 0,1 12,-12z" android:fillColor="#6B4026" />
+    <path android:pathData="M54,70m-12,0a12,7 0 1,0 24,0a12,7 0 1,0 -24,0" android:fillColor="#B98A62" />
+    <path android:pathData="M54,66.5m-3,0a3,2 0 1,0 6,0a3,2 0 1,0 -6,0" android:fillColor="#120A14" />
+    <path android:pathData="M46,57m-4.5,0a4.5,4 0 1,0 9,0a4.5,4 0 1,0 -9,0M62,57m-4.5,0a4.5,4 0 1,0 9,0a4.5,4 0 1,0 -9,0" android:fillColor="#120A14" />
+    <path android:pathData="M46,57m-1.6,0a1.6,1.6 0 1,0 3.2,0a1.6,1.6 0 1,0 -3.2,0M62,57m-1.6,0a1.6,1.6 0 1,0 3.2,0a1.6,1.6 0 1,0 -3.2,0" android:fillColor="#FFE6A8" />
+    <path android:pathData="M45,38h18v-9h-14v9z" android:fillColor="#0B0709" />
+    <path android:pathData="M41,38h26v3h-26z" android:fillColor="#0B0709" />
+    <path android:pathData="M49,35h14v2h-14z" android:fillColor="#C8263A" />
+</vector>

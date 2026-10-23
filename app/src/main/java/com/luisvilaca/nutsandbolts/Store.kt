@@ -136,7 +136,9 @@ class Store private constructor(private val dir: File) {
 fun now() = System.nanoTime() / 1_000_000
 
 class InkStroke(val c: String, val w: Float, val e: Boolean, val p: FloatArray) // p: x, y, nib opening triples in page units
-class Page(var paper: String, val strokes: MutableList<InkStroke>)
+// tpl: the printed template ("lined", "blank": the header without lines, "plain": nothing printed); gap: the ruled
+// lines' spacing in page units (55 is 7.2 mm on A4)
+class Page(var paper: String, val strokes: MutableList<InkStroke>, var tpl: String = "lined", var gap: Float = 55f)
 
 // ---------- JSON ----------
 
@@ -181,7 +183,7 @@ internal fun json(s: Data): JSONObject = JSONObject()
     .put("diary", JSONArray(s.diary.map { it.toString() }))
     .put("off", JSONArray(s.off.map { it.toString() })).put("won", JSONArray(s.won.toList()))
     .put("papers", JSONArray(s.papers))
-    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2).put("move", s.pen.move))
+    .put("pen", JSONObject().put("color", s.pen.color).put("nib", s.pen.nib.toDouble()).put("stabPct", s.pen.stab).put("rub", s.pen.rub.toDouble()).put("paper", s.pen.paper).put("seen", s.pen.seen).put("palm", s.pen.palm).put("b1", s.pen.b1).put("b2", s.pen.b2).put("move", s.pen.move).put("tpl", s.pen.tpl).put("gap", s.pen.gap.toDouble()))
     .put("remind", JSONObject().put("on", s.remind.on).put("time", s.remind.time))
     .put("sound", s.sound).put("lang", s.lang)
     .put("backedUp", s.backedUp?.toString())
@@ -227,7 +229,8 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
         val nib = j.optDouble("nib").toFloat(); val stab = j.optInt("stabPct"); val rub = j.optDouble("rub").toFloat()
         pen = Pen(j.optString("color", pen.color), nib.coerceIn(NIB_MM.start, NIB_MM.endInclusive), (stab / 10 * 10).coerceIn(0, 100),
             rub.coerceIn(RUB_MM.start, RUB_MM.endInclusive), j.optInt("paper", 0), j.optBoolean("seen"), j.optBoolean("palm", true), j.optString("b1", "eraser"), j.optString("b2", "ink"),
-            j.optBoolean("move", j.optBoolean("seen") && j.optBoolean("palm", true))) // before move, palm rejection made a finger move the page once a pen had written
+            j.optBoolean("move", j.optBoolean("seen") && j.optBoolean("palm", true)), // before move, palm rejection made a finger move the page once a pen had written
+            j.optString("tpl", "lined"), j.optDouble("gap", 55.0).toFloat().coerceIn(GAP_MM.start * MM, GAP_MM.endInclusive * MM))
     }
     o.optJSONObject("remind")?.let { j -> remind = Remind(j.optBoolean("on"), j.optString("time", "21:00")) }
     sound = o.optBoolean("sound", true)
@@ -236,7 +239,7 @@ internal fun dataFrom(raw: JSONObject) = Data().apply {
     adj = o.optJSONObject("adj")?.let(::walletFrom) ?: adjFor(this)
 }
 
-private fun pageJson(p: Page) = JSONObject().put("paper", p.paper).put("strokes", JSONArray(p.strokes.map { st ->
+private fun pageJson(p: Page) = JSONObject().put("paper", p.paper).put("tpl", p.tpl).put("gap", p.gap.toDouble()).put("strokes", JSONArray(p.strokes.map { st ->
     JSONObject().put("c", st.c).put("w", st.w.toDouble()).put("e", st.e).put("p", JSONArray(st.p.map { it.toDouble() }))
 }))
 
@@ -244,7 +247,7 @@ private fun pageFrom(o: JSONObject) = Page(o.getString("paper"), o.getJSONArray(
     (0 until a.length()).map { i ->
         a.getJSONObject(i).let { j -> j.getJSONArray("p").let { p -> InkStroke(j.getString("c"), j.getDouble("w").toFloat(), j.getBoolean("e"), FloatArray(p.length()) { p.getDouble(it).toFloat() }) } }
     }.toMutableList()
-})
+}, o.optString("tpl", "lined"), o.optDouble("gap", 55.0).toFloat())
 
 // ---------- the cloud copy (Sync.kt) ----------
 
@@ -341,6 +344,7 @@ internal fun pageBytes(p: Page): ByteArray = ByteArrayOutputStream().also { bo -
             o.writeUTF(st.c); o.writeFloat(st.w); o.writeBoolean(st.e); o.writeInt(st.p.size)
             st.p.forEachIndexed { i, v -> o.writeShort(Math.round(v * if (i % 3 == 2) 100 else 10).coerceIn(-32768, 32767)) }
         }
+        o.writeUTF(p.tpl); o.writeFloat(p.gap) // last, so an older app reading this page stops before them
     }
 }.toByteArray()
 
@@ -349,5 +353,8 @@ internal fun pageOf(b: ByteArray): Page = DataInputStream(GZIPInputStream(b.inpu
     Page(paper, MutableList(i.readInt()) {
         val c = i.readUTF(); val w = i.readFloat(); val e = i.readBoolean()
         InkStroke(c, w, e, FloatArray(i.readInt()) { k -> i.readShort() / if (k % 3 == 2) 100f else 10f })
-    })
+    }).apply {
+        // a page from before templates ends here
+        runCatching { tpl = i.readUTF(); gap = i.readFloat() }
+    }
 }

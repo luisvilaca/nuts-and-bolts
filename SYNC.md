@@ -40,6 +40,12 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+    // o cartão de Parceiro (passo 7): cada um escreve o seu; só o lê quem o cartão nomeia
+    match /peek/{uid} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || resource.data.buddy == request.auth.token.email);
+    }
   }
 }
 ```
@@ -82,3 +88,30 @@ Os lembretes por hábito usam alarmes exatos locais e funcionam sem rede. O Hype
 - ativa **Arranque automático**;
 - em **Poupança de bateria**, escolhe **Sem restrições**;
 - nas **Notificações**, deixa "Habit reminders" com som.
+
+No telemóvel dela faz o mesmo em **Five Nights at the Circus**.
+
+## 7. A app dela (Five Nights at the Circus) e o Parceiro
+
+A mesma app, com o visual do circo, é a variante `circus` do projeto. Instala-se ao lado da tua (pacote próprio) e tem os seus próprios dados, na conta Google dela.
+
+1. **Registar a app dela** no mesmo projeto Firebase: **Adicionar app > Android**.
+   - **Nome do pacote:** `com.luisvilaca.nutsandbolts.circus`
+   - **SHA-1** e **SHA-256**: os mesmos do passo 2 (é a mesma chave deste PC).
+2. Em **Definições do projeto > As tuas apps**, descarrega outra vez o `google-services.json` (agora traz as duas apps) e substitui `C:\NutsAndBolts\app\google-services.json`.
+   - Até lá, a variante do circo compila na mesma, só sem sync nem Parceiro.
+3. Em **Firestore > Regras**, cola as regras do passo 4 (agora com o bloco `peek`) e publica.
+4. **App Distribution:** no `local.properties`, junta `appDistributionTestersCircus=` com o email dela. Para publicar a versão dela:
+   ```
+   .\tools\publish.ps1 "O que mudou" circus
+   ```
+   - Ela recebe o convite, instala a **Firebase App Tester** e daí em diante atualiza com um toque.
+   - No Android Studio, escolhe a variante em **Build Variants**: `workshopDebug` é a tua, `circusDebug` é a dela.
+5. **No telemóvel dela:** **Definições > Sync > Sign in with Google** com a conta dela.
+   - Se ela preferir não usar a conta Google: **Or use an email and password**, com qualquer email (Yandex, Mail.ru…), e **Create account** na primeira vez. Para isto funcionar, liga uma vez no Firebase: **Authentication > Sign-in method > Adicionar fornecedor > Email/palavra-passe > Ativar > Guardar**.
+   - Na Rússia, a sync, o Parceiro e o login (qualquer um dos dois) precisam da VPN ligada, porque passam pelos servidores da Google. Sem VPN a app funciona na mesma e envia tudo quando a VPN voltar.
+6. **Ligar os dois (Parceiro):**
+   - Na app dela, em **Definições > Parceiro**, ela escreve o teu email Google e carrega em **Ligar**.
+   - Na tua, escreves o email dela.
+   - Quando os dois se tiverem nomeado, cada um vê no ecrã inicial o personagem do outro e quantos hábitos fez hoje, com um botão **Incentivar**.
+   - O incentivo chega como notificação enquanto a app do outro está aberta, ou na próxima vez que a abrir. Para chegar com a app fechada seria preciso o plano Blaze (Cloud Functions).

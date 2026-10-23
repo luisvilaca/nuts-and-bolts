@@ -38,22 +38,24 @@ class LangTest {
             "Build it: you earn each time you do it. Break it: you earn each time you resist it.", "Done pays this much. Failed takes the same amount back.",
             "Back to calendar", "Pen. Tap again for nib and stabilizer", "Eraser. Tap again for its size", "Move: a finger moves the page. Tap to write with a finger",
             "Move: off, a finger writes. Tap to move the page with a finger", "Ink colour", "Undo stroke", "Redo stroke", "Paper", "Bin this page",
-            "Pen ↔ eraser", "Next ink", "Nothing", "Move in", "Equip", "bolts in", "this run", "best run", "sheared", "{0} a day", "{0} a week",
+            "Pen ↔ eraser", "Next ink", "Nothing", "Move in", "Equip", "Buddy", "bolts in", "this run", "best run", "sheared", "{0} a day", "{0} a week",
             "EEEE d MMMM", "EEE d MMM", "MMMM yyyy", "d MMM", "d MMMM", "d MMMM yyyy", "EEEE") + PEN_COLORS.map { it.first }
         for ((name, table) in listOf("pt" to PT, "ru" to RU)) {
-            val missing = keys.filter { it !in table }
+            val missing = keys.filter { it !in table && it !in SKIN_WORDS[name].orEmpty() } // the skin may supply its own words
             assertTrue("$name is missing: $missing", missing.isEmpty())
         }
         assertEquals(PT.keys.toSet().size, PT.size) // no phrase written twice
     }
 
     @Test fun russianPluralsTakeThreeForms() {
+        val (bolt, nut, en) = if (SKIN == "circus") Triple(listOf("билет", "билета", "билетов"), listOf("Faz-Token", "Faz-Tokens"), listOf("ticket", "tickets"))
+            else Triple(listOf("болт", "болта", "болтов"), listOf("porca", "porcas"), listOf("bolt", "bolts"))
         Lang.pick = "ru"
-        assertEquals(listOf("1 болт", "2 болта", "5 болтов", "11 болтов", "21 болт", "22 болта", "112 болтов"), listOf(1, 2, 5, 11, 21, 22, 112).map { plural(it, "bolt") })
+        assertEquals(listOf(1 to 0, 2 to 1, 5 to 2, 11 to 2, 21 to 0, 22 to 1, 112 to 2).map { (n, f) -> "$n ${bolt[f]}" }, listOf(1, 2, 5, 11, 21, 22, 112).map { plural(it, "bolt") })
         Lang.pick = "pt"
-        assertEquals(listOf("1 porca", "0 porcas", "3 porcas"), listOf(1, 0, 3).map { plural(it, "nut") })
+        assertEquals(listOf("1 ${nut[0]}", "0 ${nut[1]}", "3 ${nut[1]}"), listOf(1, 0, 3).map { plural(it, "nut") })
         Lang.pick = "en"
-        assertEquals(listOf("1 bolt", "4 bolts"), listOf(1, 4).map { plural(it, "bolt") })
+        assertEquals(listOf("1 ${en[0]}", "4 ${en[1]}"), listOf(1, 4).map { plural(it, "bolt") })
     }
 
     @Test fun phrasesAndDatesFollowTheLanguage() {
@@ -62,8 +64,8 @@ class LangTest {
         assertEquals("Thursday 22 October", fmt(d, "EEEE d MMMM")); assertEquals("Done", t("Done")); assertEquals("Day", t("per day"))
         Lang.pick = "pt"
         assertEquals("Quinta-feira, 22 de outubro", fmt(d, "EEEE d MMMM")); assertEquals("Feito", t("Done"))
-        assertEquals("Até 20 parafusos e 4 de Bateria por dia.", t("Up to {0} and {1} {2} a day.", plural(20, "bolt"), 4, Attr.Battery.title))
+        assertEquals(if (SKIN == "circus") "Até 20 bilhetes e 4 de Energia por dia." else "Até 20 parafusos e 4 de Bateria por dia.", t("Up to {0} and {1} {2} a day.", plural(20, "bolt"), 4, Attr.Battery.title))
         Lang.pick = "ru"
-        assertEquals("Октябрь 2026", fmt(d, "MMMM yyyy")); assertEquals("Батарея", Attr.Battery.title); assertEquals("Пн", DOW[0])
+        assertEquals("Октябрь 2026", fmt(d, "MMMM yyyy")); assertEquals(if (SKIN == "circus") "Энергия" else "Батарея", Attr.Battery.title); assertEquals("Пн", DOW[0])
     }
 }

@@ -24,14 +24,15 @@ object Lang {
 }
 
 fun t(en: String, vararg a: Any?): String {
-    var s = (when (Lang.code) { "pt" -> PT; "ru" -> RU; else -> EN })[en] ?: en
+    // the skin's own words first (Skin.kt: the circus renames bolts, nuts, the attributes...), then the tables
+    var s = SKIN_WORDS[Lang.code]?.get(en) ?: (when (Lang.code) { "pt" -> PT; "ru" -> RU; else -> EN })[en] ?: en
     a.forEachIndexed { i, v -> s = s.replace("{$i}", v.toString()) }
     return s
 }
 
 // "3 bolts": a count and its noun in the right plural form (Russian has three: 1 болт, 2 болта, 5 болтов).
 fun plural(n: Int, w: String): String {
-    val f = NOUNS[w]?.get(Lang.code) ?: return "$n $w${if (abs(n) == 1) "" else "s"}"
+    val f = (SKIN_NOUNS[w] ?: NOUNS[w])?.get(Lang.code) ?: return "$n $w${if (abs(n) == 1) "" else "s"}"
     val i = if (Lang.code == "ru") { val a = abs(n) % 100; val b = a % 10; if (b == 1 && a != 11) 0 else if (b in 2..4 && a !in 12..14) 1 else 2 }
         else if (abs(n) == 1) 0 else 1
     return "$n ${f[minOf(i, f.size - 1)]}"

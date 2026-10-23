@@ -80,6 +80,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
@@ -203,7 +204,7 @@ private fun BottomBar(ui: Ui) {
 @Composable
 private fun SideRail(ui: Ui) {
     Column(Modifier.fillMaxHeight().width(72.dp).background(W.rail), verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
-        Tab.entries.forEach { k -> TabItem(ui, k, Modifier.fillMaxWidth().height(60.dp)) }
+        Tab.entries.forEach { k -> TabItem(ui, k, Modifier.fillMaxWidth().height(72.dp)) } // room for a two-line label
     }
 }
 
@@ -217,7 +218,7 @@ private fun TabItem(ui: Ui, k: Tab, modifier: Modifier) {
         Box(Modifier.size(64.dp, 32.dp).clip(CircleShape).background(if (on) W.raised else Color.Transparent).indication(press, ripple()), contentAlignment = Alignment.Center) {
             Icon(ICONS.getValue(k.icon), null, Modifier.size(24.dp), tint = if (on) W.act else W.dim)
         }
-        Text(t(k.label), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim)
+        Text(t(k.label), Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelMedium, color = if (on) W.text else W.dim, textAlign = TextAlign.Center, maxLines = 2)
     }
 }
 

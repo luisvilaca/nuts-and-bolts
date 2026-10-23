@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- notification icon: the bear's head in its top hat, one colour, eyes cut out -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M9,2h6v4h2v1.5h-10v-1.5h2zM5.5,9a2,2 0 1,1 4,0h5a2,2 0 1,1 4,0a3,3 0 0,1 1.5,2.6v4.4a4,4 0 0,1 -4,4h-8a4,4 0 0,1 -4,-4v-4.4a3,3 0 0,1 1.5,-2.6zM8.5,13a1.4,1.4 0 1,0 2.8,0a1.4,1.4 0 1,0 -2.8,0zM12.7,13a1.4,1.4 0 1,0 2.8,0a1.4,1.4 0 1,0 -2.8,0z" />
+</vector>
