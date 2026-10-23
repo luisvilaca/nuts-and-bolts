@@ -230,7 +230,7 @@ private fun TabItem(ui: Ui, k: Tab, modifier: Modifier) {
 fun Header(title: String, store: Store, ui: Ui, lay: Lay, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.displaySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Wallet(store.s)
+        store.s.let { Wallet(it.bolts, it.nuts) }
         IconButton(onClick = { ui.settings = true }, Modifier.padding(start = 4.dp)) { Icon(ICONS.getValue("settings"), t("Settings"), tint = if (ui.settings) W.act else W.dim) }
     }
 }
@@ -241,9 +241,9 @@ fun Header(title: String, store: Store, ui: Ui, lay: Lay, modifier: Modifier = M
 fun <T> derived(store: Store, vararg keys: Any?, calc: () -> T): T = remember(store.tick, *keys) { calc() }
 
 @Composable
-fun Wallet(s: Data) = Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "${plural(s.bolts, "bolt")}, ${plural(s.nuts, "nut")}"; liveRegion = LiveRegionMode.Polite },
+fun Wallet(bolts: Int, nuts: Int) = Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "${plural(bolts, "bolt")}, ${plural(nuts, "nut")}"; liveRegion = LiveRegionMode.Polite },
     horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
-    Coin("bolts", s.bolts); Coin("nuts", s.nuts)
+    Coin("bolts", bolts); Coin("nuts", nuts)
 }
 
 @Composable
@@ -350,11 +350,11 @@ fun HabitRow(store: Store, ui: Ui, h: Habit, d: LocalDate, big: Boolean = false,
             Crossfade(complete || (full && !ahead), size, animationSpec = if (still) snap() else tween(250), label = "finish") { finished -> Box(Modifier.fillMaxSize()) {
                 if (finished) {
                     // finished: a quiet chip, not a dead button; a period closed by a skip or a sheared bolt reads in dim
-                    Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.steel else W.edge, CircleShape).longPress { menu = "done" }
+                    Row(Modifier.matchParentSize().clip(CircleShape).border(1.dp, if (complete) W.glow else W.edge, CircleShape).longPress { menu = "done" }
                         .semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        if (complete) Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.steel)
+                        if (complete) Icon(ICONS.getValue("check"), null, Modifier.size(18.dp), tint = W.glow)
                         Text(t(if (!complete) "Closed" else if (h.kind == Kind.Break) "Held" else "All in"), Modifier.padding(start = if (complete) 6.dp else 0.dp),
-                            style = MaterialTheme.typography.labelLarge, color = if (complete) W.steel else W.dim)
+                            style = MaterialTheme.typography.labelLarge, color = if (complete) W.glow else W.dim)
                     }
                 } else {
                     val press = remember { MutableInteractionSource() }

@@ -32,6 +32,8 @@ class Store private constructor(private val dir: File) {
     // the language follows the data, so a pick in Settings, a restore or a background reminder all speak it
     private var data: Data = load().also { Lang.pick = it.lang }
         set(v) { field = v; Lang.pick = v.lang }
+    // one mutable object, the same before and after a change: a composable that takes it is @NonSkippableComposable,
+    // or strong skipping keeps its old picture; better still, pass it the values it shows (Wallet)
     val s: Data get() { tick; return data }
 
     fun change(block: Data.() -> Unit) { data.block(); Lang.pick = data.lang; tick++; save(); onChange?.invoke() }

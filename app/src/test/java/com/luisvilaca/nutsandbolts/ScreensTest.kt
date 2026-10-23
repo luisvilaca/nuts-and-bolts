@@ -187,6 +187,20 @@ class ScreensTest {
         rule.onAllNodesWithText("Nothing")[1].assertIsSelected()
     }
 
+    // The wallet in the top bar shows a change to the balance at once, as a purchase makes it.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun walletFollowsTheBalance() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        rule.waitForIdle()
+        val before = st.s.bolts
+        val p = PARTS.first { it.id !in st.s.owned && it.bolts in 1..before && it.nuts <= st.s.nuts }
+        var ok = false
+        st.change { ok = buy(this, p) }
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(ok)
+        rule.onNodeWithContentDescription("${plural(before - p.bolts, "bolt")}, ${plural(st.s.nuts, "nut")}").assertExists()
+    }
+
     // A pen button that picks the next ink moves the selection in the ink swatches with it.
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penButtonInkShows() {
         val st = seed()

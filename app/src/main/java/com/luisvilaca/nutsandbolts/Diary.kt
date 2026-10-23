@@ -64,6 +64,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonSkippableComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -193,7 +194,7 @@ fun DiaryScreen(store: Store, ui: Ui, lay: Lay) {
 
 // Which pages to export: a range of days, this month's by default, with how many written pages it holds.
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
+@Composable @NonSkippableComposable
 private fun ExportRange(s: Data, close: () -> Unit, go: (LocalDate, LocalDate) -> Unit) {
     val m = YearMonth.now()
     val st = rememberDateRangePickerState(m.atDay(1).millis(), LocalDate.now().millis())
