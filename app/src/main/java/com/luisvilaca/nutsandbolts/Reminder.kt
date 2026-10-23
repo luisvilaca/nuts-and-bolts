@@ -48,6 +48,7 @@ class Reminder : BroadcastReceiver() {
         const val TAB = "tab" // the section a notification opens
         private const val DAY = "day"
         private const val HABITS = "habits"
+        const val BUDDY = "buddy"
 
         private fun notifyHabit(c: Context, s: Data, h: Habit, t: LocalDate) {
             val p = slots(s, h, t)
@@ -59,7 +60,8 @@ class Reminder : BroadcastReceiver() {
                 Notification.Action.Builder(Icon.createWithResource(c, R.drawable.ic_stat), word, done).build())
         }
 
-        private fun notify(c: Context, id: Int, channel: String, title: String, text: String, action: Notification.Action? = null) {
+        // tab: the section tapping it opens
+        internal fun notify(c: Context, id: Int, channel: String, title: String, text: String, action: Notification.Action? = null, tab: Tab = Tab.Habits) {
             val nm = c.getSystemService(NotificationManager::class.java)
             // the robot's own call, not the system ping; a channel's sound is fixed once made, hence new channel ids
             val sound = Uri.parse("android.resource://${c.packageName}/${R.raw.sfx_notify}")
@@ -67,7 +69,8 @@ class Reminder : BroadcastReceiver() {
             nm.deleteNotificationChannel("reminder") // the first build's channel, with the default sound
             nm.createNotificationChannel(NotificationChannel(DAY, t("Daily reminder"), NotificationManager.IMPORTANCE_DEFAULT).apply { setSound(sound, att) })
             nm.createNotificationChannel(NotificationChannel(HABITS, t("Habit reminders"), NotificationManager.IMPORTANCE_HIGH).apply { setSound(sound, att) })
-            val open = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java).putExtra(TAB, Tab.Habits.name)
+            nm.createNotificationChannel(NotificationChannel(BUDDY, t("Buddy cheers"), NotificationManager.IMPORTANCE_HIGH).apply { setSound(sound, att) })
+            val open = PendingIntent.getActivity(c, tab.ordinal, Intent(c, MainActivity::class.java).putExtra(TAB, tab.name)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             nm.notify(id, Notification.Builder(c, channel).setSmallIcon(R.drawable.ic_stat).setColor(W.act.toArgb())
                 .setContentTitle(title).setContentText(text).setContentIntent(open).setAutoCancel(true)

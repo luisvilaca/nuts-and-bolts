@@ -13,6 +13,10 @@ plugins {
 // Sync (Firebase) only when the project's google-services.json is here (see SYNC.md). Without it the app builds and
 // runs as before, with sync off.
 if (file("google-services.json").exists()) apply(plugin = libs.plugins.googleServices.get().pluginId)
+// Until the circus app is registered in the same Firebase project (SYNC.md), its build carries no Firebase config and
+// has sync off, instead of failing on a google-services.json without its package.
+if (file("google-services.json").exists() && !file("google-services.json").readText().contains("com.luisvilaca.nutsandbolts.circus"))
+    tasks.matching { it.name.startsWith("processCircus") && it.name.endsWith("GoogleServices") }.configureEach { enabled = false }
 
 // Kept out of git, in local.properties: who gets each build through App Distribution (appDistributionTesters=a@b.c,...).
 val local = Properties().apply { rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }
@@ -37,6 +41,16 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    // Two looks of the same app, each its own install: the owner's Reactor Workshop, and Five Nights at the Circus for
+    // their partner's phone. Everything but the skin (Skin.kt, Inks.kt, Parts.kt, Art.kt, sounds, icon, name) is shared.
+    flavorDimensions += "look"
+    productFlavors {
+        create("workshop") { dimension = "look"; isDefault = true }
+        create("circus") {
+            dimension = "look"; applicationIdSuffix = ".circus"
+            firebaseAppDistribution { testers = local.getProperty("appDistributionTestersCircus", "") }
+        }
     }
     buildTypes {
         getByName("release") {

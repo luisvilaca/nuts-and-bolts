@@ -63,7 +63,7 @@ class Mark(val s: Outcome, var b: Int = 0, var p: Int = 0, var n: Int = 0, var l
 // move: one finger moves the page instead of writing (two fingers always zoom and move it); the pen always writes.
 // b1, b2: what the pen's two side buttons do: "eraser" (pen and eraser in turn), "ink" (the next ink), "undo" or "none".
 class Pen(var color: String = PEN_COLORS[0].second, var nib: Float = 0.6f, var stab: Int = 50, var rub: Float = 4f, var paper: Int = 0, var seen: Boolean = false, var palm: Boolean = true,
-          var b1: String = "eraser", var b2: String = "ink", var move: Boolean = false)
+          var b1: String = "eraser", var b2: String = "ink", var move: Boolean = false, var tpl: String = "lined", var gap: Float = 55f) // tpl, gap: for new pages
 class Remind(var on: Boolean = false, var time: String = "21:00")
 
 class Data {

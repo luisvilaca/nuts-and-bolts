@@ -67,7 +67,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
     var pending by remember { mutableStateOf<Pair<Data, Map<String, Page>>?>(null) }
     var pendingDate by remember { mutableStateOf<String?>(null) }
     var clock by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf(s.name) }
+    var name by remember { mutableStateOf(s.robot) } // the default name in this language and look (Rebite, Freddy)
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -107,6 +107,10 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
 
             SectionLabel("Sync")
             SyncRow(ui)
+            if (Sync.ready(ctx)) {
+                SectionLabel("Buddy")
+                BuddyRow(store, ui)
+            }
 
             SectionLabel("Backup")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
@@ -159,7 +163,7 @@ fun SettingsScreen(store: Store, ui: Ui, lay: Lay) {
                 pending = null
                 ui.scope.launch {
                     val ok = withContext(Dispatchers.IO) { runCatching { store.restore(b) }.isSuccess }
-                    if (ok) { name = store.s.name; Sync.restored(); ui.tell(t("Backup restored")) } else ui.tell(t("The backup could not be restored."))
+                    if (ok) { name = store.s.robot; Sync.restored(); ui.tell(t("Backup restored")) } else ui.tell(t("The backup could not be restored."))
                 }
             }) { Text(t("Replace"), color = W.coral) } },
             dismissButton = { TextButton({ pending = null }) { Text(t("Keep what is here"), color = W.text) } })
@@ -217,11 +221,17 @@ private fun SyncRow(ui: Ui) {
         return
     }
     val who = Sync.who
+    var byMail by remember { mutableStateOf(false) }
+    var mail by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-        if (who == null) Button({
-            busy = true
-            ui.scope.launch { Sync.signIn(ctx)?.let { if (it.isNotEmpty()) ui.tell(it) }; busy = false }
-        }, Modifier.height(44.dp), enabled = !busy, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(t("Sign in with Google")) }
+        if (who == null) {
+            Button({
+                busy = true
+                ui.scope.launch { Sync.signIn(ctx)?.let { if (it.isNotEmpty()) ui.tell(it) }; busy = false }
+            }, Modifier.height(44.dp), enabled = !busy, shape = CircleShape, colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(t("Sign in with Google")) }
+            if (!byMail) TextButton({ byMail = true }, Modifier.height(44.dp)) { Text(t("Or use an email and password"), color = W.text) }
+        }
         else {
             Column {
                 Text(who, style = MaterialTheme.typography.bodyLarge)
@@ -230,7 +240,50 @@ private fun SyncRow(ui: Ui) {
             OutlinedButton({ ui.scope.launch { Sync.signOut(ctx) } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) { Text(t("Sign out"), color = W.text) }
         }
     }
+    // an account by email and password, for someone who would rather not use Google's
+    if (who == null && byMail) Column(Modifier.padding(top = 12.dp).widthIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Field(mail, { mail = it.take(80) }, t("Email"))
+        Field(pass, { pass = it.take(64) }, t("Password"), password = true)
+        fun go(create: Boolean) {
+            busy = true
+            ui.scope.launch { Sync.signInEmail(mail, pass, create)?.let { ui.tell(it) }; busy = false }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+            Button({ go(false) }, Modifier.height(44.dp), enabled = !busy && mail.isNotBlank() && pass.isNotEmpty(), shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(W.act, W.onAct, W.raised, W.dim)) { Text(t("Sign in")) }
+            OutlinedButton({ go(true) }, Modifier.height(44.dp), enabled = !busy && mail.isNotBlank() && pass.isNotEmpty(), border = BorderStroke(1.dp, W.edge)) { Text(t("Create account"), color = W.text) }
+            TextButton({
+                if (mail.isBlank()) ui.tell(t("Type your email first."))
+                else ui.scope.launch { ui.tell(Sync.resetPassword(mail) ?: t("A link to choose a new password was sent to {0}.", mail.trim())) }
+            }, Modifier.height(44.dp)) { Text(t("Forgot password?"), color = W.dim) }
+        }
+    }
     Text(t(if (who == null) "Sign in with the same Google account on the tablet and the phone, and both keep the same habits, robot and diary pages. Changes made offline go across once the device is back online."
         else "Every change goes to the other device as it is made. Signing out keeps everything on this device."),
         Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+}
+
+// One person invites the other by their Google email; the other accepts on their phone (here, on the Lab, or from the
+// notification), and then each app shows the other's character and their day, and either can send a cheer.
+@Composable
+private fun BuddyRow(store: Store, ui: Ui) {
+    var email by remember { mutableStateOf(Buddy.buddy) }
+    LaunchedEffect(Buddy.buddy) { email = Buddy.buddy }
+    if (Sync.who == null) {
+        Text(t("Sign in under Sync first."), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        return
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+        Field(email, { email = it.take(80) }, t("Your buddy's Google email"), Modifier.widthIn(max = 360.dp))
+        OutlinedButton({ Buddy.link(email, store)?.let { ui.tell(it) } }, Modifier.height(44.dp), border = BorderStroke(1.dp, W.edge)) {
+            Text(t(if (email.isBlank() && Buddy.buddy.isNotEmpty()) "Unlink" else "Invite"), color = W.text)
+        }
+    }
+    val b = Buddy.buddy
+    Text(when {
+        b.isEmpty() -> t("Type your buddy's Google email and send an invitation. Once they accept it, you both see each other's character and today's progress, and can send a cheer.")
+        Buddy.them == null -> t("Invitation sent to {0}. Once they accept it on their phone, you are linked.", b)
+        else -> t("Linked with {0}.", b)
+    }, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium, color = W.dim)
+    Buddy.invites.forEach { InviteCard(it, store, ui) }
 }

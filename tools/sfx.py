@@ -1,6 +1,6 @@
 # Synthesizes the app's sound effects as 16-bit mono WAVs: a robot's workshop powered by a small reactor, so servos,
 # ratchets, relays, metal, Geiger ticks and reactor hum. Deterministic (fixed seed), no dependencies.
-# python tools/sfx.py app/src/main/res/raw
+# python tools/sfx.py app/src/workshop/res/raw
 import math, random, struct, sys, wave
 SR = 44100
 random.seed(7)

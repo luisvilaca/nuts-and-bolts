@@ -14,6 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
+import kotlin.math.roundToInt
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -129,12 +134,7 @@ fun DrawScope.robot(equip: Map<String, String?>, t: Long, mood: Int = 1, react: 
             "eyes" -> scale(1f, eyes, pt.pivots["eyes"] ?: Offset(200f, 150f)) { paint(sh, t, eyeAlpha, pt.pal) }
             "prop" -> scale(0.12f + 0.88f * kotlin.math.abs(cos(PI * (t % 450) / 450).toFloat()), 1f, pt.pivots["prop"] ?: Offset(200f, 54f)) { paint(sh, t, pal = pt.pal) }
             "hover" -> translate(0f, -3f * (1 - cos(2 * PI * (t % 2200) / 2200).toFloat())) { paint(sh, t, pal = pt.pal) }
-            "moon" -> {
-                // place the moon on its untilted orbit, then turn that offset by the tilt baked into the path
-                val a = 2 * PI * (t % 7000) / 7000
-                val x = (200 + 112 * cos(a)).toFloat(); val y = (150 + 34 * sin(a)).toFloat(); val m = sh.m!!
-                translate(m[0] * x + m[2] * y, m[1] * x + m[3] * y) { paint(sh, t, pal = pt.pal) }
-            }
+            "moon" -> moon(sh, t, pt.pal)
             else -> if ("halo" in sh.roles) translate(0f, -3f * (1 - cos(2 * PI * (t % 2600) / 2600).toFloat())) { paint(sh, t, pal = pt.pal) } else paint(sh, t, pal = pt.pal)
         }
     }
@@ -155,6 +155,22 @@ fun DrawScope.robot(equip: Map<String, String?>, t: Long, mood: Int = 1, react: 
     }
 }
 
+// A pet moon on its orbit: placed on the untilted orbit, then that offset turned by the tilt baked into the path.
+private fun DrawScope.moon(sh: Shape, t: Long, pal: Map<String, Ink>) {
+    val a = 2 * PI * (t % 7000) / 7000
+    val x = (200 + 112 * cos(a)).toFloat(); val y = (150 + 34 * sin(a)).toFloat(); val m = sh.m!!
+    translate(m[0] * x + m[2] * y, m[1] * x + m[3] * y) { paint(sh, t, pal = pal) }
+}
+
+// The buddy's character, as their app drew it (Buddy.kt), standing on this one's platform: in the bay's space, its feet
+// at x on the platform's floor line (750), smaller than the host, breathing out of step with it.
+fun DrawScope.guest(pic: ImageBitmap, x: Float, t: Long) {
+    val u = 0.7f // robot units to the bay's (the host stands at 1.25)
+    val bob = -3f * (1 - cos(2 * PI * ((t + 1300) % 3400) / 3400).toFloat())
+    drawImage(pic, dstOffset = IntOffset((x - 200 * u).roundToInt(), (750 - 468 * u + bob).roundToInt()),
+        dstSize = IntSize((400 * u).roundToInt(), (520 * u).roundToInt()), filterQuality = FilterQuality.High)
+}
+
 // Fits a w x h drawing space into the canvas: contain (meet) or cover (slice), anchored bottom centre like the bay.
 fun DrawScope.fit(w: Float, h: Float, cover: Boolean = false, block: DrawScope.() -> Unit) {
     val k = if (cover) max(size.width / w, size.height / h) else min(size.width / w, size.height / h)
@@ -169,6 +185,17 @@ fun RobotView(store: Store, modifier: Modifier = Modifier, equip: Map<String, St
 
 // One part on its own, square-cropped for a shop tile (bases draw their room instead, see Shop.kt).
 fun DrawScope.thumb(p: Part, t: Long = 0) {
+    // a pet that orbits the head: its tile shows the pet itself, framed, without the orbit
+    val pet = p.shapes.filter { it.layer == "moon" }
+    if (pet.isNotEmpty()) {
+        val m = pet[0].m!!
+        val o = Offset(m[0] * 312 + m[2] * 150, m[1] * 312 + m[3] * 150) // where moon() puts it at t = 0
+        val bs = pet.map { it.path.getBounds() }
+        val r = androidx.compose.ui.geometry.Rect(bs.minOf { it.left }, bs.minOf { it.top }, bs.maxOf { it.right }, bs.maxOf { it.bottom }).translate(o)
+        val k = min(size.width, size.height) * 0.62f / max(r.width, r.height)
+        withTransform({ translate(size.width / 2, size.height / 2); scale(k, k, Offset.Zero); translate(-r.center.x, -r.center.y) }) { pet.forEach { moon(it, 0, p.pal) } }
+        return
+    }
     val b = p.box ?: return
     val s = max(b[2], b[3]) * 1.12f
     val k = min(size.width, size.height) / s

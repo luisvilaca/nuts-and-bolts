@@ -4,10 +4,10 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 
-// Short effects for the moments that change something, in the workshop's own sounds (servos, ratchets, relays, metal,
-// Geiger ticks, reactor hum): a bolt driven home, a frame going critical, a skip, a sheared bolt, a level gained or
+// Short effects for the moments that change something, in the skin's own sounds (the workshop's servos, ratchets,
+// relays, metal, Geiger ticks and reactor hum; the circus's bulbs, calliope, music box, glass and camera static): a bolt driven home, a frame going critical, a skip, a sheared bolt, a level gained or
 // lost, a nut, a purchase, a part equipped, an undo, a habit added or deleted, the robot answering a tap, a tab, a
-// page binned. Synthesized by tools/sfx.py. Silent when the Sounds switch in Settings is off (App keeps on in step
+// page binned. Synthesized by tools/sfx.py and tools/sfx_circus.py into each flavour's res/raw. Silent when the Sounds switch in Settings is off (App keeps on in step
 // with it), and before load.
 object Sfx {
     private var pool: SoundPool? = null

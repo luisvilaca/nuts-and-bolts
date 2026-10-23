@@ -1,0 +1,689 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T13:16:30Z",
+  "title": "Design System: Five Nights at the Circus",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "canonical": "#120A14",
+        "tonalRamp": [
+          "#251429",
+          "#43254B",
+          "#62366D",
+          "#81478F",
+          "#A366B2",
+          "#BE92C9",
+          "#D6BBDD",
+          "#EFE4F1"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Rail",
+        "canonical": "#0B060D",
+        "tonalRamp": [
+          "#23132A",
+          "#41234D",
+          "#5E3470",
+          "#7C4493",
+          "#9E62B7",
+          "#BA8FCB",
+          "#D4B9DF",
+          "#EEE3F2"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "#1D1020",
+        "tonalRamp": [
+          "#251429",
+          "#44254B",
+          "#63366D",
+          "#81478F",
+          "#A466B2",
+          "#BE92C9",
+          "#D7BBDD",
+          "#EFE4F1"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#2E1630",
+        "tonalRamp": [
+          "#28132A",
+          "#4A234D",
+          "#6B3370",
+          "#8D4393",
+          "#B062B7",
+          "#C78FCC",
+          "#DCB9DF",
+          "#F1E3F2"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "rgba(255,255,255,0.07)"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "#2B1628",
+        "tonalRamp": [
+          "#281526",
+          "#4A2645",
+          "#6C3764",
+          "#8E4884",
+          "#B167A7",
+          "#C893C0",
+          "#DCBCD8",
+          "#F1E4EF"
+        ]
+      },
+      "edge": {
+        "role": "neutral",
+        "displayName": "Edge",
+        "canonical": "#4A2541",
+        "tonalRamp": [
+          "#291424",
+          "#4B2542",
+          "#6D3660",
+          "#8F477D",
+          "#B366A0",
+          "#C992BB",
+          "#DDBBD5",
+          "#F1E4EE"
+        ]
+      },
+      "canvas-cream": {
+        "role": "neutral",
+        "displayName": "Canvas Cream",
+        "canonical": "#F3E6D3",
+        "tonalRamp": [
+          "#30220D",
+          "#583E18",
+          "#805A23",
+          "#A8772E",
+          "#CE994B",
+          "#DCB67F",
+          "#E9D1AF",
+          "#F6EDDF"
+        ]
+      },
+      "dim": {
+        "role": "neutral",
+        "displayName": "Dim",
+        "canonical": "#BBA4B0",
+        "tonalRamp": [
+          "#231A1F",
+          "#403038",
+          "#5D4652",
+          "#7B5C6C",
+          "#9D7C8D",
+          "#B9A2AE",
+          "#D3C5CC",
+          "#EEE8EB"
+        ]
+      },
+      "faded-canvas": {
+        "role": "secondary",
+        "displayName": "Faded Canvas",
+        "canonical": "#E8D5C4",
+        "tonalRamp": [
+          "#2C1E11",
+          "#51371F",
+          "#75502E",
+          "#9A683C",
+          "#BF895A",
+          "#D1AB8A",
+          "#E2CBB6",
+          "#F4EAE2"
+        ]
+      },
+      "joint": {
+        "role": "secondary",
+        "displayName": "Joint",
+        "canonical": "#7A5A6E",
+        "tonalRamp": [
+          "#231A20",
+          "#41303A",
+          "#5E4555",
+          "#7B5B6F",
+          "#9E7B91",
+          "#BAA1B0",
+          "#D4C4CE",
+          "#EEE8EB"
+        ]
+      },
+      "selection": {
+        "role": "neutral",
+        "displayName": "Selection",
+        "canonical": "rgba(232,213,196,0.55)"
+      },
+      "selection-fill": {
+        "role": "neutral",
+        "displayName": "Selection Fill",
+        "canonical": "rgba(232,213,196,0.06)"
+      },
+      "bulb-amber": {
+        "role": "primary",
+        "displayName": "Bulb Amber",
+        "canonical": "#FFC94A",
+        "tonalRamp": [
+          "#3D2B00",
+          "#704F00",
+          "#A37300",
+          "#D69600",
+          "#FFBB1A",
+          "#FFCE5C",
+          "#FFE199",
+          "#FFF3D6"
+        ]
+      },
+      "on-bulb": {
+        "role": "primary",
+        "displayName": "On Bulb",
+        "canonical": "#2A1404",
+        "tonalRamp": [
+          "#381B05",
+          "#66310A",
+          "#95470E",
+          "#C45D13",
+          "#EB7D2D",
+          "#F1A36A",
+          "#F6C5A2",
+          "#FBE8DA"
+        ]
+      },
+      "bulb-glow": {
+        "role": "primary",
+        "displayName": "Bulb Glow",
+        "canonical": "#FFB938",
+        "tonalRamp": [
+          "#3D2800",
+          "#704900",
+          "#A36A00",
+          "#D68B00",
+          "#FFAE1A",
+          "#FFC65C",
+          "#FFDB99",
+          "#FFF1D6"
+        ]
+      },
+      "filament": {
+        "role": "primary",
+        "displayName": "Filament",
+        "canonical": "#FFE6A8",
+        "tonalRamp": [
+          "#3D2C00",
+          "#705000",
+          "#A37400",
+          "#D69900",
+          "#FFBD1A",
+          "#FFD05C",
+          "#FFE299",
+          "#FFF3D6"
+        ]
+      },
+      "faz-token-pink": {
+        "role": "tertiary",
+        "displayName": "Faz Token Pink",
+        "canonical": "#FF7AAE",
+        "tonalRamp": [
+          "#3D0018",
+          "#70002C",
+          "#A30040",
+          "#D60054",
+          "#FF1A73",
+          "#FF5C9C",
+          "#FF99C1",
+          "#FFD6E6"
+        ]
+      },
+      "smashed-coral": {
+        "role": "tertiary",
+        "displayName": "Smashed Coral",
+        "canonical": "#FF5C5C",
+        "tonalRamp": [
+          "#3D0000",
+          "#700000",
+          "#A30000",
+          "#D60000",
+          "#FF1A1A",
+          "#FF5C5C",
+          "#FF9999",
+          "#FFD6D6"
+        ]
+      },
+      "tent-red-drum": {
+        "role": "material",
+        "displayName": "Tent Red Drum",
+        "canonical": "#7A1426",
+        "tonalRamp": [
+          "#350910",
+          "#60101E",
+          "#8C172C",
+          "#B81E39",
+          "#DF3A57",
+          "#E87387",
+          "#F1A7B4",
+          "#F9DCE1"
+        ]
+      },
+      "tent-red-stripe": {
+        "role": "material",
+        "displayName": "Tent Red Stripe",
+        "canonical": "#8A1A2E",
+        "tonalRamp": [
+          "#330A11",
+          "#5E121F",
+          "#891A2E",
+          "#B4223C",
+          "#DB3E5A",
+          "#E5768A",
+          "#EFA9B6",
+          "#F9DDE2"
+        ]
+      },
+      "tent-cream-stripe": {
+        "role": "material",
+        "displayName": "Tent Cream Stripe",
+        "canonical": "#D9C7B0",
+        "tonalRamp": [
+          "#292014",
+          "#4C3A24",
+          "#6E5535",
+          "#917046",
+          "#B49164",
+          "#CAB191",
+          "#DECEBA",
+          "#F2EBE3"
+        ]
+      },
+      "brass-trim": {
+        "role": "material",
+        "displayName": "Brass Trim",
+        "canonical": "#F2C14E",
+        "tonalRamp": [
+          "#392904",
+          "#694C08",
+          "#986E0B",
+          "#C8900F",
+          "#EFB429",
+          "#F4CA67",
+          "#F8DEA0",
+          "#FCF2D9"
+        ]
+      },
+      "sign-board": {
+        "role": "material",
+        "displayName": "Sign Board",
+        "canonical": "#2A1426",
+        "tonalRamp": [
+          "#291426",
+          "#4C2445",
+          "#6F3564",
+          "#914583",
+          "#B564A6",
+          "#CA90C0",
+          "#DEBAD8",
+          "#F2E3EF"
+        ]
+      },
+      "riser-plum": {
+        "role": "material",
+        "displayName": "Riser Plum",
+        "canonical": "#3A1F33",
+        "tonalRamp": [
+          "#281523",
+          "#492740",
+          "#6A395E",
+          "#8C4B7B",
+          "#AF699D",
+          "#C695B9",
+          "#DBBDD3",
+          "#F1E4EE"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen titles (Rye; Kelly Slab in Russian)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Empty-state line; the picked habit in the detail pane."
+      },
+      "title-large": {
+        "displayName": "Title Large",
+        "purpose": "A part's name in its detail."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Habit names on cards."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Notes, field text, part names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Habit metadata, helper and reward text."
+      },
+      "label-large": {
+        "displayName": "Label Large",
+        "purpose": "Buttons, segments, attribute names."
+      },
+      "label-medium": {
+        "displayName": "Label Medium",
+        "purpose": "Tab labels, attribute meanings."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "The nameplate and group labels, tracked caps."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Balances, levels and counters, in Rye."
+      }
+    },
+    "shadows": [
+      {
+        "name": "bulb-halo",
+        "value": "radial-gradient(bulb-glow 55% -> transparent, radius 2.1x bulb; up to 3.4x while fresh)",
+        "purpose": "A lit bulb; the only glow on a slot."
+      },
+      {
+        "name": "card-lit-edge",
+        "value": "1.5dp bulb-glow at 90% over a 6dp bulb-glow haze at 25%, 12dp corners",
+        "purpose": "A finished habit's card."
+      },
+      {
+        "name": "spotlight",
+        "value": "cone light 8%->26% vertical; pool radial 42%; vignette black 0/45/78/92% at 0/0.3/0.6/1",
+        "purpose": "The one light in each room; everything else dark."
+      },
+      {
+        "name": "material-default",
+        "value": "Material 3 default elevation",
+        "purpose": "FAB and snackbar only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "bulb-buzz-on",
+        "value": "700ms, two flickers at partial power then hold",
+        "purpose": "Done lights the newest bulb."
+      },
+      {
+        "name": "fresh-flare",
+        "value": "sin(t/260ms) pulse, held until the screen is left",
+        "purpose": "A fresh bulb stays seen."
+      },
+      {
+        "name": "sign-ignite",
+        "value": "500ms beat then 700ms ramp",
+        "purpose": "A just-completed sign's bloom and chase."
+      },
+      {
+        "name": "sign-chase",
+        "value": "14 border lights, thirds, 120ms step",
+        "purpose": "A fully lit sign."
+      },
+      {
+        "name": "swag-chase",
+        "value": "11 bulbs, alternate, 400ms step",
+        "purpose": "The marquee swag over the signs."
+      },
+      {
+        "name": "fail-negative",
+        "value": "70ms Difference invert + 160ms static (420 specks)",
+        "purpose": "A smashed bulb; never with animations off."
+      },
+      {
+        "name": "press",
+        "value": "scale 0.96, tween 150ms",
+        "purpose": "Done button press."
+      },
+      {
+        "name": "finish-crossfade",
+        "value": "tween 250ms",
+        "purpose": "Done becomes the finished chip."
+      },
+      {
+        "name": "segment-slide",
+        "value": "spring(dampingRatio 0.8, stiffness 500)",
+        "purpose": "Segmented selection."
+      },
+      {
+        "name": "frame-clock",
+        "value": "one clock; t = 0 freezes every loop",
+        "purpose": "Animator duration scale 0 stills the ring."
+      }
+    ],
+    "sound": [
+      {
+        "name": "sfx_done",
+        "value": "bulb buzz, one flicker, filament tink, calliope note"
+      },
+      {
+        "name": "sfx_critical",
+        "value": "out-of-tune calliope fanfare"
+      },
+      {
+        "name": "sfx_skip",
+        "value": "bulb squeaked out of its socket"
+      },
+      {
+        "name": "sfx_fail",
+        "value": "glass smash, servo screech into static"
+      },
+      {
+        "name": "sfx_level",
+        "value": "music box climbing"
+      },
+      {
+        "name": "sfx_down",
+        "value": "music box winding flat"
+      },
+      {
+        "name": "sfx_nut",
+        "value": "coin and prize bell"
+      },
+      {
+        "name": "sfx_buy",
+        "value": "claw, thunk, two bells"
+      },
+      {
+        "name": "sfx_equip",
+        "value": "servo turn, jaw clack"
+      },
+      {
+        "name": "sfx_undo",
+        "value": "servo backwards"
+      },
+      {
+        "name": "sfx_add",
+        "value": "three hammer taps, rising blip"
+      },
+      {
+        "name": "sfx_delete",
+        "value": "wooden clatter, low thud"
+      },
+      {
+        "name": "sfx_chirp",
+        "value": "clown horn honk-honk"
+      },
+      {
+        "name": "sfx_tab",
+        "value": "camera click and static"
+      },
+      {
+        "name": "sfx_bin",
+        "value": "static swell that cuts out"
+      },
+      {
+        "name": "sfx_notify",
+        "value": "three lullaby music-box notes"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "landscape and width >= 600dp"
+      },
+      {
+        "name": "phone",
+        "value": "short side < 600dp"
+      },
+      {
+        "name": "split",
+        "value": "width >= 720dp"
+      },
+      {
+        "name": "scene",
+        "value": "1000x900 scene; x 40..960, y 120..880 always shown; crop to x 60..940 when narrow"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Done Button",
+      "kind": "button",
+      "refersTo": "button-done",
+      "description": "The one amber action per habit card; also Save, Buy, Add habit.",
+      "html": "<button class=\"ds-btn-done\">Done</button>",
+      "css": ".ds-btn-done { font-family: Manrope, sans-serif; background: #FFC94A; color: #2A1404; height: 44px; padding: 0 24px; border: none; border-radius: 9999px; font-size: 16px; font-weight: 600; transition: transform .15s; } .ds-btn-done:active { transform: scale(.96); } .ds-btn-done:focus-visible { outline: 2px solid #E8D5C4; outline-offset: 2px; } .ds-btn-done:disabled { background: #2E1630; color: #BBA4B0; }"
+    },
+    {
+      "name": "Menu Button",
+      "kind": "button",
+      "refersTo": "button-menu",
+      "description": "44dp outlined circle beside Done; its menu holds Skip, Fail, take back, Edit, Delete.",
+      "html": "<button class=\"ds-btn-menu\" aria-label=\"More\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"6\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"18\" r=\"1.6\" fill=\"currentColor\"/></svg></button>",
+      "css": ".ds-btn-menu { width: 44px; height: 44px; border-radius: 50%; background: transparent; border: 1px solid #4A2541; color: #E8D5C4; display: grid; place-items: center; } .ds-btn-menu:hover, .ds-btn-menu:focus-visible { background: #2E1630; outline: none; }"
+    },
+    {
+      "name": "Finished Chip",
+      "kind": "chip",
+      "refersTo": "chip-finished",
+      "description": "Done's place once every bulb is lit.",
+      "html": "<span class=\"ds-chip\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\"><path d=\"M5 12.5l4.5 4.5L19 7.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg> All in</span>",
+      "css": ".ds-chip { font-family: Manrope, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 24px; border: 1px solid #E8D5C4; border-radius: 9999px; color: #E8D5C4; font-size: 16px; font-weight: 600; }"
+    },
+    {
+      "name": "Card (finished, lit edge)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Every habit, form group and calendar; a finished habit lights its whole edge.",
+      "html": "<div class=\"ds-card\"><b>Workout</b><br><small>3 a week · Costume</small></div><div class=\"ds-card lit\"><b>Read 20 minutes</b><br><small>1 a day · Wiring</small></div>",
+      "css": ".ds-card { font-family: Manrope, sans-serif; background: #1D1020; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px; color: #F3E6D3; margin-bottom: 12px; } .ds-card small { color: #BBA4B0; } .ds-card.lit { border: 1.5px solid #FFB938; box-shadow: 0 0 0 4px rgba(255,185,56,.25); }"
+    },
+    {
+      "name": "Segments",
+      "kind": "nav",
+      "refersTo": "segment-active",
+      "description": "Day / Calendar / History; the selection slides on a spring.",
+      "html": "<div class=\"ds-seg\"><span class=\"on\">Day</span><span>Calendar</span><span>History</span></div>",
+      "css": ".ds-seg { font-family: Manrope, sans-serif; display: flex; border: 1px solid #4A2541; border-radius: 22px; padding: 3px; } .ds-seg span { flex: 1; text-align: center; padding: 10px 8px; color: #BBA4B0; border-radius: 19px; font-weight: 600; } .ds-seg .on { background: rgba(232,213,196,0.06); color: #F3E6D3; box-shadow: inset 0 0 0 1.5px rgba(232,213,196,0.55); }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Faint fill; amber outline and cursor on focus.",
+      "html": "<input class=\"ds-field\" placeholder=\"Drink water\">",
+      "css": ".ds-field { font-family: Manrope, sans-serif; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 16px; color: #F3E6D3; caret-color: #FFC94A; } .ds-field::placeholder { color: #BBA4B0; } .ds-field:focus { outline: none; border-color: #FFC94A; }"
+    },
+    {
+      "name": "Bottom Bar",
+      "kind": "nav",
+      "refersTo": "nav-container",
+      "description": "The Ring, Prize Corner, Acts, Night Log; the active tab in a raised pill with an amber icon.",
+      "html": "<nav class=\"ds-bar\"><a class=\"on\"><i></i>The Ring</a><a><i></i>Prize Corner</a><a><i></i>Acts</a><a><i></i>Night Log</a></nav>",
+      "css": ".ds-bar { font-family: Manrope, sans-serif; display: flex; background: #0B060D; padding: 8px 0; } .ds-bar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: #BBA4B0; font-size: 13px; font-weight: 500; } .ds-bar i { width: 64px; height: 32px; border-radius: 16px; } .ds-bar .on { color: #F3E6D3; } .ds-bar .on i { background: #2E1630; } .ds-bar a:hover i { background: #2B1628; }"
+    },
+    {
+      "name": "Marquee Bulbs",
+      "kind": "custom",
+      "refersTo": "bulb",
+      "description": "Lit, dark, unscrewed (skip), smashed (fail): each slot state its own form.",
+      "html": "<span class=\"ds-bulb lit\"></span><span class=\"ds-bulb\"></span><span class=\"ds-bulb skip\"></span><span class=\"ds-bulb fail\"></span>",
+      "css": ".ds-bulb { display: inline-block; width: 20px; height: 20px; border-radius: 50%; margin: 6px; background: #2E1630; border: 2px solid #BBA4B0; } .ds-bulb.lit { background: radial-gradient(circle, #FFFFFF 0 38%, #FFE6A8 40%); border-color: #FFE6A8; box-shadow: 0 0 14px 6px rgba(255,185,56,.55); } .ds-bulb.skip { background: transparent; border: 2px dashed #BBA4B0; } .ds-bulb.fail { background: radial-gradient(circle, #FF5C5C 0 20%, #0B060D 22% 62%, transparent 64%); border: 2px dotted #FF5C5C; }"
+    },
+    {
+      "name": "Gauge",
+      "kind": "custom",
+      "refersTo": "gauge",
+      "description": "Attribute level: glow-to-canvas fill, haze and a white-hot leading spark.",
+      "html": "<div class=\"ds-gauge\"><i style=\"width:62%\"></i></div>",
+      "css": ".ds-gauge { height: 8px; border-radius: 4px; background: #2E1630; } .ds-gauge i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #FFB938, #E8D5C4); box-shadow: 0 0 10px rgba(255,185,56,.35), 6px 0 6px -1px #FFFFFF; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Midnight Big Top",
+    "overview": "A circus tent after close. The show is long over and the animatronics are still awake. The ground is plum-black canvas, and the only light in the room is bulb amber: the bulbs on each habit's sign, the one spotlight on the ring box, the gauges, and the Done button. Everything else stays in the dark. Each habit is a marquee sign. Done lights a bulb that buzzes on, flickering twice before it holds. When every bulb on a sign is lit, its border lights chase and the animatronic's eyes flare.\n\nThe world is drawn, not photographed. Every figure, room and prop is vector art painted from Inks.kt roles over a 400 x 520 robot space and a 1000 x 900 ring scene. The art is inspired by the classic and withered animatronics and Sister Location's circus, but no game assets are copied. Tent red and cream are materials (the drum stripes, the riser skirt, the valance and the calliope). They never act as signals. The interface around the ring is quiet: plum cards, cream text, one amber action per card.\n\nDensity and structure are the same as the workshop flavour, with the same screens, breakpoints and rhythm. The circus changes only colour, faces, icons, art, words and sound.",
+    "keyCharacteristics": [
+      "Plum-black tonal ladder (rail < ground < card < raised) with cream text.",
+      "Bulb amber is the single light and the single action colour.",
+      "Habit slots are bulbs, and each state has its own form: lit, dark, unscrewed, smashed.",
+      "Rye poster wood type for titles and numerals, with Manrope for everything read.",
+      "One spotlight. Outside its cone the ring falls to near-black.",
+      "A Fail flips the ring to its negative for one frame, under camera static."
+    ],
+    "rules": [
+      {
+        "name": "The One Light Rule",
+        "body": "In the interface, amber is the only colour that glows or invites a press. Done is the one amber fill on a card, and every glow uses bulb-glow.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tent Is Material Rule",
+        "body": "Tent red and cream stripe the drum, the riser, the valance and the calliope. They never mark state, never fill a control, and never colour text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pink Means Tokens Rule",
+        "body": "In the interface chrome, pink appears only on Faz-Tokens. Pink in the art (bows, blush, pom-poms, the Circus Gallery's neon) belongs to the costumes and rooms and is allowed.",
+        "section": "colors"
+      },
+      {
+        "name": "The Poster Face Is For Signs Rule",
+        "body": "Rye sets only titles and numbers, never a sentence. Anything read in full is Manrope.",
+        "section": "typography"
+      },
+      {
+        "name": "The Cyrillic Swap Rule",
+        "body": "When the language is Russian, every Rye role changes to Kelly Slab. The swap is never left to a system fallback.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Spotlight Rule",
+        "body": "Each room has exactly one light colour (Center Ring amber, Parts & Service sick green #B8F0A0, Pirate Cove violet #B48CFF, Show Stage warm white #FFE3B0, Circus Gallery pink #FF6FA3). It feeds the spotlight and the marquee swag. Everything outside the cone stays dark.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep bulb amber (bulb-amber, bulb-glow) as the only light and the only action colour in the interface. Use one amber Done per card.",
+      "Do draw every slot as a marquee bulb in one of its four forms, so state is legible without colour.",
+      "Do set titles and numbers in Rye (Kelly Slab in Russian) and everything read in Manrope.",
+      "Do keep the stage dark outside the room's one spotlight, using one light colour per room.",
+      "Do let a fresh bulb keep its flare until the screen is left, and let a fully lit sign chase its border lights.",
+      "Do freeze every loop, the buzz-on and the negative-flash when the animator duration scale is 0.",
+      "Do use the circus's word overlay (Tickets, Faz-Tokens, Acts, Night Log, Animatronic, smashed) in EN, PT-PT and RU."
+    ],
+    "donts": [
+      "Don't use tent red or cream stripe as a signal, a control fill or a text colour. They are canvas and wood.",
+      "Don't put pink in the interface chrome for anything but Faz-Tokens, or coral for anything but a smashed bulb and a destructive action.",
+      "Don't set sentences, labels or buttons in Rye.",
+      "Don't light the stage evenly. The scene is one spotlight cut out of the dark, not a lit dashboard of glow rings.",
+      "Don't copy game sprites, screenshots or audio. Every animatronic, room and sound is original.",
+      "Don't change the diary's papers or inks for the circus. They are owner-pinned and shared with the workshop."
+    ]
+  }
+}

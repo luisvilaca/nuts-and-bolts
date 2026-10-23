@@ -82,6 +82,8 @@ fun LabScreen(store: Store, ui: Ui, lay: Lay) {
     val run = s.habits.filter { active(it, t, s.off) }
     val orbits = derived(store) { orbitsFor(s, t) }
     val habits = @Composable {
+        Buddy.invites.forEach { InviteCard(it, store, ui) }
+        Buddy.them?.let { BuddyCard(it, ui, t) }
         // Sunday, the week's last day: the week in review heads the list
         if (t.dayOfWeek == java.time.DayOfWeek.SUNDAY && s.habits.isNotEmpty()) WeekCard(s, t)
         when {
@@ -132,7 +134,7 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
     Box(modifier.padding(inset).clip(RoundedCornerShape(20.dp)).onGloballyPositioned { shown = it.boundsInWindow().height > 0f }) {
         Canvas(Modifier.fillMaxSize().semantics { contentDescription = "${s.robot}, ${t(MOOD[mood(s)]).lowercase()}" }) {
             // the nameplate sits over the empty wall above Rivet, so no band is held back for it
-            room(s, tm.value, store.react, orbits, store.fresh, equip)
+            room(s, tm.value, store.react, orbits, store.fresh, equip, guest = Buddy.them?.pic) // the buddy stands beside
         }
         // the robot's wave is the feedback; a press shade would only box the nameplate
         Column(Modifier.padding(20.dp).clickable(remember { MutableInteractionSource() }, null, onClickLabel = "wave") { store.react("wave"); Sfx.play("chirp") }) {
@@ -262,5 +264,37 @@ fun Empty(store: Store, ui: Ui) = Column(Modifier.padding(vertical = 16.dp)) {
                 border = SuggestionChipDefaults.suggestionChipBorder(true, borderColor = W.edge),
                 colors = SuggestionChipDefaults.suggestionChipColors(labelColor = W.text))
         }
+    }
+}
+
+// The buddy's character as their app last drew it, how their day is going, and a cheer to send them.
+@Composable
+private fun BuddyCard(p: Buddy.Peek, ui: Ui, today: LocalDate) = Card(Modifier.fillMaxWidth(), pad = 12.dp) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        p.pic?.let { androidx.compose.foundation.Image(it, null, Modifier.size(56.dp, 72.dp)) }
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp).semantics(mergeDescendants = true) {}) {
+            Text(p.who.ifEmpty { p.name }, style = MaterialTheme.typography.titleMedium)
+            Text((if (p.who.isEmpty()) "" else "${p.name} · ") + if (p.day == today.toString() && p.slots > 0) t("{0} of {1} done today", p.done, p.slots) else t("Nothing logged yet today"),
+                style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        }
+        androidx.compose.material3.OutlinedButton({ Buddy.cheer(); Sfx.play("chirp"); ui.tell(t("Cheer sent to {0}", p.who.ifEmpty { p.name })) }, Modifier.height(44.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, W.edge)) { Text(t("Cheer"), color = W.text) }
+    }
+}
+
+// Someone has named this account as their buddy: their character, and one tap to link back.
+@Composable
+fun InviteCard(p: Buddy.Peek, store: Store, ui: Ui) = Card(Modifier.fillMaxWidth(), pad = 12.dp, accent = W.act) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        p.pic?.let { androidx.compose.foundation.Image(it, null, Modifier.size(56.dp, 72.dp)) }
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(t("{0} wants to be your buddy", p.who.ifEmpty { p.name }), style = MaterialTheme.typography.titleMedium)
+            Text(p.email, style = MaterialTheme.typography.bodyMedium, color = W.dim)
+        }
+    }
+    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button({ Buddy.accept(p, store); Sfx.play("level"); ui.tell(t("You are now linked with {0}.", p.who.ifEmpty { p.email })) }, Modifier.height(44.dp),
+            colors = ButtonDefaults.buttonColors(W.act, W.onAct)) { Text(t("Accept")) }
+        androidx.compose.material3.TextButton({ Buddy.decline(p) }, Modifier.height(44.dp)) { Text(t("Not now"), color = W.dim) }
     }
 }

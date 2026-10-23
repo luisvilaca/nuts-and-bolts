@@ -64,6 +64,8 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -141,6 +143,11 @@ private const val NIB_SPEED = 0.45f
 private const val NIB_EASE = 0.35f
 const val PAGE_W = 1600f
 const val PAGE_H = 2260f
+const val MM = PAGE_W / 210f // page units in a millimetre: the page is A4
+val GAP_MM = 5f..12f // the ruled lines' spacing, in steps of 0.5
+val TEMPLATES = listOf("lined" to "Lined", "blank" to "Blank", "plain" to "Plain")
+// held upright, the editor's tools run along the top instead of down the right edge (owner, 2026-10-22)
+private val TopBar = compositionLocalOf { false }
 
 fun hex(s: String) = Color(android.graphics.Color.parseColor(s))
 fun lightPaper(s: String) = hex(s).let { 0.299f * it.red + 0.587f * it.green + 0.114f * it.blue > 0.55f }
@@ -280,10 +287,11 @@ private fun MotionEvent.penIndex() = (0 until pointerCount).firstOrNull { getToo
 private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     val s = store.s
     val density = LocalDensity.current
-    val pad = remember(date) { Pad(store.page(date) ?: Page(s.papers.getOrElse(s.pen.paper) { PAPERS[0] }, mutableListOf())) }
+    val pad = remember(date) { Pad(store.page(date) ?: Page(s.papers.getOrElse(s.pen.paper) { PAPERS[0] }, mutableListOf(), s.pen.tpl, s.pen.gap)) }
     var erase by remember { mutableStateOf(false) }
     var pop by remember { mutableStateOf<String?>(null) }
     var bin by remember { mutableStateOf(false) }
+    var wheel by remember { mutableStateOf<Int?>(null) } // the paper slot whose colour is being picked
     var live by remember { mutableIntStateOf(0) }
     var ring by remember { mutableStateOf<Offset?>(null) }
     var px by remember { mutableStateOf(IntSize.Zero) }
@@ -312,7 +320,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
     val touchOk = { !(s.pen.palm && s.pen.seen && penNear()) }
 
     fun persist() {
-        val p = Page(pad.page.paper, pad.page.strokes.toMutableList())
+        val p = Page(pad.page.paper, pad.page.strokes.toMutableList(), pad.page.tpl, pad.page.gap)
         store.writePage(date, p)
         // the day's mark changes only when the page goes from blank to written or back; a change on every stroke
         // would redraw every screen and write the whole state each time
@@ -324,6 +332,13 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
         pad.page.paper = c
         val light = lightPaper(c); val ice = PEN_COLORS[0].second; val black = PEN_COLORS[4].second
         if (s.pen.color == (if (light) ice else black)) store.change { pen.color = if (light) black else ice }
+        if (pad.page.strokes.isNotEmpty()) persist()
+        pad.ver++
+    }
+    // the template and line spacing: this page's, and every new page's from now on
+    fun setTemplate(tpl: String = pad.page.tpl, gap: Float = pad.page.gap) {
+        pad.page.tpl = tpl; pad.page.gap = gap
+        store.change { pen.tpl = tpl; pen.gap = gap }
         if (pad.page.strokes.isNotEmpty()) persist()
         pad.ver++
     }
@@ -357,11 +372,11 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
         persist()
     }
 
-    Row(Modifier.fillMaxSize()) {
-        // The page covers what the rail leaves: as wide as it on a tablet, where it moves up and down, and as tall as it on a
-        // phone held upright, where it moves sideways. A pen always writes; one finger writes, or moves the page in Move
-        // mode; two fingers zoom and move it. Every pointer is taken here, in the space's own (unzoomed) coordinates.
-        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().clipToBounds().onSizeChanged { port = it }
+    // The page covers what the tools leave: as wide as it on a tablet, where it moves up and down, and as tall as it on a
+    // phone held upright, where it moves sideways. A pen always writes; one finger writes, or moves the page in Move
+    // mode; two fingers zoom and move it. Every pointer is taken here, in the space's own (unzoomed) coordinates.
+    val page: @Composable (Modifier) -> Unit = { m ->
+        BoxWithConstraints(m.clipToBounds().onSizeChanged { port = it }
                     .pointerInput(pad) {
                         fun PointerType.pen() = this == PointerType.Stylus || this == PointerType.Eraser
                         awaitPointerEventScope {
@@ -463,7 +478,7 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
             Box(Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).size(pw, pw * (PAGE_H / PAGE_W))
                 .graphicsLayer { transformOrigin = TransformOrigin(0f, 0f); scaleX = z; scaleY = z; translationX = off.x; translationY = off.y }
                 .clipToBounds().background(hex(pad.page.paper)).onSizeChanged { px = it; pad.resize(it.width, it.height, density) }) {
-                Template(date, pad.page.paper, s.robot, pad.ver)
+                Template(date, pad.page, s.robot, pad.ver)
                 Canvas(Modifier.fillMaxSize().semantics { contentDescription = t("Diary page for {0}", fmt(date, "EEEE d MMMM")) }) {
                     pad.ver; live // redraw when either changes
                     pad.bmp?.let { drawImage(it, dstSize = IntSize(size.width.toInt(), size.height.toInt()), srcSize = IntSize(it.width, it.height)) }
@@ -479,14 +494,19 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                 }
             }
         }
-        // The tools stand in a rail down the right edge, away from the writing hand's sweep: back to the calendar at
-        // the top; the pen, the eraser and the inks in the middle; undo, redo, paper and bin at the foot. Menus open to
-        // its left. On a short window the inks fold into the current ink's swatch.
-        BoxWithConstraints(Modifier.fillMaxHeight().width(56.dp).background(W.rail).padding(vertical = 6.dp)) {
-            val short = maxHeight < 600.dp
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally) {
+    }
+    // The tools stand in a rail down the right edge, away from the writing hand's sweep, or, held upright, in a bar
+    // along the top: back to the calendar first; the pen, the eraser and the inks in the middle; undo, redo, paper and
+    // bin at the end. Menus open beside the rail or under the bar. On a short rail or a narrow bar the inks fold into the
+    // current ink's swatch.
+    val tools = @Composable {
+        val top = TopBar.current
+        BoxWithConstraints(if (top) Modifier.fillMaxWidth().height(52.dp).background(W.rail).padding(horizontal = 6.dp)
+            else Modifier.fillMaxHeight().width(56.dp).background(W.rail).padding(vertical = 6.dp)) {
+            val short = if (top) maxWidth < 600.dp else maxHeight < 600.dp
+            Strip(Modifier.fillMaxSize(), Arrangement.SpaceBetween) {
                 Tool("calendar", "Back to calendar", false, touchOk) { ui.page = null }
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Strip(spread = Arrangement.spacedBy(2.dp)) {
                     Box {
                         // the first tap picks the pen back up from the eraser; a tap on the pen in hand opens its settings
                         Tool("diary", "Pen. Tap again for nib and stabilizer", !erase, touchOk, more = true) { if (erase) erase = false else pop = "pen" }
@@ -512,14 +532,14 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                     Tool("move", if (s.pen.move) "Move: a finger moves the page. Tap to write with a finger" else "Move: off, a finger writes. Tap to move the page with a finger", s.pen.move, touchOk) {
                         store.change { pen.move = !pen.move }
                     }
-                    Box(Modifier.padding(vertical = 6.dp).size(22.dp, 1.dp).background(W.line))
+                    Box((if (top) Modifier.padding(horizontal = 6.dp).size(1.dp, 22.dp) else Modifier.padding(vertical = 6.dp).size(22.dp, 1.dp)).background(W.line))
                     val inks = @Composable { PEN_COLORS.forEach { (name, c) -> Swatch(c, name, !erase && s.pen.color == c, round = true, touchOk, faint = contrast(c, pad.page.paper) < 1.5f) { erase = false; pop = null; store.change { pen.color = c } } } }
                     if (short) Box {
                         Swatch(s.pen.color, "Ink colour", !erase, round = true, touchOk) { pop = "ink" }
                         Menu(pop == "ink", { pop = null }) { Row { inks() } }
                     } else inks()
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Strip {
                     Tool("undo", "Undo stroke", false, touchOk) { undoStroke() }
                     Tool("redo", "Redo stroke", false, touchOk) { pad.redo.removeLastOrNull()?.let { pad.page.strokes += it; pad.redraw(density); persist() } }
                     Box {
@@ -528,13 +548,27 @@ private fun Editor(store: Store, ui: Ui, date: LocalDate) {
                             Row(Modifier.padding(bottom = 8.dp)) {
                                 s.papers.forEachIndexed { i, c -> Swatch(c, t("Paper {0}", i + 1), pad.page.paper.equals(c, true), round = false) { store.change { pen.paper = i }; setPaper(c) } }
                             }
-                            Papers(store) { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }
+                            Papers(store, { i, c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c) }) { i -> pop = null; wheel = i }
+                            Text(t("TEMPLATE"), Modifier.padding(top = 16.dp, bottom = 8.dp), style = Label)
+                            Segments(TEMPLATES.map { (k, v) -> k to t(v) }, pad.page.tpl) { setTemplate(tpl = it) }
+                            if (pad.page.tpl == "lined") Setting(t("Line spacing"), pad.page.gap / MM, GAP_MM, 13, { "%.1f mm".format(it) }, { v -> setTemplate(gap = v * MM) })
                         }
                     }
                     Tool("trash", "Bin this page", false, touchOk) { if (pad.page.strokes.isNotEmpty()) bin = true }
                 }
             }
         }
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val top = maxHeight > maxWidth
+        CompositionLocalProvider(TopBar provides top) {
+            if (top) Column(Modifier.fillMaxSize()) { tools(); page(Modifier.weight(1f).fillMaxWidth()) }
+            else Row(Modifier.fillMaxSize()) { page(Modifier.weight(1f).fillMaxHeight()); tools() }
+        }
+    }
+    wheel?.let { i ->
+        // the page on screen follows when it is on that slot's old colour
+        ColorWheel(s.papers[i], { c -> if (pad.page.paper.equals(s.papers[i], true)) setPaper(c); store.change { papers[i] = c } }) { wheel = null }
     }
     if (bin) AlertDialog(onDismissRequest = { bin = false }, title = { Text(t("Bin this page?")) },
         text = { Text(t("Everything written on it is erased and cannot be brought back.")) },
@@ -547,7 +581,8 @@ private fun Modifier.lastPointer(into: Array<PointerType?>) = pointerInput(Unit)
     awaitPointerEventScope { while (true) awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull()?.let { into[0] = it.type } }
 }
 
-// Tool buttons are borderless; the tool in hand gets a raised tile and a short green bar on its inner (left) side.
+// Tool buttons are borderless; the tool in hand gets a raised tile and a short bar in the ready colour on its inner
+// side (the left in the rail, the foot in the top bar).
 // more: a corner tick for a button with settings behind a second tap or a long press.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -558,7 +593,8 @@ private fun Tool(icon: String, en: String, on: Boolean, touchOk: () -> Boolean =
     Box(Modifier.size(44.dp, 40.dp).clip(RoundedCornerShape(10.dp)).background(if (on) W.raised else Color.Transparent).lastPointer(kind)
         .combinedClickable(onClickLabel = label, onLongClick = onLong?.let { l -> { if (ok()) l() } }, onClick = { if (ok()) onClick() }).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Icon(ICONS.getValue(icon), null, Modifier.size(22.dp), tint = if (on) W.text else W.dim)
-        if (on) Box(Modifier.align(Alignment.CenterStart).padding(start = 2.dp).size(2.dp, 14.dp).background(W.act))
+        if (on) Box(if (TopBar.current) Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(14.dp, 2.dp).background(W.act)
+            else Modifier.align(Alignment.CenterStart).padding(start = 2.dp).size(2.dp, 14.dp).background(W.act))
         if (more) Canvas(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(4.dp)) {
             drawPath(Path().apply { moveTo(size.width, 0f); lineTo(size.width, size.height); lineTo(0f, size.height); close() }, W.dim)
         }
@@ -580,9 +616,20 @@ private fun Swatch(c: String, en: String, on: Boolean, round: Boolean, touchOk: 
     }
 }
 
+// A run of tools: down the rail, or along the top bar.
 @Composable
-private fun Menu(open: Boolean, close: () -> Unit, content: @Composable () -> Unit) =
-    DropdownMenu(open, close, offset = DpOffset((-344).dp, (-40).dp), containerColor = W.raised, shape = RoundedCornerShape(16.dp)) { Column(Modifier.padding(16.dp).width(300.dp)) { content() } }
+private fun Strip(modifier: Modifier = Modifier, spread: Arrangement.HorizontalOrVertical = Arrangement.spacedBy(0.dp), content: @Composable () -> Unit) =
+    if (TopBar.current) Row(modifier, horizontalArrangement = spread, verticalAlignment = Alignment.CenterVertically) { content() }
+    else Column(modifier, verticalArrangement = spread, horizontalAlignment = Alignment.CenterHorizontally) { content() }
+
+// A tool's menu: to the rail's left, or under the top bar. It scrolls when the window is short.
+@Composable
+private fun Menu(open: Boolean, close: () -> Unit, content: @Composable () -> Unit) {
+    val top = TopBar.current
+    DropdownMenu(open, close, offset = if (top) DpOffset(0.dp, 4.dp) else DpOffset((-344).dp, (-40).dp), containerColor = W.raised, shape = RoundedCornerShape(16.dp)) {
+        Column(Modifier.padding(16.dp).width(300.dp)) { content() }
+    }
+}
 
 // A labelled slider with its value at the right. It moves freely under the finger and saves once, on release.
 @Composable
@@ -606,14 +653,19 @@ private fun DrawScope.eraserRing(c: Offset, r: Float) {
     drawCircle(Color.White, r, c, style = Stroke(1.5.dp.toPx()))
 }
 
-// Typing a hex value into a paper slot; the page on screen follows when it uses that slot.
+// A paper slot's colour, picked on the colour wheel (tap its swatch) or typed as a hex value; the page on screen follows
+// when it uses that slot.
 @Composable
-private fun Papers(store: Store, changed: (Int, String) -> Unit) {
+// pick: open the colour wheel for that slot (the editor shows it, with this menu closed).
+private fun Papers(store: Store, changed: (Int, String) -> Unit, pick: (Int) -> Unit) {
     Text(t("PAPER COLOURS"), Modifier.padding(bottom = 8.dp), style = Label)
     store.s.papers.forEachIndexed { i, c ->
         var txt by remember(c) { mutableStateOf(c) }
         Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.edge, RoundedCornerShape(6.dp)))
+            // the swatch opens the colour wheel; the field takes a typed hex value
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).clickable(onClickLabel = t("Pick a colour")) { pick(i) }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(32.dp).clip(RoundedCornerShape(6.dp)).background(hex(c)).border(1.dp, W.edge, RoundedCornerShape(6.dp)))
+            }
             OutlinedTextField(txt, { v ->
                 txt = "#" + v.filter { it.isLetterOrDigit() }.uppercase().filter { it in "0123456789ABCDEF" }.take(6)
                 if (txt.length == 7) { changed(i, txt); store.change { papers[i] = txt } }
@@ -627,17 +679,19 @@ private fun Papers(store: Store, changed: (Int, String) -> Unit) {
 // The printed page: weekday and date, a five-cell gauge to fill in by hand, the day number and this look's emblem,
 // ruled lines, a large faint emblem near the foot, and the log's catalog number.
 @Composable
-private fun Template(date: LocalDate, paper: String, name: String, ver: Int) {
+private fun Template(date: LocalDate, page: Page, name: String, ver: Int) {
     val tm = rememberTextMeasurer()
     Canvas(Modifier.fillMaxSize()) {
         ver
-        withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) { printed(tm, date, paper, name, density * fontScale) }
+        withTransform({ scale(size.width / PAGE_W, size.width / PAGE_W, Offset.Zero) }) { printed(tm, date, page, name, density * fontScale) }
     }
 }
 
 // The template in page units; k: the screen's sp-to-pixel factor, which the page's own sizes are divided by.
-private fun DrawScope.printed(tm: TextMeasurer, date: LocalDate, paper: String, name: String, k: Float) {
-    val light = lightPaper(paper)
+// The page's template: lined (all of it), blank (the header and foot without the ruled lines) or plain (nothing).
+private fun DrawScope.printed(tm: TextMeasurer, date: LocalDate, page: Page, name: String, k: Float) {
+    if (page.tpl == "plain") return
+    val light = lightPaper(page.paper)
     val head = if (light) Color(0xFF393939) else Color(0xFF00FF88)
     val sub = if (light) Color(0xBF393939) else Color(0xB8E0F7FA)
     val rule = if (light) Color(0x38393939) else Color(0x26FFFFFF)
@@ -649,7 +703,8 @@ private fun DrawScope.printed(tm: TextMeasurer, date: LocalDate, paper: String, 
     fun emblem(cx: Float, cy: Float, r: Float, c: Color, w: Float) = shape(EMBLEM, cx, cy + r * 0.6f, r / 14f, c, w)
     fun cell(at: Offset, r: Float, c: Color) = shape(CELL, at.x, at.y + r, r / 9f, c, 2f)
     emblem(1290f, PAGE_H - 330, 250f, art, 2f)
-    for (i in 0 until 37) drawLine(rule, Offset(90f, 220f + i * 55), Offset(1510f, 220f + i * 55), 1.5f)
+    // ruled from under the header to the foot (37 lines at the 55 a page used to have)
+    if (page.tpl == "lined") { var y = 220f; while (y <= 2200f) { drawLine(rule, Offset(90f, y), Offset(1510f, y), 1.5f); y += page.gap } }
     drawLine(head, Offset(90f, 160f), Offset(1510f, 160f), 2.5f)
     val lbl = TextStyle(fontFamily = display, fontSize = 15.sp, letterSpacing = 0.16.em, color = sub)
     val txt = { s: String, st: TextStyle, x: Float, base: Float, end: Boolean ->
@@ -679,7 +734,7 @@ fun exportPdf(ctx: android.content.Context, store: Store, a: LocalDate, b: Local
         val ink = Pad(page).apply { bmp = ImageBitmap(PAGE_W.toInt(), PAGE_H.toInt()); k = 1f; redraw(one) }.bmp!!
         val whole = ImageBitmap(PAGE_W.toInt(), PAGE_H.toInt())
         CanvasDrawScope().draw(one, LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(whole), Size(PAGE_W, PAGE_H)) {
-            drawRect(hex(page.paper)); printed(tm, d, page.paper, store.s.robot, 1f); drawImage(ink)
+            drawRect(hex(page.paper)); printed(tm, d, page, store.s.robot, 1f); drawImage(ink)
         }
         val sheet = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, ++n).create())
         sheet.canvas.drawBitmap(whole.asAndroidBitmap(), null, android.graphics.RectF(0f, 0f, 595f, 842f), android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))

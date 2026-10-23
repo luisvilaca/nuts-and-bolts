@@ -139,6 +139,29 @@ val PT = mapOf(
     "Best: {0}" to "Melhor: {0}", "Needs care: {0}" to "Precisa de atenção: {0}", "ACHIEVEMENTS" to "CONQUISTAS",
     "First bolt" to "Primeiro parafuso", "Seven days running" to "Sete dias seguidos", "A whole day critical" to "Um dia inteiro crítico", "500 bolts earned" to "500 parafusos ganhos",
     "Seven diary pages" to "Sete páginas no diário", "An attribute at level 5" to "Um atributo no nível 5",
+    // the buddy link
+    "Buddy" to "Parceiro", "Your buddy's Google email" to "O email Google do seu parceiro", "Invite" to "Convidar", "Unlink" to "Desligar",
+    "Sign in under Sync first." to "Inicie sessão em Sync primeiro.", "That is not an email address." to "Isso não é um endereço de email.",
+    "Type your buddy's Google email and send an invitation. Once they accept it, you both see each other's character and today's progress, and can send a cheer." to "Escreva o email Google do seu parceiro e envie um convite. Quando o aceitar, veem a personagem e o progresso de hoje um do outro, e podem enviar um incentivo.",
+    "Invitation sent to {0}. Once they accept it on their phone, you are linked." to "Convite enviado a {0}. Quando o aceitar no telemóvel, ficam ligados.",
+    "{0} wants to be your buddy" to "{0} quer ser seu parceiro", "Tap to answer." to "Toque para responder.", "Accept" to "Aceitar", "Not now" to "Agora não",
+    "You are now linked with {0}." to "Agora está ligado a {0}.", "Linked with {0}." to "Ligado a {0}.",
+    "{0} of {1} done today" to "{0} de {1} feitos hoje", "Nothing logged yet today" to "Ainda nada registado hoje", "Cheer" to "Incentivar",
+    "Cheer sent to {0}" to "Incentivo enviado a {0}", "{0} cheered you on!" to "{0} está a torcer por si!", "Tap to cheer back." to "Toque para retribuir.",
+    "Buddy cheers" to "Incentivos do parceiro",
+    // sign-in by email and password
+    "Or use an email and password" to "Ou use um email e uma palavra-passe", "Email" to "Email", "Password" to "Palavra-passe",
+    "Sign in" to "Entrar", "Create account" to "Criar conta", "Forgot password?" to "Esqueceu-se da palavra-passe?",
+    "Wrong email or password." to "Email ou palavra-passe errados.",
+    "There is already an account with that email: sign in instead." to "Já existe uma conta com esse email: entre em vez de a criar.",
+    "The password needs at least 6 characters." to "A palavra-passe precisa de pelo menos 6 caracteres.",
+    "Email sign-in is not turned on for this app yet (see SYNC.md)." to "O início de sessão por email ainda não está ligado nesta app (ver SYNC.md).",
+    "No connection: check the internet (or the VPN) and try again." to "Sem ligação: verifique a internet (ou a VPN) e tente outra vez.",
+    "A link to choose a new password was sent to {0}." to "Foi enviado para {0} um link para escolher uma nova palavra-passe.",
+    "Type your email first." to "Escreva primeiro o seu email.",
+    // paper templates and the colour wheel
+    "TEMPLATE" to "MODELO", "Lined" to "Pautado", "Blank" to "Em branco", "Plain" to "Liso", "Line spacing" to "Espaço entre linhas",
+    "Pick a colour" to "Escolher uma cor", "Colour wheel" to "Roda de cores", "Brightness" to "Brilho", "Use this colour" to "Usar esta cor",
 )
 
 val RU = mapOf(
@@ -273,4 +296,27 @@ val RU = mapOf(
     "Best: {0}" to "Лучше всего: {0}", "Needs care: {0}" to "Требует внимания: {0}", "ACHIEVEMENTS" to "ДОСТИЖЕНИЯ",
     "First bolt" to "Первый болт", "Seven days running" to "Семь дней подряд", "A whole day critical" to "Весь день в критическом режиме", "500 bolts earned" to "500 болтов заработано",
     "Seven diary pages" to "Семь страниц дневника", "An attribute at level 5" to "Атрибут на уровне 5",
+    // the buddy link
+    "Buddy" to "Напарник", "Your buddy's Google email" to "Google-почта напарника", "Invite" to "Пригласить", "Unlink" to "Отвязать",
+    "Sign in under Sync first." to "Сначала войдите в разделе Sync.", "That is not an email address." to "Это не адрес электронной почты.",
+    "Type your buddy's Google email and send an invitation. Once they accept it, you both see each other's character and today's progress, and can send a cheer." to "Введите Google-почту напарника и отправьте приглашение. Когда его примут, вы будете видеть персонажа и сегодняшний прогресс друг друга и сможете отправлять поддержку.",
+    "Invitation sent to {0}. Once they accept it on their phone, you are linked." to "Приглашение отправлено: {0}. Как только его примут на телефоне, вы будете связаны.",
+    "{0} wants to be your buddy" to "{0} хочет стать вашим напарником", "Tap to answer." to "Нажмите, чтобы ответить.", "Accept" to "Принять", "Not now" to "Не сейчас",
+    "You are now linked with {0}." to "Теперь вы связаны: {0}.", "Linked with {0}." to "Связано с {0}.",
+    "{0} of {1} done today" to "Сегодня выполнено {0} из {1}", "Nothing logged yet today" to "Сегодня пока ничего не отмечено", "Cheer" to "Поддержать",
+    "Cheer sent to {0}" to "Поддержка отправлена: {0}", "{0} cheered you on!" to "{0} поддерживает вас!", "Tap to cheer back." to "Нажмите, чтобы ответить.",
+    "Buddy cheers" to "Поддержка напарника",
+    // sign-in by email and password
+    "Or use an email and password" to "Или войдите по почте и паролю", "Email" to "Почта", "Password" to "Пароль",
+    "Sign in" to "Войти", "Create account" to "Создать аккаунт", "Forgot password?" to "Забыли пароль?",
+    "Wrong email or password." to "Неверная почта или пароль.",
+    "There is already an account with that email: sign in instead." to "Аккаунт с этой почтой уже есть: просто войдите.",
+    "The password needs at least 6 characters." to "Пароль должен содержать не менее 6 символов.",
+    "Email sign-in is not turned on for this app yet (see SYNC.md)." to "Вход по почте для этого приложения ещё не включён (см. SYNC.md).",
+    "No connection: check the internet (or the VPN) and try again." to "Нет соединения: проверьте интернет (или VPN) и попробуйте снова.",
+    "A link to choose a new password was sent to {0}." to "Ссылка для нового пароля отправлена на {0}.",
+    "Type your email first." to "Сначала введите почту.",
+    // paper templates and the colour wheel
+    "TEMPLATE" to "ШАБЛОН", "Lined" to "В линейку", "Blank" to "Чистый", "Plain" to "Пустой", "Line spacing" to "Межстрочный интервал",
+    "Pick a colour" to "Выбрать цвет", "Colour wheel" to "Цветовой круг", "Brightness" to "Яркость", "Use this colour" to "Выбрать этот цвет",
 )

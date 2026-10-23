@@ -17,7 +17,9 @@ import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.Blob
@@ -85,10 +87,39 @@ object Sync {
         }
     } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) { "" } catch (e: Exception) { e.message ?: t("Sign-in failed.") }
 
+    // Email and password, for an account without Google (it still needs Google's servers: a VPN where they are
+    // blocked). create makes the account first. null when signed in, or what went wrong.
+    suspend fun signInEmail(email: String, password: String, create: Boolean): String? = try {
+        val a = FirebaseAuth.getInstance()
+        val r = if (create) a.createUserWithEmailAndPassword(email.trim(), password).done() else a.signInWithEmailAndPassword(email.trim(), password).done()
+        attach(r.user!!)
+        null
+    } catch (e: Exception) { why(e) }
+
+    // Sends a link to choose a new password, written in the app's language. null when sent, or what went wrong.
+    suspend fun resetPassword(email: String): String? = try {
+        FirebaseAuth.getInstance().apply { setLanguageCode(Lang.code) }.sendPasswordResetEmail(email.trim()).done()
+        null
+    } catch (e: Exception) { why(e) }
+
+    private fun why(e: Exception): String = when {
+        e is FirebaseNetworkException -> t("No connection: check the internet (or the VPN) and try again.")
+        e !is FirebaseAuthException -> e.message ?: t("Sign-in failed.")
+        else -> when (e.errorCode) {
+            "ERROR_INVALID_EMAIL" -> t("That is not an email address.")
+            "ERROR_WRONG_PASSWORD", "ERROR_USER_NOT_FOUND", "ERROR_INVALID_CREDENTIAL" -> t("Wrong email or password.")
+            "ERROR_EMAIL_ALREADY_IN_USE" -> t("There is already an account with that email: sign in instead.")
+            "ERROR_WEAK_PASSWORD" -> t("The password needs at least 6 characters.")
+            "ERROR_OPERATION_NOT_ALLOWED" -> t("Email sign-in is not turned on for this app yet (see SYNC.md).")
+            else -> e.message ?: t("Sign-in failed.")
+        }
+    }
+
     // This device keeps everything it has; it only stops following the cloud.
     suspend fun signOut(c: Context) {
         regs.forEach { it.remove() }; regs = emptyList()
         doc = null; who = null; state = ""
+        Buddy.detach()
         FirebaseAuth.getInstance().signOut()
         runCatching { CredentialManager.create(c).clearCredentialState(ClearCredentialStateRequest()) }
     }
@@ -106,6 +137,7 @@ object Sync {
         uid = u.uid
         val d = FirebaseFirestore.getInstance().collection("users").document(u.uid)
         doc = d
+        Buddy.attach(app, u.uid, u.email.orEmpty(), u.displayName, s)
         val saved = File(dir, "sync-$uid.json").takeIf { it.exists() }?.let { f -> runCatching { JSONObject(f.readText()) }.getOrNull() }
         if (saved != null) {
             @Suppress("UNCHECKED_CAST")
@@ -187,6 +219,7 @@ object Sync {
     private fun push() {
         val d = doc ?: return
         val s = store ?: return
+        Buddy.publish(s)
         val cur = flat(s.s)
         val ch = diff(last, cur, FieldValue.delete())
         if (ch.isEmpty()) return

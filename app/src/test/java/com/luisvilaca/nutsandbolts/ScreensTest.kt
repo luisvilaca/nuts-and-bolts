@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -47,7 +48,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [35])
 class ScreensTest {
     @get:Rule val rule = createComposeRule()
-    private val out = File(System.getProperty("user.dir"), "../.impeccable/review").apply { mkdirs() }
+    private val out = File(System.getProperty("user.dir"), if (SKIN == "workshop") "../.impeccable/review" else "../.impeccable/review/$SKIN").apply { mkdirs() }
 
     private fun seed(empty: Boolean = false): Store {
         val ctx = ApplicationProvider.getApplicationContext<android.app.Application>()
@@ -191,7 +192,7 @@ class ScreensTest {
         val st = seed()
         st.change { pen.color = PEN_COLORS[0].second; pen.b2 = "ink" }
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); openToday()
+        tap(t("Diary")); openToday()
         rule.runOnUiThread { PenKeys.on!!(2) }; rule.waitForIdle()
         rule.onNodeWithContentDescription(PEN_COLORS[1].first).assertIsSelected()
     }
@@ -200,7 +201,7 @@ class ScreensTest {
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun cardMenuAndDelete() {
         val st = seed()
         rule.setContent { NbTheme { App(st) } }
-        tap("Habits")
+        tap(t("Habits"))
         val before = st.s.bolts
         rule.onAllNodesWithText("Done")[0].performTouchInput { longClick() }; rule.waitForIdle()
         org.junit.Assert.assertEquals(before, st.s.bolts)
@@ -217,19 +218,31 @@ class ScreensTest {
         tap("Drink water"); rule.onNodeWithText("Edit habit").assertExists()
         tap("Cancel")
         rule.onNodeWithText("Edit habit").assertDoesNotExist()
-        org.junit.Assert.assertEquals(2, rule.onAllNodesWithText("Lab").fetchSemanticsNodes().size) // the title and the tab
+        org.junit.Assert.assertEquals(2, rule.onAllNodesWithText(t("Lab")).fetchSemanticsNodes().size) // the title and the tab
     }
 
     // Trying parts on across categories builds one outfit for the visit; leaving the Shop clears it.
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun tryOnOutfit() {
         val st = seed()
         rule.setContent { NbTheme { App(st) } }
-        tap("Shop"); tap("Dome"); tap("Arms"); tap("Wrenches")
-        rule.onNodeWithText("Trying on: Dome, Wrenches").assertExists()
+        tap(t("Shop")); tap(PART.getValue("head-dome").name); tap(t("Arms")); tap(PART.getValue("arms-wrench").name)
+        rule.onNodeWithText(t("Trying on: {0}", PART.getValue("head-dome").name + ", " + PART.getValue("arms-wrench").name)).assertExists()
         shot("tablet-shop-tryon")
-        tap("Lab"); tap("Shop")
-        rule.onNodeWithText("Trying on: Dome, Wrenches").assertDoesNotExist()
+        tap(t("Lab")); tap(t("Shop"))
+        rule.onNodeWithText(t("Trying on: {0}", PART.getValue("head-dome").name + ", " + PART.getValue("arms-wrench").name)).assertDoesNotExist()
         org.junit.Assert.assertEquals("head-box", st.s.equip["head"]) // trying on buys nothing
+    }
+
+    // An invitation and a linked buddy's card head today's list: accept or not; their character, their day and a cheer.
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun buddyCard() {
+        val st = seed()
+        Buddy.them = Buddy.Peek("Ana", "Bonnie", "circus", LocalDate.now().toString(), 3, 5, listOf(2, 3, 1, 4), null, 0)
+        Buddy.invites = listOf(Buddy.Peek("Rui", "Rivet", "workshop", "", 0, 0, emptyList(), null, 0, "rui@example.com"))
+        rule.setContent { NbTheme { App(st) } }
+        rule.onNodeWithText(t("Cheer")).performScrollTo()
+        rule.onNodeWithText(t("Accept")).assertExists()
+        shot("phone-buddy")
+        Buddy.them = null; Buddy.invites = emptyList()
     }
 
     // A dozen bolts on one frame still stand below the light rail.
@@ -251,12 +264,44 @@ class ScreensTest {
     @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun penMenus() {
         val st = seed()
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); openToday()
+        tap(t("Diary")); openToday()
         rule.onNodeWithContentDescription("Pen. Tap again for nib and stabilizer").performClick(); rule.waitForIdle()
         rule.onNodeWithText("NIB").assertExists(); rule.onNodeWithText("0.6 mm").assertExists(); rule.onNodeWithText("50%").assertExists()
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
         rule.onNodeWithContentDescription("Eraser. Tap again for its size").performClick(); rule.waitForIdle()
         rule.onNodeWithText("4 mm").assertExists()
+    }
+
+    // Held upright, the tools run along the top; the paper menu offers the templates and the line spacing, and a
+    // paper's swatch opens the colour wheel. A blank page keeps its header and drops the lines.
+    @Test @Config(qualifiers = "w411dp-h891dp-port-hdpi") fun paperTemplatesAndWheel() {
+        val st = seed()
+        rule.setContent { NbTheme { App(st) } }
+        tap(t("Diary")); openToday()
+        rule.onNodeWithContentDescription(t("Paper")).performClick(); rule.waitForIdle()
+        rule.onNodeWithText(t("Line spacing").uppercase()).assertExists()
+        shot("phone-paper-menu")
+        rule.onAllNodesWithText(t("Blank"))[0].performClick(); rule.waitForIdle()
+        org.junit.Assert.assertEquals("blank", st.s.pen.tpl) // new pages follow
+        rule.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("opens the wheel") { it.config.getOrNull(androidx.compose.ui.semantics.SemanticsActions.OnClick)?.label == t("Pick a colour") })[1].performClick(); rule.waitForIdle()
+        rule.onNodeWithContentDescription(t("Colour wheel")).assertExists()
+        shot("phone-colour-wheel")
+        tap(t("Cancel"))
+        shot("phone-page-blank")
+    }
+
+    // A linked buddy stands on the platform beside this one, drawn from the picture their app publishes.
+    @Test @Config(qualifiers = "w1280dp-h854dp-land-hdpi") fun buddyInTheBay() {
+        val st = seed()
+        val pic = androidx.compose.ui.graphics.ImageBitmap(400, 520)
+        androidx.compose.ui.graphics.drawscope.CanvasDrawScope().draw(androidx.compose.ui.unit.Density(1f), androidx.compose.ui.unit.LayoutDirection.Ltr,
+            androidx.compose.ui.graphics.Canvas(pic), androidx.compose.ui.geometry.Size(400f, 520f)) {
+            robot(mapOf("head" to "head-dome", "body" to "body-capsule", "arms" to "arms-mitt", "legs" to "legs-boots", "acc" to null), 0L)
+        }
+        Buddy.them = Buddy.Peek("Ana", "Bonnie", "circus", LocalDate.now().toString(), 3, 5, listOf(2, 3, 1, 4), pic, 0)
+        rule.setContent { NbTheme { App(st) } }
+        shot("tablet-buddy-bay")
+        Buddy.them = null
     }
 
     // On a phone held upright the page fills the height. Two fingers zoom without leaving ink; one finger writes, or
@@ -265,7 +310,7 @@ class ScreensTest {
         val st = seed()
         st.change { pen.move = false }
         rule.setContent { NbTheme { App(st) } }
-        tap("Diary"); openToday()
+        tap(t("Diary")); openToday()
         val page = rule.onNodeWithContentDescription("Diary page for", substring = true)
         val today = LocalDate.now()
         val tall = page.fetchSemanticsNode().size.height
