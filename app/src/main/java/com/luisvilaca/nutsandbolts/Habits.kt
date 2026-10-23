@@ -57,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonSkippableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -237,7 +238,7 @@ private fun Legend(modifier: Modifier) = Row(modifier.semantics(mergeDescendants
 
 // This week so far, Monday to today: bolts in, nuts, pages, and the habits that did best and need the most care.
 // Also on the Lab on Sundays, the week's last day.
-@Composable
+@Composable @NonSkippableComposable
 fun WeekCard(s: Data, t: LocalDate) {
     val r = review(s, t)
     if (r.slots == 0) return
@@ -255,7 +256,7 @@ fun WeekCard(s: Data, t: LocalDate) {
 }
 
 // The achievements, reached or not, each with the part it gives.
-@Composable
+@Composable @NonSkippableComposable
 private fun Feats(s: Data) = Card(Modifier.fillMaxWidth()) {
     Text(t("ACHIEVEMENTS"), Modifier.padding(bottom = 8.dp), style = Label)
     FEATS.forEach { f ->
@@ -269,7 +270,7 @@ private fun Feats(s: Data) = Card(Modifier.fillMaxWidth()) {
 }
 
 // Every habit's lifetime: its rate and runs, the run bar across its whole life, and its last twelve weeks.
-@Composable
+@Composable @NonSkippableComposable
 private fun History(s: Data, records: Map<Habit, Record>) {
     s.habits.forEach { h ->
         val r = records.getValue(h)
@@ -308,10 +309,10 @@ private fun RunBar(h: Habit, r: Record, modifier: Modifier) = Column(modifier) {
 }
 
 // A habit's recent days: a weekly habit as its last twelve week plates, a daily one as one row of day pips ending at
-// today on the right, as many days as the card is wide, so it lines up under the run bar's "today". A pip is steel when
-// the day was full, half steel when partly done, coral with a sheared bolt, and an empty ring when nothing went in;
+// today on the right, as many days as the card is wide, so it lines up under the run bar's "today". A pip is green when
+// the day was full, half green when partly done, coral with a sheared bolt, and an empty ring when nothing went in;
 // days the habit did not run are left blank.
-@Composable
+@Composable @NonSkippableComposable
 private fun Strip(s: Data, h: Habit, modifier: Modifier) {
     val t = LocalDate.now()
     val first = weekStart(t).minusWeeks(11)
@@ -335,8 +336,8 @@ private fun Strip(s: Data, h: Habit, modifier: Modifier) {
             val done = ms.count { it.s == Outcome.Done }
             when {
                 ms.any { it.s == Outcome.Fail } -> drawCircle(W.coral, rr, c)
-                done >= h.target -> drawCircle(W.steel, rr, c)
-                done > 0 -> { drawCircle(W.edge, rr, c); drawArc(W.steel, 90f, 180f, true, c - Offset(rr, rr), Size(rr * 2, rr * 2)) }
+                done >= h.target -> drawCircle(W.glow, rr, c)
+                done > 0 -> { drawCircle(W.edge, rr, c); drawArc(W.glow, 90f, 180f, true, c - Offset(rr, rr), Size(rr * 2, rr * 2)) }
                 else -> drawCircle(W.edge, rr - 1f, c, style = Stroke(1.5f))
             }
         }
@@ -344,7 +345,7 @@ private fun Strip(s: Data, h: Habit, modifier: Modifier) {
 }
 
 // The picked habit in full: its rate, runs and failures, the run bar, and every day it was logged, newest first.
-@Composable
+@Composable @NonSkippableComposable
 private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
     val t = LocalDate.now()
     val unit = { n: Int -> plural(n, h.per.id) }
@@ -387,7 +388,7 @@ private fun Detail(s: Data, ui: Ui, h: Habit, r: Record, modifier: Modifier) = C
 
 // What the habit as set up pays: each Done (or resist), each fail, the most a period can bring, its nuts, and how
 // far the attribute it trains is from its next level.
-@Composable
+@Composable @NonSkippableComposable
 private fun Reward(s: Data, kind: Kind, per: Per, target: Int, weight: Heft, stat: Attr) {
     val w = weight
     val st = stat

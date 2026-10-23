@@ -41,6 +41,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonSkippableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -149,7 +150,7 @@ fun BayPanel(store: Store, modifier: Modifier, orbits: List<Orbit>, equip: Map<S
 // level ticks round a 270° arc, the way to the next level filled in uranium glow, the level in the middle and the
 // attribute's icon in the arc's open foot, with the name and what it means for you (energy, mind, body, heart) beside it. Narrower, one compact line per attribute: icon, name and meaning, a slim gauge
 // and the level. A long press repeats the name and meaning in a tooltip.
-@Composable
+@Composable @NonSkippableComposable
 fun Attributes(s: Data, modifier: Modifier = Modifier) = BoxWithConstraints(modifier.fillMaxWidth()) {
     val row = maxWidth >= 560.dp * LocalDensity.current.fontScale // large text gets the lines instead of cut names
     Card(Modifier.fillMaxWidth(), pad = 12.dp) {
@@ -176,7 +177,7 @@ private fun AttrTip(st: Attr, modifier: Modifier, content: @Composable () -> Uni
         state = rememberTooltipState()) { content() }
 }
 
-@Composable
+@Composable @NonSkippableComposable
 private fun Dial(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = say(s, st) },
     verticalAlignment = Alignment.CenterVertically) {
     val p = s.stats.getValue(st); val l = level(p)
@@ -208,7 +209,7 @@ private fun Dial(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().semantics(merg
     }
 }
 
-@Composable
+@Composable @NonSkippableComposable
 private fun AttrLine(s: Data, st: Attr) = Row(Modifier.fillMaxWidth().heightIn(min = 28.dp).semantics(mergeDescendants = true) { contentDescription = say(s, st) },
     verticalAlignment = Alignment.CenterVertically) {
     val p = s.stats.getValue(st); val l = level(p)

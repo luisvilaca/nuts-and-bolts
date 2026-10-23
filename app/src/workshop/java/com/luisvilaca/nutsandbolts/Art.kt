@@ -444,7 +444,7 @@ private fun DrawScope.reactorHall(t: Long) {
     drawCircle(ink, 7f, c)
 }
 
-// A habit card's progress (Tracker in Kit.kt): segments, one per slot; done in solid steel, failed in coral, skipped as
+// A habit card's progress (Tracker in Kit.kt): segments, one per slot; done in solid glow green, failed in coral, skipped as
 // a dashed outline, open as an empty track. The whole tracker glows once the period is complete.
 fun DrawScope.tracker(slots: List<Slot>) {
     val gap = 4.dp.toPx()
@@ -457,7 +457,7 @@ fun DrawScope.tracker(slots: List<Slot>) {
         val o = Offset(i * (w + gap), 0f)
         val a = if (sl.other) 0.5f else 1f
         when (sl.s) {
-            Outcome.Done -> drawRoundRect(W.steel, o, Size(w, h), r, alpha = a)
+            Outcome.Done -> drawRoundRect(W.glow, o, Size(w, h), r, alpha = a)
             Outcome.Fail -> drawRoundRect(W.coral, o, Size(w, h), r, alpha = a)
             Outcome.Skip -> drawRoundRect(W.dim, o, Size(w, h), r, alpha = a, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 5f))))
             null -> drawRoundRect(W.edge, o, Size(w, h), r)
