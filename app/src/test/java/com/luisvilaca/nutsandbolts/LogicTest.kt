@@ -38,6 +38,7 @@ class LogicTest {
         val s = fresh(); val w = weekly; s.habits += listOf(daily, w)
         assertEquals(d("2026-10-12"), weekStart(d("2026-10-18")))
         mark(s, w, d("2026-10-12"), Outcome.Done)
+        assertNull(mark(s, w, d("2026-10-12"), Outcome.Done)) // one mark a day, even with slots left
         assertEquals(1, mark(s, w, d("2026-10-15"), Outcome.Done)!!.n) // finishing the week earns a nut
         assertNull(mark(s, w, d("2026-10-17"), Outcome.Done))
         undo(s, w, d("2026-10-12")) // undoing the earlier mark still takes the nut back

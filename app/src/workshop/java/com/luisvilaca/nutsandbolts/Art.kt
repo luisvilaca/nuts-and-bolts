@@ -119,6 +119,7 @@ val ROOMS = listOf(
     Room(Color(0xFF261B4A), Color(0xFF110C24), Color(0xFF1A1430), Color(0xFFB48CFF)), // Observatory: violet night
     Room(Color(0xFF0B2C33), Color(0xFF071518), Color(0xFF0C2226), Color(0xFF3FF0D0)), // Star Deck: teal station light
     Room(Color(0xFF12291B), Color(0xFF08130C), Color(0xFF0E1D12), Color(0xFF9CFF6A)), // Reactor Hall: uranium green
+    Room(Color(0xFF1A1030), Color(0xFF0A0714), Color(0xFF140E1C), Color(0xFF8CFF6A)), // Haunted Bay: moonlit violet, ghost green
 )
 
 // The whole bay, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
@@ -135,6 +136,7 @@ fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fres
     drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
     drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
     withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { bay(s, t, react, orbits, fresh, equip, tier, r, guest) }
+    if (dressed(tier)) webs(band, k)
 }
 
 // Rivet on its platform and, beside it, a workbench with one steel frame per habit running today, clamped upright
@@ -146,7 +148,9 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val bench = 596f
     drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
-    when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); else -> chargingBay(s) }
+    when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); HAUNT_TIER -> crypt(t); else -> chargingBay(s) }
+    val dress = dressed(tier) // Halloween (Halloween.kt)
+    if (dress) hauntBack(t)
     val heart = Offset(765f, 706f)
     drawCircle(Brush.radialGradient(listOf(W.glow.copy(alpha = (0.08f + 0.18f * core) * pulse), Color.Transparent), heart, 420f), 420f, heart)
     lightRail(r.light, core)
@@ -196,6 +200,7 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
             bolt(Offset(x, bench - 38f - pitch * j), br, sl, drive)
         }
     }
+    if (dress) hauntFront(t)
 }
 
 // A positron rising off a critical frame over its life ph (0..1): a four-point spark that swells and fades as it

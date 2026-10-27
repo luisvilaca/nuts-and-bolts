@@ -16,6 +16,20 @@ class FeaturesTest {
     private fun d(s: String) = LocalDate.parse(s)
     private val daily get() = Habit("a", "Daily", per = Per.Day, target = 1, stat = Attr.Battery, weight = Heft.Medium)
 
+    // The season runs all October to 2 November; out of it a limited part shows in the Shop only once owned, and
+    // every category, the base too, has one.
+    @Test fun limitedPartsSellOnlyInTheSeason() {
+        assertTrue(halloween(d("2026-10-01")) && halloween(d("2026-10-31")) && halloween(d("2026-11-02")))
+        assertFalse(halloween(d("2026-09-30")) || halloween(d("2026-11-03")))
+        assertEquals(SLOTS.keys, PARTS.filter { it.limited }.map { it.slot }.toSet())
+        val s = Data(); val p = PARTS.first { it.limited }
+        assertTrue(forSale(p, s, d("2026-10-27")))
+        assertFalse(forSale(p, s, d("2026-12-01")))
+        s.owned += p.id
+        assertTrue(forSale(p, s, d("2026-12-01")))
+        assertTrue(forSale(PARTS.first { !it.limited }, Data(), d("2026-12-01")))
+    }
+
     @Test fun aDayOffNeitherBreaksNorGrowsAStreak() {
         val s = Data(); val h = daily; s.habits += h
         mark(s, h, d("2026-10-12"), Outcome.Done); mark(s, h, d("2026-10-14"), Outcome.Done)

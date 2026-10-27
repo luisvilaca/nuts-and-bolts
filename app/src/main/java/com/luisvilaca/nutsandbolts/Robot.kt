@@ -52,6 +52,7 @@ class Part(
     val id: String, val slot: String, val en: String, val no: String,
     val bolts: Int = 0, val nuts: Int = 0, val box: FloatArray? = null, val at: String? = null, val tier: Int = 0,
     val pivots: Map<String, Offset> = emptyMap(), val shapes: List<Shape> = emptyList(), val pal: Map<String, Ink> = emptyMap(),
+    val limited: Boolean = false, // sold only in the Halloween season (Halloween.kt)
 ) { val name get() = t(en) }
 
 val PART = PARTS.associateBy { it.id }

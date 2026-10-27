@@ -85,6 +85,9 @@ val PT = mapOf(
     "Isotope Antenna" to "Antena de Isótopos", "Bow Tie" to "Laço", "Jet Pack" to "Mochila a Jato", "Propeller" to "Hélice", "Cape" to "Capa",
     "Top Hat & Monocle" to "Cartola e Monóculo", "Halo" to "Auréola", "Crown" to "Coroa", "Pet Moon" to "Lua de Estimação", "Sidekick Drone" to "Drone Ajudante",
     "Charging Bay" to "Posto de Carga", "Workshop" to "Oficina", "Observatory" to "Observatório", "Star Deck" to "Convés Estelar", "Reactor Hall" to "Sala do Reator",
+    // Halloween, limited
+    "Jack-o'-Bot" to "Abóbora-Robô", "Cauldron Core" to "Núcleo Caldeirão", "Skeleton Arms" to "Braços de Esqueleto", "Phantom Tail" to "Cauda Fantasma",
+    "Witch Hat" to "Chapéu de Bruxa", "Haunted Bay" to "Posto Assombrado", "Limited" to "Limitado", "Halloween limited edition" to "Edição limitada de Halloween",
     // the Diary
     "has a page" to "tem página", "Diary page for {0}" to "Página do diário de {0}", "Nib" to "Aparo", "Stabilizer" to "Estabilizador",
     "At 0% the line follows the pen exactly; higher irons out shake on slow strokes. Fast strokes are never held back." to "A 0% a linha segue a caneta exatamente; mais alto alisa o tremor nos traços lentos. Os traços rápidos nunca são travados.",
@@ -242,6 +245,9 @@ val RU = mapOf(
     "Isotope Antenna" to "Изотопная антенна", "Bow Tie" to "Бабочка", "Jet Pack" to "Реактивный ранец", "Propeller" to "Пропеллер", "Cape" to "Плащ",
     "Top Hat & Monocle" to "Цилиндр и монокль", "Halo" to "Нимб", "Crown" to "Корона", "Pet Moon" to "Ручная луна", "Sidekick Drone" to "Дрон-помощник",
     "Charging Bay" to "Зарядная станция", "Workshop" to "Мастерская", "Observatory" to "Обсерватория", "Star Deck" to "Звёздная палуба", "Reactor Hall" to "Зал реактора",
+    // Halloween, limited
+    "Jack-o'-Bot" to "Тыквобот", "Cauldron Core" to "Котёл-ядро", "Skeleton Arms" to "Руки скелета", "Phantom Tail" to "Призрачный хвост",
+    "Witch Hat" to "Шляпа ведьмы", "Haunted Bay" to "Станция с привидениями", "Limited" to "Ограничено", "Halloween limited edition" to "Лимитированная серия Хэллоуина",
     // the Diary
     "has a page" to "есть страница", "Diary page for {0}" to "Страница дневника за {0}", "Nib" to "Перо", "Stabilizer" to "Стабилизатор",
     "At 0% the line follows the pen exactly; higher irons out shake on slow strokes. Fast strokes are never held back." to "При 0% линия точно следует за пером; выше — сглаживает дрожь медленных штрихов. Быстрые штрихи никогда не задерживаются.",
