@@ -412,6 +412,13 @@ val PARTS = listOf(
     Part("base-dome", "base", "Observatory", "NB-Z03", nuts = 10, tier = 3),
     Part("base-deck", "base", "Star Deck", "NB-Z04", nuts = 25, tier = 4),
     Part("base-hall", "base", "Reactor Hall", "NB-Z05", nuts = 40, tier = 5),
+    // Halloween, limited: one per category, sold only in the season (shapes and finish in Halloween.kt)
+    Part("head-jack", "head", "Jack-o'-Bot", "NB-H10", pal = SPOOKY, bolts = 250, nuts = 4, limited = true, box = floatArrayOf(96f, 50f, 208f, 172f), pivots = mapOf("eyes" to Offset(200f, 140f)), shapes = JACK_HEAD),
+    Part("body-cauldron", "body", "Cauldron Core", "NB-B08", pal = SPOOKY, bolts = 300, nuts = 5, limited = true, box = floatArrayOf(106f, 222f, 188f, 158f), shapes = CAULDRON_BODY),
+    Part("arms-bone", "arms", "Skeleton Arms", "NB-A11", pal = SPOOKY, bolts = 180, nuts = 3, limited = true, box = floatArrayOf(70f, 240f, 260f, 136f), shapes = BONE_ARMS),
+    Part("legs-ghost", "legs", "Phantom Tail", "NB-L09", pal = SPOOKY, bolts = 200, nuts = 3, limited = true, box = floatArrayOf(100f, 350f, 200f, 126f), shapes = GHOST_TAIL),
+    Part("acc-witch", "acc", "Witch Hat", "NB-X15", pal = SPOOKY, bolts = 120, nuts = 2, limited = true, box = floatArrayOf(118f, 0f, 164f, 110f), at = "head-front", shapes = WITCH_HAT),
+    Part("base-haunt", "base", "Haunted Bay", "NB-Z06", nuts = 15, tier = HAUNT_TIER, limited = true),
 )
 
 // Rivet's platform; the rest of each room is drawn in Atom.kt.

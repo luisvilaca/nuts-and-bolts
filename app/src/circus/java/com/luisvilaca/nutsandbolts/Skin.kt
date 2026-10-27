@@ -123,6 +123,12 @@ private val PARTS_WORDS = listOf(
     "Observatory" to listOf("Pirate Cove", "Enseada Pirata", "Пиратская бухта"),
     "Star Deck" to listOf("Show Stage", "Palco do Espetáculo", "Сцена шоу"),
     "Reactor Hall" to listOf("Circus Gallery", "Galeria do Circo", "Цирковая галерея"),
+    // Halloween, limited (the circus's own; the Witch Hat takes the shared table's words)
+    "Jack-o'-Bot" to listOf("Pumpkin Bear", "Urso Abóbora", "Тыквенный медведь"),
+    "Cauldron Core" to listOf("Mummy Wraps", "Ligaduras de Múmia", "Бинты мумии"),
+    "Skeleton Arms" to listOf("Bone Arms", "Braços de Osso", "Костяные руки"),
+    "Phantom Tail" to listOf("Ghost Sheet", "Lençol Fantasma", "Простыня призрака"),
+    "Haunted Bay" to listOf("Haunted Big Top", "Tenda Assombrada", "Шатёр с привидениями"),
 )
 
 private val STAGES = listOf(

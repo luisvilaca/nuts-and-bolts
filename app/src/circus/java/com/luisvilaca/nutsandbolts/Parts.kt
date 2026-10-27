@@ -353,6 +353,14 @@ val PARTS = listOf(
     Part("base-dome", "base", "Pirate Cove", "FC-Z03", nuts = 10, tier = 3),
     Part("base-deck", "base", "Show Stage", "FC-Z04", nuts = 25, tier = 4),
     Part("base-hall", "base", "Circus Gallery", "FC-Z05", nuts = 40, tier = 5),
+    // Halloween, limited: one per category, sold only in the season (the shared shapes and finish are in Halloween.kt)
+    Part("head-jack", "head", "Pumpkin Bear", "FC-H10", pal = SPOOKY + PUMPKIN, bolts = 250, nuts = 4, limited = true, box = HEAD, pivots = mapOf("eyes" to Offset(200f, 142f)), shapes =
+        two(c(140, 96, 22), "sh") + two(c(140, 96, 11), "sh2") + face() + listOf(s("M200 94q-2-18 14-28", "stem"), s("M182 96q-6 10-4 22M218 96q6 10 4 22", "pkln"))),
+    Part("body-cauldron", "body", "Mummy Wraps", "FC-B08", pal = SPOOKY, bolts = 300, nuts = 5, limited = true, box = BODY, shapes = MUMMY_BODY),
+    Part("arms-bone", "arms", "Bone Arms", "FC-A11", pal = SPOOKY, bolts = 180, nuts = 3, limited = true, box = ARMS, shapes = BONE_ARMS),
+    Part("legs-ghost", "legs", "Ghost Sheet", "FC-L09", pal = SPOOKY, bolts = 200, nuts = 3, limited = true, box = LEGS, shapes = GHOST_TAIL),
+    Part("acc-witch", "acc", "Witch Hat", "FC-X15", pal = SPOOKY, bolts = 120, nuts = 2, limited = true, box = floatArrayOf(118f, 0f, 164f, 110f), at = "head-front", shapes = WITCH_HAT),
+    Part("base-haunt", "base", "Haunted Big Top", "FC-Z06", nuts = 15, tier = HAUNT_TIER, limited = true),
 )
 
 // The ring box the animatronic stands on: a striped drum, its rim bulbs chasing round; the rest of each room is

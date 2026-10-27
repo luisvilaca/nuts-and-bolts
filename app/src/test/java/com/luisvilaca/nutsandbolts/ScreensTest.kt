@@ -137,11 +137,12 @@ class ScreensTest {
             mapOf("head" to "head-saucer", "body" to "body-gumball", "arms" to "arms-tentacle", "legs" to "legs-spider", "acc" to "acc-crown"),
             mapOf("head" to "head-hex", "body" to "body-reactor", "arms" to "arms-magnet", "legs" to "legs-tread", "acc" to "acc-sprout"),
             mapOf("head" to "head-monitor", "body" to "body-crate", "arms" to "arms-wrench", "legs" to "legs-wheel", "acc" to "acc-prop"),
+            mapOf("head" to "head-jack", "body" to "body-cauldron", "arms" to "arms-bone", "legs" to "legs-ghost", "acc" to "acc-witch"), // Halloween, limited
         )
         rule.setContent { NbTheme { Column(Modifier.background(W.ground).padding(8.dp)) {
             PARTS.filter { it.slot != "base" }.chunked(14).forEach { r -> Row { r.forEach { p -> Canvas(Modifier.padding(2.dp).size(86.dp).background(W.raised)) { thumb(p) } } } }
             Row { kits.forEach { RobotView(st, Modifier.size(110.dp, 143.dp), it) } }
-            Row { PARTS.filter { it.slot == "base" }.forEach { b -> BayPanel(st, Modifier.size(252.dp, 230.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id)) } }
+            PARTS.filter { it.slot == "base" }.chunked(5).forEach { row -> Row { row.forEach { b -> BayPanel(st, Modifier.size(252.dp, 230.dp), orbitsFor(st.s, LocalDate.now()), st.s.equip + ("base" to b.id)) } } }
         } } }
         shot("catalogue")
     }

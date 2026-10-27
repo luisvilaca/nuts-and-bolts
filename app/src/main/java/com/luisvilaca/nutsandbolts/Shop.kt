@@ -67,8 +67,9 @@ fun ShopScreen(store: Store, ui: Ui, lay: Lay) {
     val s = store.s
     var cat by remember { mutableStateOf("head") }
     val trying = remember { mutableStateMapOf<String, String>() } // slot to part id, for this visit only
-    // within a category: what is worn first, then what is owned, then the cheapest
-    val items = PARTS.filter { it.slot == cat }.sortedWith(compareBy({ s.equip[it.slot] != it.id }, { it.id !in s.owned }, { it.bolts }, { it.nuts }))
+    // within a category: what is worn first, then what is owned, then the season's limited parts, then the cheapest;
+    // a limited part out of its season shows only once owned
+    val items = PARTS.filter { it.slot == cat && forSale(it, s, LocalDate.now()) }.sortedWith(compareBy({ s.equip[it.slot] != it.id }, { it.id !in s.owned }, { !it.limited }, { it.bolts }, { it.nuts }))
     val sel = PART[trying[cat]] ?: PART[s.equip[cat]] ?: items.first()
     val wear = s.equip + trying
     val orbits = derived(store) { orbitsFor(s, LocalDate.now()) }
@@ -137,6 +138,7 @@ private fun Detail(store: Store, ui: Ui, p: Part, modifier: Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.titleLarge)
+            if (p.limited) Text(t("Halloween limited edition"), style = MaterialTheme.typography.bodyMedium, color = HALLOWEEN)
             // owned parts say what they are through the button alone
             if (!has) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) { Price(p, false, short = lack(s, p)) }
         }
@@ -215,6 +217,8 @@ private fun Tile(store: Store, p: Part, sel: Boolean, orbits: List<Orbit>, modif
                     drawImage(cache[1] as ImageBitmap)
                 }
             }
+            if (p.limited) Text(t("Limited"), Modifier.align(Alignment.TopStart).padding(8.dp).clip(RoundedCornerShape(6.dp)).background(HALLOWEEN).padding(horizontal = 6.dp, vertical = 1.dp),
+                style = MaterialTheme.typography.labelMedium, color = Color(0xFF2A1004))
             if (owned) Box(Modifier.align(Alignment.TopEnd).padding(8.dp).size(24.dp).clip(CircleShape).background(W.card).border(1.dp, W.sel, CircleShape)
                 .semantics { contentDescription = t("Owned") }, contentAlignment = Alignment.Center) {
                 Icon(ICONS.getValue("check"), null, Modifier.size(14.dp), tint = W.steel)

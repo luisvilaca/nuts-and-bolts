@@ -180,6 +180,7 @@ fun record(s: Data, h: Habit, t: LocalDate): Record {
 // Fills the next slot of the habit's period.
 fun mark(s: Data, h: Habit, d: LocalDate, kind: Outcome): Mark? {
     if (periodMarks(s, h, d).size >= h.target) return null
+    if (h.per == Per.Week && !s.marks[d]?.get(h.id).isNullOrEmpty()) return null // a weekly habit takes one mark a day
     val w = h.weight
     val m = Mark(kind, a = h.stat)
     if (kind == Outcome.Done) { m.b = w.bolts; m.p = w.pts }

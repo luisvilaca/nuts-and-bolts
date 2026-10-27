@@ -126,6 +126,7 @@ val ROOMS = listOf(
     Room(Color(0xFF1C0E2E), Color(0xFF09050F), Color(0xFF140A1E), Color(0xFFB48CFF)), // Pirate Cove: violet curtain
     Room(Color(0xFF1E0A0C), Color(0xFF0A0405), Color(0xFF120809), Color(0xFFFFE3B0)), // Show Stage: red velvet, warm white
     Room(Color(0xFF2A0C22), Color(0xFF0C040B), Color(0xFF1C0A16), Color(0xFFFF6FA3)), // Circus Gallery: pink neon
+    Room(Color(0xFF1A1030), Color(0xFF0A0714), Color(0xFF140E1C), Color(0xFF8CFF6A)), // Haunted Big Top: moonlit violet, ghost green
 )
 
 // The whole ring, room and all, fitted into the canvas. Scene space is 1000 x 900; x 40..960 and y 120..880 always
@@ -141,6 +142,7 @@ fun DrawScope.room(s: Data, t: Long, react: Reaction?, orbits: List<Orbit>, fres
     drawRect(Brush.verticalGradient(listOf(r.sky, r.wall), 0f, fy))
     drawRect(Brush.verticalGradient(listOf(r.floor, W.rail), fy, size.height), Offset(0f, fy), Size(size.width, size.height - fy))
     withTransform({ translate(ox, oy); scale(k, k, Offset.Zero) }) { ring(s, t, react, orbits, fresh, equip, tier, r, guest) }
+    if (dressed(tier)) webs(band, k)
     // a fail: for one frame the whole ring snaps to its negative under a burst of camera static (never with animations off)
     val ms = react?.takeIf { it.kind == "sad" && t != 0L }?.let { since(t, it.at) } ?: Long.MAX_VALUE
     if (ms < 160) {
@@ -164,10 +166,14 @@ private fun DrawScope.ring(s: Data, t: Long, react: Reaction?, orbits: List<Orbi
     val soul = level(s.stats.getValue(Attr.Core)) / 10f
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val riser = 596f
-    when (tier) { 2 -> partsAndService(t); 3 -> pirateCove(t); 4 -> showStage(t); 5 -> gallery(t); else -> centerRing(s, t) }
+    when (tier) { 2 -> partsAndService(t); 3 -> pirateCove(t); 4 -> showStage(t); 5 -> gallery(t); HAUNT_TIER -> {}; else -> centerRing(s, t) }
     // the dark everywhere the spotlight does not reach
     drawRect(Brush.radialGradient(0f to Color.Transparent, 0.3f to Color.Black.copy(alpha = 0.45f), 0.6f to Color.Black.copy(alpha = 0.78f), 1f to Color.Black.copy(alpha = 0.92f),
         center = Offset(380f, 600f), radius = 640f), Offset(-600f, -300f), Size(2200f, 1300f))
+    // Halloween (Halloween.kt): the haunted stage is moonlit, so it is drawn over the dark, not under it
+    if (tier == HAUNT_TIER) crypt(t)
+    val dress = dressed(tier)
+    if (dress) hauntBack(t)
     spotlight(Offset(360f, 120f), 360f, r.light)
     marqueeLight(r.light, t)
     translate(-140f, 0f) {
@@ -219,6 +225,7 @@ private fun DrawScope.ring(s: Data, t: Long, react: Reaction?, orbits: List<Orbi
             bulb(Offset(x, riser - 38f - pitch * j), br, sl, drive, flare)
         }
     }
+    if (dress) hauntFront(t)
 }
 
 // A point at share f round a rectangle's border, clockwise from the top left.
