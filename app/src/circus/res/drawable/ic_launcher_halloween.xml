@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Halloween: the Pumpkin Bear in a witch's hat under an orange and violet scallop, its eyes glowing candle orange,
+     and a bat. The everyday icon is ic_launcher_foreground (mipmap-anydpi/ic_launcher.xml). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M18,24h12v10q-6,5 -12,0z" android:fillColor="#E8771E" />
+    <path android:pathData="M30,24h12v10q-6,5 -12,0z" android:fillColor="#3A1F5C" />
+    <path android:pathData="M42,24h12v10q-6,5 -12,0z" android:fillColor="#E8771E" />
+    <path android:pathData="M54,24h12v10q-6,5 -12,0z" android:fillColor="#3A1F5C" />
+    <path android:pathData="M66,24h12v10q-6,5 -12,0z" android:fillColor="#E8771E" />
+    <path android:pathData="M78,24h12v10q-6,5 -12,0z" android:fillColor="#3A1F5C" />
+    <path android:pathData="M38,47m-7,0a7,7 0 1,0 14,0a7,7 0 1,0 -14,0M70,47m-7,0a7,7 0 1,0 14,0a7,7 0 1,0 -14,0" android:fillColor="#D9661A" />
+    <path android:pathData="M38,47m-3.5,0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0M70,47m-3.5,0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0" android:fillColor="#FFD49A" />
+    <path android:pathData="M42,44h24a12,12 0 0,1 12,12v8a12,12 0 0,1 -12,12h-24a12,12 0 0,1 -12,-12v-8a12,12 0 0,1 12,-12z" android:fillColor="#F08A2C" />
+    <path android:pathData="M48,46q-2,6 -1,12M60,46q2,6 1,12" android:strokeColor="#A8461A" android:strokeWidth="1.2" android:strokeLineCap="round" />
+    <path android:pathData="M54,70m-12,0a12,7 0 1,0 24,0a12,7 0 1,0 -24,0" android:fillColor="#FFD49A" />
+    <path android:pathData="M54,66.5m-3,0a3,2 0 1,0 6,0a3,2 0 1,0 -6,0" android:fillColor="#120A14" />
+    <path android:pathData="M46,57m-4.5,0a4.5,4 0 1,0 9,0a4.5,4 0 1,0 -9,0M62,57m-4.5,0a4.5,4 0 1,0 9,0a4.5,4 0 1,0 -9,0" android:fillColor="#120A14" />
+    <path android:pathData="M46,57m-1.8,0a1.8,1.8 0 1,0 3.6,0a1.8,1.8 0 1,0 -3.6,0M62,57m-1.8,0a1.8,1.8 0 1,0 3.6,0a1.8,1.8 0 1,0 -3.6,0" android:fillColor="#FFB13B" />
+    <path android:pathData="M54,42m-18,0a18,3.2 0 1,0 36,0a18,3.2 0 1,0 -36,0" android:fillColor="#2A1240" />
+    <path android:pathData="M43,41.5C46,34 50,28 53,24C55,21 59,19 63,20C60,22 59,25 59,28C60,33 62,37 65,41.5z" android:fillColor="#5A3384" />
+    <path android:pathData="M45.5,36.5h18l1.3,3.5h-20.6z" android:fillColor="#FF8A1F" />
+    <path android:pathData="M52,36v4h4v-4z" android:strokeColor="#F2C14E" android:strokeWidth="1.2" />
+    <path android:pathData="M82,52c-2,-3 -6,-4 -9,-3c1.5,1 2,2.5 1.5,4c1.5,-0.8 3,-0.6 4,0.6c0.8,-1.2 2,-1.6 3.5,-1.6z M82,52c2,-3 6,-4 9,-3c-1.5,1 -2,2.5 -1.5,4c-1.5,-0.8 -3,-0.6 -4,0.6c-0.8,-1.2 -2,-1.6 -3.5,-1.6z M82,51.5m-1.6,0a1.6,2.2 0 1,0 3.2,0a1.6,2.2 0 1,0 -3.2,0" android:fillColor="#8A5CC9" />
+</vector>
