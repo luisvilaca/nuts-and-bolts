@@ -173,7 +173,7 @@ fun wallArt(tier: Int) = tier == 1 || tier == HAUNT_TIER || !spooky
 // from behind the tallest, bats, and fog along the foot of the wall. The haunted base has its own moon (crypt).
 fun DrawScope.hauntBack(t: Long, tier: Int) {
     if (tier != HAUNT_TIER) moonWindow(t)
-    bunting(Offset(250f, 124f), Offset(600f, 142f), 50f, 7, t) // clear of the nameplate at top left
+    bunting(Offset(300f, 124f), Offset(620f, 142f), 46f, 6, t) // clear of the nameplate at top left
     bunting(Offset(600f, 118f), Offset(1080f, 124f), 34f, 8, t, 3)
     fog(t, 704f)
     ghost(Offset(556f, 600f), t)
@@ -186,14 +186,14 @@ fun DrawScope.hauntBack(t: Long, tier: Int) {
     }
 }
 
-// In front of everything: a pile of jack-o'-lanterns at left, a big cauldron at the platform's edge, a potion flask by
-// the reactor, a lantern at right, and a spider on its silk.
+// In front of everything: a pile of jack-o'-lanterns at left, a big cauldron at the platform's edge, a potion bottle
+// between the reactor and the lantern at right, and a spider on its silk.
 fun DrawScope.hauntFront(t: Long) {
     lantern(Offset(108f, 826f), 58f, t, 0)
     lantern(Offset(200f, 858f), 28f, t, 1)
-    lantern(Offset(900f, 838f), 42f, t, 2)
+    lantern(Offset(922f, 842f), 38f, t, 2)
     cauldron(Offset(606f, 830f), t, 1.6f)
-    flask(Offset(772f, 852f), 18f, Color(0xFFB48CFF))
+    potion(Offset(844f, 874f), t)
     spider(Offset(586f, 420f + 18f * wob(t, 1700.0)), t, 0, 1.8f)
 }
 
@@ -339,15 +339,50 @@ private fun DrawScope.cauldron(c: Offset, t: Long, k: Float = 1f) = scale(k, k, 
     }
 }
 
-// A round-bottomed potion flask, half full, corked.
-private fun DrawScope.flask(c: Offset, r: Float, ink: Color) {
-    drawCircle(ink.copy(alpha = 0.18f), r * 2.2f, c)
-    drawArc(ink, 0f, 180f, true, c - Offset(r, r), Size(r * 2, r * 2), alpha = 0.9f)
-    drawCircle(Color.White, r, c, alpha = 0.12f)
-    drawRect(Color.White.copy(alpha = 0.16f), Offset(c.x - r * 0.3f, c.y - r * 2f), Size(r * 0.6f, r * 1.1f))
-    drawCircle(Color.White, r, c, alpha = 0.5f, style = Stroke(2f))
-    drawRect(Color(0xFF9A6440), Offset(c.x - r * 0.38f, c.y - r * 2.4f), Size(r * 0.76f, r * 0.5f))
-    drawLine(Color.White.copy(alpha = 0.45f), c + Offset(-r * 0.55f, -r * 0.35f), c + Offset(-r * 0.3f, -r * 0.62f), 2f, StrokeCap.Round)
+// A potion bottle standing at `foot`: a round flask with a long neck and a cork, violet brew sloshing inside with
+// bubbles rising through it, a parchment label with a skull, and a glow round it all.
+private fun DrawScope.potion(foot: Offset, t: Long) {
+    val c = foot - Offset(0f, 34f); val r = 32f; val nw = 10f // the body's centre and radius, the neck's half width
+    val joint = c.y - kotlin.math.sqrt(r * r - nw * nw)
+    val half = (kotlin.math.asin(nw / r) * 180 / PI).toFloat()
+    val glass = Path().apply {
+        moveTo(c.x - nw, c.y - r - 28f); lineTo(c.x - nw, joint)
+        arcTo(Rect(c, r), -90f - half, -(360f - 2 * half), false)
+        lineTo(c.x + nw, c.y - r - 28f); close()
+    }
+    val brew = Color(0xFFB48CFF)
+    drawCircle(Brush.radialGradient(listOf(brew.copy(alpha = 0.32f), Color.Transparent), c, r * 2.6f), r * 2.6f, c)
+    drawOval(Color.Black.copy(alpha = 0.3f), Offset(c.x - r, foot.y - 6f), Size(r * 2, 10f))
+    drawPath(glass, Color.White.copy(alpha = 0.08f))
+    clipPath(glass) {
+        val level = c.y - r * 0.3f
+        val slosh = wob(t, 700.0)
+        val surface = Path().apply {
+            moveTo(c.x - r, level + 3f * slosh)
+            quadraticBezierTo(c.x - r / 2, level - 6f * slosh, c.x, level)
+            quadraticBezierTo(c.x + r / 2, level + 6f * slosh, c.x + r, level - 3f * slosh)
+            lineTo(c.x + r, c.y + r); lineTo(c.x - r, c.y + r); close()
+        }
+        drawPath(surface, Brush.verticalGradient(listOf(Color(0xFFD6B8FF), brew, Color(0xFF5A2A9E)), level - 6f, c.y + r))
+        for (i in 0 until 3) {
+            val ph = if (t == 0L) (i + 1) / 4f else ((t / 1500.0 + i / 3.0) % 1.0).toFloat()
+            drawCircle(Color.White, 2f + i, Offset(c.x - 12f + i * 11f, c.y + r * 0.8f - (r * 0.8f + r * 0.3f) * ph), alpha = 0.55f * (1 - ph), style = Stroke(1.5f))
+        }
+    }
+    // the label and its skull
+    val lab = Rect(c.x - 15f, c.y + 2f, c.x + 15f, c.y + 22f)
+    drawRoundRect(Color(0xFFEFE2C4), lab.topLeft, lab.size, CornerRadius(3f))
+    val sk = Offset(c.x, c.y + 11f); val ink = Color(0xFF3A1F5C)
+    drawCircle(ink, 5.5f, sk - Offset(0f, 1.5f)); drawRect(ink, Offset(sk.x - 3.5f, sk.y + 1.5f), Size(7f, 4f))
+    for (dx in listOf(-2.2f, 2.2f)) drawCircle(Color(0xFFEFE2C4), 1.6f, sk + Offset(dx, -1.5f))
+    for (d in listOf(-1f, 1f)) drawLine(ink, sk + Offset(-10f, 6f * d - 1f), sk + Offset(-7f, 4.5f * d - 1f), 1.6f, StrokeCap.Round)
+    // glass: its outline, a lip at the neck, a highlight down the body, and the cork
+    drawPath(glass, Color.White.copy(alpha = 0.6f), style = Stroke(2.5f))
+    drawRoundRect(Color(0xFFDDE6F0), Offset(c.x - nw - 4f, c.y - r - 32f), Size(nw * 2 + 8f, 7f), CornerRadius(3.5f), alpha = 0.85f)
+    drawRoundRect(Color(0xFF9A6440), Offset(c.x - nw + 1f, c.y - r - 48f), Size(nw * 2 - 2f, 18f), CornerRadius(4f))
+    drawLine(Color(0xFF6B4026), Offset(c.x - nw + 4f, c.y - r - 40f), Offset(c.x + nw - 4f, c.y - r - 40f), 1.5f)
+    drawArc(Color.White, 200f, 50f, false, c - Offset(r - 6f, r - 6f), Size((r - 6f) * 2, (r - 6f) * 2), alpha = 0.55f, style = Stroke(3.5f, cap = StrokeCap.Round))
+    drawLine(Color.White.copy(alpha = 0.4f), Offset(c.x - nw + 3f, c.y - r - 22f), Offset(c.x - nw + 3f, joint + 2f), 2f, StrokeCap.Round)
 }
 
 // A spider hanging on its silk from the ceiling, legs paddling slowly.
