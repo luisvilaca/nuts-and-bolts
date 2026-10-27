@@ -166,14 +166,14 @@ private fun DrawScope.ring(s: Data, t: Long, react: Reaction?, orbits: List<Orbi
     val soul = level(s.stats.getValue(Attr.Core)) / 10f
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val riser = 596f
-    when (tier) { 2 -> partsAndService(t); 3 -> pirateCove(t); 4 -> showStage(t); 5 -> gallery(t); HAUNT_TIER -> {}; else -> centerRing(s, t) }
+    if (wallArt(tier)) when (tier) { 2 -> partsAndService(t); 3 -> pirateCove(t); 4 -> showStage(t); 5 -> gallery(t); HAUNT_TIER -> {}; else -> centerRing(s, t, tent = !spooky) }
     // the dark everywhere the spotlight does not reach
     drawRect(Brush.radialGradient(0f to Color.Transparent, 0.3f to Color.Black.copy(alpha = 0.45f), 0.6f to Color.Black.copy(alpha = 0.78f), 1f to Color.Black.copy(alpha = 0.92f),
         center = Offset(380f, 600f), radius = 640f), Offset(-600f, -300f), Size(2200f, 1300f))
     // Halloween (Halloween.kt): the haunted stage is moonlit, so it is drawn over the dark, not under it
     if (tier == HAUNT_TIER) crypt(t)
     val dress = dressed(tier)
-    if (dress) hauntBack(t)
+    if (dress) hauntBack(t, tier)
     spotlight(Offset(360f, 120f), 360f, r.light)
     marqueeLight(r.light, t)
     translate(-140f, 0f) {
@@ -317,13 +317,13 @@ private fun DrawScope.valance(red: Color = Color(0xFF5A1428), cream: Color = Col
 
 // Center Ring: the big top's canvas stripes fanning up into the dark, the valance, and the show sign on the wall whose
 // five bulbs read Power (a bulb for every two levels).
-private fun DrawScope.centerRing(s: Data, t: Long) {
+private fun DrawScope.centerRing(s: Data, t: Long, tent: Boolean = true) {
     val apex = Offset(500f, -260f)
-    for (i in -9..9) {
+    if (tent) for (i in -9..9) {
         val p = Path().apply { moveTo(apex.x, apex.y); lineTo(500f + i * 150f, 700f); lineTo(500f + (i + 0.5f) * 150f, 700f); close() }
         drawPath(p, if (i % 2 == 0) Color(0xFF3A0F22) else Color(0xFF241018), alpha = 0.8f)
     }
-    valance()
+    if (tent) valance() // the Halloween set takes the tent's place in the season (Halloween.kt)
     drawRoundRect(Color(0xFF2A1426), Offset(66f, 440f), Size(104f, 150f), CornerRadius(12f))
     drawRoundRect(Color(0xFFF2C14E), Offset(66f, 440f), Size(104f, 150f), CornerRadius(12f), alpha = 0.7f, style = Stroke(3f))
     val lit = (level(s.stats.getValue(Attr.Battery)) + 1) / 2
