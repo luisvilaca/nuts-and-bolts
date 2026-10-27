@@ -1,7 +1,9 @@
 package com.luisvilaca.nutsandbolts
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -10,6 +12,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -161,27 +165,99 @@ private fun DrawScope.fog(t: Long, y: Float) {
     }
 }
 
-// Behind the robot: tombstones along the wall and bats wheeling under the ceiling.
-fun DrawScope.hauntBack(t: Long) {
-    tomb(Offset(82f, 704f), 60f, 92f, cross = false)
-    tomb(Offset(166f, 708f), 0f, 74f, cross = true)
-    tomb(Offset(580f, 706f), 44f, 62f, cross = false)
-    for ((i, a) in listOf(Offset(250f, 150f), Offset(470f, 136f), Offset(812f, 150f)).withIndex()) {
-        val p = a + Offset(26f * wob(t, 2100.0, i * 2.0), 12f * wob(t, 1300.0, i * 1.0))
-        bat(p, listOf(1.5f, 1.2f, 1.3f)[i], wob(t, 110.0, i * 1.7))
+// Whether a room hangs its own wall art: in the season the decorative pieces of the bought rooms step aside for the
+// Halloween set (the Charging Bay's station and the Center Ring's Power sign stay, they read an attribute).
+fun wallArt(tier: Int) = tier == 1 || tier == HAUNT_TIER || !spooky
+
+// Behind the robot: an arched window on a full moon, bunting under the ceiling, big tombstones with a ghost peeking
+// from behind the tallest, bats, and fog along the foot of the wall. The haunted base has its own moon (crypt).
+fun DrawScope.hauntBack(t: Long, tier: Int) {
+    if (tier != HAUNT_TIER) moonWindow(t)
+    bunting(Offset(250f, 124f), Offset(600f, 142f), 50f, 7, t) // clear of the nameplate at top left
+    bunting(Offset(600f, 118f), Offset(1080f, 124f), 34f, 8, t, 3)
+    fog(t, 704f)
+    ghost(Offset(556f, 600f), t)
+    tomb(Offset(556f, 708f), 92f, 146f, cross = false)
+    tomb(Offset(94f, 706f), 80f, 108f, cross = false)
+    tomb(Offset(182f, 712f), 0f, 100f, cross = true)
+    for ((i, a) in listOf(Offset(318f, 214f), Offset(536f, 262f), Offset(782f, 250f)).withIndex()) {
+        val p = a + Offset(30f * wob(t, 2100.0, i * 2.0), 14f * wob(t, 1300.0, i * 1.0))
+        bat(p, listOf(2.1f, 2.5f, 2f)[i], wob(t, 110.0, i * 1.7))
     }
 }
 
-// In front of everything: jack-o'-lanterns and a cauldron on the floor, two potion flasks, spiders on their silk.
+// In front of everything: a pile of jack-o'-lanterns at left, a big cauldron at the platform's edge, a potion flask by
+// the reactor, a lantern at right, and a spider on its silk.
 fun DrawScope.hauntFront(t: Long) {
-    lantern(Offset(92f, 814f), 34f, t, 0)
-    lantern(Offset(162f, 858f), 20f, t, 1)
-    lantern(Offset(912f, 846f), 28f, t, 2)
-    cauldron(Offset(646f, 840f), t)
-    flask(Offset(744f, 846f), 15f, SLIME)
-    flask(Offset(782f, 852f), 11f, Color(0xFFB48CFF))
-    spider(Offset(588f, 300f + 18f * wob(t, 1700.0)), t, 0)
-    spider(Offset(196f, 392f + 14f * wob(t, 2300.0, 2.0)), t, 1)
+    lantern(Offset(108f, 826f), 58f, t, 0)
+    lantern(Offset(200f, 858f), 28f, t, 1)
+    lantern(Offset(900f, 838f), 42f, t, 2)
+    cauldron(Offset(606f, 830f), t, 1.6f)
+    flask(Offset(772f, 852f), 18f, Color(0xFFB48CFF))
+    spider(Offset(586f, 420f + 18f * wob(t, 1700.0)), t, 0, 1.8f)
+}
+
+// An arched window on the left wall: a full moon in a purple dusk, a bare branch across it, hills of graves below, and
+// now and then a bat crossing the moon.
+private fun DrawScope.moonWindow(t: Long) {
+    val win = Rect(52f, 176f, 216f, 424f)
+    val pane = Path().apply { addRoundRect(RoundRect(win, CornerRadius(82f), CornerRadius(82f), CornerRadius(6f), CornerRadius(6f))) }
+    drawCircle(Brush.radialGradient(listOf(Color(0x30D8FFB0), Color.Transparent), Offset(140f, 260f), 220f), 220f, Offset(140f, 260f))
+    clipPath(pane) {
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF140C2A), Color(0xFF3A1F4E), Color(0xFF7A3440)), 176f, 424f), win.topLeft, win.size)
+        for (i in 0 until 9) drawCircle(Color.White, if (i % 3 == 0) 1.8f else 1.1f, Offset(60f + i * 53 % 150, 190f + i * 37 % 110), alpha = 0.7f)
+        val m = Offset(146f, 262f)
+        drawCircle(Brush.radialGradient(listOf(Color(0x66F4FFE0), Color.Transparent), m, 110f), 110f, m)
+        drawCircle(Brush.radialGradient(listOf(Color(0xFFFFFBEA), Color(0xFFD8E8B0)), m - Offset(14f, 14f), 64f), 48f, m)
+        for ((d, r) in listOf(Offset(-14f, -8f) to 9f, Offset(16f, 8f) to 6f, Offset(-2f, 22f) to 5f)) drawCircle(Color(0x2A3E5A2A), r, m + d)
+        val fly = if (t == 0L) 0.5f else ((t / 7000.0) % 1.0).toFloat()
+        bat(Offset(40f + 200f * fly, 250f - 30f * sin(fly * PI.toFloat())), 0.9f, wob(t, 90.0))
+        for ((a, b, w) in listOf(Triple(Offset(40f, 330f), Offset(110f, 300f), 9f), Triple(Offset(110f, 300f), Offset(170f, 304f), 5f),
+            Triple(Offset(110f, 300f), Offset(140f, 270f), 4f), Triple(Offset(78f, 316f), Offset(84f, 284f), 3f))) drawLine(IRON, a, b, w, StrokeCap.Round)
+        drawPath(Path().apply { moveTo(40f, 424f); quadraticBezierTo(100f, 370f, 160f, 396f); quadraticBezierTo(200f, 380f, 230f, 400f); lineTo(230f, 430f); lineTo(40f, 430f); close() }, IRON)
+        for (x in listOf(92f, 128f, 186f)) drawRoundRect(IRON, Offset(x, 382f - (x % 7f)), Size(10f, 16f), CornerRadius(5f, 5f))
+    }
+    drawPath(pane, Color(0xFF2A1E36), style = Stroke(10f))
+    drawLine(Color(0xFF2A1E36), Offset(134f, 176f), Offset(134f, 424f), 6f)
+    drawLine(Color(0xFF2A1E36), Offset(52f, 330f), Offset(216f, 330f), 6f)
+    drawRoundRect(Color(0xFF2A1E36), Offset(42f, 422f), Size(184f, 12f), CornerRadius(3f))
+}
+
+// A swag of pennants on a string, orange (a carved face on each), violet and black in turn, swaying a little.
+private fun DrawScope.bunting(a: Offset, b: Offset, sag: Float, n: Int, t: Long, shift: Int = 0) {
+    val ctl = Offset((a.x + b.x) / 2, (a.y + b.y) / 2 + sag * 2)
+    drawPath(Path().apply { moveTo(a.x, a.y); quadraticBezierTo(ctl.x, ctl.y, b.x, b.y) }, Color(0xFF2A1E36), style = Stroke(3f))
+    for (i in 0 until n) {
+        val f = (i + 0.5f) / n
+        val p = a * ((1 - f) * (1 - f)) + ctl * (2 * (1 - f) * f) + b * (f * f)
+        val k = (i + shift) % 3
+        rotate(5f * wob(t, 900.0, i * 0.8), p) {
+            val flag = Path().apply { moveTo(p.x - 20f, p.y); lineTo(p.x + 20f, p.y); lineTo(p.x, p.y + 52f); close() }
+            drawPath(flag, listOf(HALLOWEEN, Color(0xFF5A3384), Color(0xFF1A1024))[k])
+            drawPath(flag, Color.White.copy(alpha = 0.12f), style = Stroke(1.5f))
+            if (k == 0) {
+                for (dx in listOf(-7f, 7f)) drawPath(Path().apply { moveTo(p.x + dx - 4f, p.y + 16f); lineTo(p.x + dx, p.y + 9f); lineTo(p.x + dx + 4f, p.y + 16f); close() }, Color(0xFF2A1004))
+                drawLine(Color(0xFF2A1004), Offset(p.x - 6f, p.y + 22f), Offset(p.x + 6f, p.y + 22f), 2.5f, StrokeCap.Round)
+            } else if (k == 2) drawCircle(Color(0xFFFFD34D), 3f, Offset(p.x, p.y + 16f), alpha = 0.85f) // a little moon
+        }
+    }
+}
+
+// A sheet ghost that rises from behind the tall tombstone, looks about, and sinks again (half risen while still).
+private fun DrawScope.ghost(at: Offset, t: Long) {
+    val ph = if (t == 0L) 0.5f else ((t / 9000.0) % 1.0).toFloat()
+    val up = sin(ph * PI.toFloat()).let { it * it } // 0 hidden, 1 fully up
+    if (up < 0.02f) return
+    val c = at - Offset(10f * sin(ph * 12f), 96f * up)
+    val body = Path().apply {
+        moveTo(c.x - 34f, c.y + 70f); lineTo(c.x - 34f, c.y); cubicTo(c.x - 34f, c.y - 46f, c.x + 34f, c.y - 46f, c.x + 34f, c.y); lineTo(c.x + 34f, c.y + 70f)
+        for (j in 0 until 4) quadraticBezierTo(c.x + 34f - j * 17f - 8.5f, c.y + 84f, c.x + 34f - (j + 1) * 17f, c.y + 70f)
+        close()
+    }
+    drawCircle(Brush.radialGradient(listOf(Color(0x40E8FFF0), Color.Transparent), c, 90f), 90f, c, alpha = up)
+    drawPath(body, Brush.verticalGradient(listOf(Color.White, Color(0xFFC9C6E0)), c.y - 40f, c.y + 80f), alpha = 0.92f * up)
+    for (dx in listOf(-12f, 12f)) drawOval(Color(0xFF140A1C), Offset(c.x + dx - 6f, c.y - 10f), Size(12f, 17f), alpha = up)
+    drawOval(Color(0xFF140A1C), Offset(c.x - 6f, c.y + 14f), Size(12f, 14f), alpha = up)
 }
 
 private fun DrawScope.tomb(base: Offset, w: Float, h: Float, cross: Boolean) {
@@ -247,7 +323,7 @@ private fun DrawScope.lantern(c: Offset, r: Float, t: Long, i: Int) {
 }
 
 // A cauldron on three legs, brimming with green, bubbles rising and popping off it.
-private fun DrawScope.cauldron(c: Offset, t: Long) {
+private fun DrawScope.cauldron(c: Offset, t: Long, k: Float = 1f) = scale(k, k, c) {
     val glow = 0.85f + 0.15f * wob(t, 600.0)
     drawCircle(Brush.radialGradient(listOf(SLIME.copy(alpha = 0.22f * glow), Color.Transparent), c - Offset(0f, 30f), 130f), 130f, c - Offset(0f, 30f))
     for (dx in listOf(-30f, 0f, 30f)) drawLine(Color(0xFF15171D), Offset(c.x + dx, c.y + 10f), Offset(c.x + dx * 1.2f, c.y + 34f), 6f, StrokeCap.Round)
@@ -255,7 +331,7 @@ private fun DrawScope.cauldron(c: Offset, t: Long) {
     drawOval(Color.White.copy(alpha = 0.12f), Offset(c.x - 36f, c.y - 24f), Size(14f, 38f))
     drawOval(Color(0xFF5A6070), Offset(c.x - 44f, c.y - 48f), Size(88f, 20f))
     drawOval(SLIME, Offset(c.x - 36f, c.y - 45f), Size(72f, 13f), alpha = glow)
-    drawRoundRect(SLIME, Offset(c.x + 18f, c.y - 40f), Size(9f, 22f), androidx.compose.ui.geometry.CornerRadius(4.5f), alpha = 0.9f) // a drip over the rim
+    drawRoundRect(SLIME, Offset(c.x + 18f, c.y - 40f), Size(9f, 22f), CornerRadius(4.5f), alpha = 0.9f) // a drip over the rim
     for (i in 0 until 5) {
         val ph = if (t == 0L) i / 5f else ((t / 1700.0 + i / 5.0) % 1.0).toFloat()
         val p = Offset(c.x - 22f + i * 11f + 6f * sin(ph * 6f + i), c.y - 44f - 56f * ph)
@@ -275,8 +351,12 @@ private fun DrawScope.flask(c: Offset, r: Float, ink: Color) {
 }
 
 // A spider hanging on its silk from the ceiling, legs paddling slowly.
-private fun DrawScope.spider(c: Offset, t: Long, i: Int) {
-    drawLine(Color.White.copy(alpha = 0.35f), Offset(c.x, -300f), c, 1.5f)
+private fun DrawScope.spider(c: Offset, t: Long, i: Int, k: Float = 1f, silk: Boolean = true) {
+    if (silk) drawLine(Color.White.copy(alpha = 0.35f), Offset(c.x, -300f), c, 1.5f)
+    scale(k, k, c) { spiderBody(c, t, i) }
+}
+
+private fun DrawScope.spiderBody(c: Offset, t: Long, i: Int) {
     val kick = 4f * wob(t, 260.0, i * 1.3)
     for (side in listOf(-1f, 1f)) for (j in 0 until 4) {
         val a = (-50 + j * 34) * PI / 180
@@ -293,7 +373,7 @@ private fun DrawScope.spider(c: Offset, t: Long, i: Int) {
 // A cobweb across the canvas's top right corner (in canvas pixels, below the band), scaled with the room; only the
 // right, since the nameplate sits at the top left.
 fun DrawScope.webs(band: Float, k: Float) {
-    val r = 170f * k
+    val r = 270f * k
     scale(-1f, 1f, Offset(size.width / 2, 0f)) {
         val o = Offset(0f, band)
         val spokes = (0..5).map { j -> (j * 18f) * PI.toFloat() / 180f }
@@ -310,5 +390,6 @@ fun DrawScope.webs(band: Float, k: Float) {
             }
             drawPath(p, silk, style = Stroke(1.2f * k + 0.5f))
         }
+        spider(o + Offset(r * 0.42f, r * 0.34f), 0L, 2, k * 1.5f, silk = false) // the web's keeper, sitting still
     }
 }

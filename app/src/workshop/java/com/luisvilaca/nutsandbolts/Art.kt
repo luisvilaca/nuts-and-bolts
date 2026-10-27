@@ -148,9 +148,9 @@ private fun DrawScope.bay(s: Data, t: Long, react: Reaction?, orbits: List<Orbit
     val pulse = if (t == 0L) 1f else 0.85f + 0.15f * sin(t / 700.0).toFloat()
     val bench = 596f
     drawRect(r.light.copy(alpha = 0.14f), Offset(-600f, 692f), Size(2200f, 8f)) // the skirting, lit by the room
-    when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); HAUNT_TIER -> crypt(t); else -> chargingBay(s) }
+    if (wallArt(tier)) when (tier) { 2 -> workshop(); 3 -> observatory(); 4 -> starDeck(); 5 -> reactorHall(t); HAUNT_TIER -> crypt(t); else -> chargingBay(s) }
     val dress = dressed(tier) // Halloween (Halloween.kt)
-    if (dress) hauntBack(t)
+    if (dress) hauntBack(t, tier)
     val heart = Offset(765f, 706f)
     drawCircle(Brush.radialGradient(listOf(W.glow.copy(alpha = (0.08f + 0.18f * core) * pulse), Color.Transparent), heart, 420f), 420f, heart)
     lightRail(r.light, core)
