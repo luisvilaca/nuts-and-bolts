@@ -47,6 +47,5 @@ sync is not set up. [SYNC.md](SYNC.md) (in Portuguese) explains how to connect a
 
 ## How it was made
 
-I designed the app and built it with Claude Code as an AI pair programmer. I made the product and design
-decisions (recorded in [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md)), directed the implementation, and tested
-the builds on my own tablet and phone.
+I designed the app and made its product and design decisions (recorded in [PRODUCT.md](PRODUCT.md) and
+[DESIGN.md](DESIGN.md)), and I test every build on my own tablet and phone.

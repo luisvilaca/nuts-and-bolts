@@ -54,7 +54,7 @@ service cloud.firestore {
 
 1. Vai a **App Distribution > Começar**.
 2. Em **Testadores e grupos**, junta o teu email. O `local.properties` já tem `appDistributionTesters=luismvilaca21@gmail.com`; acrescenta outros separados por vírgulas.
-3. Neste PC, uma vez só, instala e liga o Firebase CLI. Na linha de comandos do Claude Code podes escrever `! npm install -g firebase-tools` e depois `! firebase login`.
+3. Neste PC, uma vez só, instala e liga o Firebase CLI. Na linha de comandos escreve `npm install -g firebase-tools` e depois `firebase login`.
 4. Para publicar uma versão:
    ```
    .\tools\publish.ps1 "O que mudou"
